@@ -44,7 +44,7 @@ export const tools = {
       important: z.boolean().optional().describe('Filter by important flag'),
       from_date: z.string().optional().describe('Filter notes created after this date (ISO8601)'),
       to_date: z.string().optional().describe('Filter notes created before this date (ISO8601)'),
-      limit: z.number().optional().default(20).describe('Maximum notes to return'),
+      limit: z.coerce.number().optional().default(20).describe('Maximum notes to return'),
     }),
     handler: async (args: {
       project?: string;
@@ -87,8 +87,8 @@ export const tools = {
       project: z.string().optional().describe('Filter by project name'),
       labels: z.array(z.string()).optional().describe('Filter by labels'),
       status: z.enum(['open', 'completed']).optional().default('open').describe('Filter by status'),
-      top: z.number().optional().describe('Return only top N by priority'),
-      limit: z.number().optional().default(20).describe('Maximum actions to return'),
+      top: z.coerce.number().optional().describe('Return only top N by priority'),
+      limit: z.coerce.number().optional().default(20).describe('Maximum actions to return'),
     }),
     handler: async (args: {
       project?: string;
@@ -129,7 +129,7 @@ export const tools = {
     schema: z.object({
       project: z.string().optional().describe('Filter by project name'),
       from_date: z.string().optional().describe('Filter by completion date'),
-      limit: z.number().optional().default(20).describe('Maximum actions to return'),
+      limit: z.coerce.number().optional().default(20).describe('Maximum actions to return'),
     }),
     handler: async (args: {
       project?: string;
@@ -165,7 +165,7 @@ export const tools = {
       query: z.string().describe('Search query'),
       type: z.enum(['all', 'notes', 'actions']).optional().default('all').describe('Limit search to specific type'),
       project: z.string().optional().describe('Filter results by project'),
-      limit: z.number().optional().default(10).describe('Maximum results per type'),
+      limit: z.coerce.number().optional().default(10).describe('Maximum results per type'),
     }),
     handler: async (args: {
       query: string;
@@ -244,8 +244,8 @@ export const tools = {
       title: z.string().describe('Action title/description'),
       project: z.string().describe('Project name this action belongs to'),
       labels: z.array(z.string()).optional().describe('Optional labels for categorization'),
-      urgency: z.number().min(1).max(5).describe('Urgency rating (1=low, 5=high)'),
-      importance: z.number().min(1).max(5).describe('Importance rating (1=low, 5=high)'),
+      urgency: z.coerce.number().min(1).max(5).describe('Urgency rating (1=low, 5=high)'),
+      importance: z.coerce.number().min(1).max(5).describe('Importance rating (1=low, 5=high)'),
     }),
     handler: async (args: {
       title: string;
@@ -271,7 +271,7 @@ export const tools = {
   edit_note: {
     description: 'Update an existing note.',
     schema: z.object({
-      id: z.number().describe('Note ID to edit'),
+      id: z.coerce.number().describe('Note ID to edit'),
       summary: z.string().optional().describe('New summary'),
       project: z.string().optional().describe('New project'),
       labels: z.array(z.string()).optional().describe('New labels (replaces existing)'),
@@ -298,12 +298,12 @@ export const tools = {
   edit_action: {
     description: 'Update an existing action.',
     schema: z.object({
-      id: z.number().describe('Action ID to edit'),
+      id: z.coerce.number().describe('Action ID to edit'),
       title: z.string().optional().describe('New title'),
       project: z.string().optional().describe('New project'),
       labels: z.array(z.string()).optional().describe('New labels (replaces existing)'),
-      urgency: z.number().min(1).max(5).optional().describe('New urgency (1-5)'),
-      importance: z.number().min(1).max(5).optional().describe('New importance (1-5)'),
+      urgency: z.coerce.number().min(1).max(5).optional().describe('New urgency (1-5)'),
+      importance: z.coerce.number().min(1).max(5).optional().describe('New importance (1-5)'),
     }),
     handler: async (args: {
       id: number;
@@ -329,7 +329,7 @@ export const tools = {
   delete_note: {
     description: 'Permanently delete a note.',
     schema: z.object({
-      id: z.number().describe('Note ID to delete'),
+      id: z.coerce.number().describe('Note ID to delete'),
     }),
     handler: async (args: { id: number }) => {
       await apiClient.deleteNote(args.id);
@@ -340,7 +340,7 @@ export const tools = {
   delete_action: {
     description: 'Permanently delete an action.',
     schema: z.object({
-      id: z.number().describe('Action ID to delete'),
+      id: z.coerce.number().describe('Action ID to delete'),
     }),
     handler: async (args: { id: number }) => {
       await apiClient.deleteAction(args.id);
@@ -351,7 +351,7 @@ export const tools = {
   complete_actions: {
     description: 'Mark actions as completed.',
     schema: z.object({
-      ids: z.array(z.number()).describe('Array of action IDs to mark as completed'),
+      ids: z.array(z.coerce.number()).describe('Array of action IDs to mark as completed'),
     }),
     handler: async (args: { ids: number[] }) => {
       const result = await apiClient.completeActions(args.ids);

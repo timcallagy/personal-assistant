@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,9 +15,33 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <aside className="w-64 bg-background-secondary border-r border-background-tertiary flex flex-col h-full">
+    <>
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-background-secondary rounded-md border border-background-tertiary"
+        aria-label="Toggle menu"
+      >
+        <span className="text-xl">{isOpen ? '✕' : '☰'}</span>
+      </button>
+
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-40
+        w-64 bg-background-secondary border-r border-background-tertiary flex flex-col h-full
+        transform transition-transform duration-200 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
       {/* Logo */}
       <div className="p-4 border-b border-background-tertiary">
         <Link href="/dashboard" className="flex items-center gap-2">
@@ -34,6 +59,7 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={() => setIsOpen(false)}
                   className={`
                     flex items-center gap-3 px-3 py-2 rounded-md transition-colors
                     ${isActive
@@ -62,6 +88,7 @@ export function Sidebar() {
           </Button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
