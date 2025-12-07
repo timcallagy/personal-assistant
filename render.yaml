@@ -1,0 +1,39 @@
+services:
+  # API Server
+  - type: web
+    name: pa-api
+    runtime: node
+    plan: starter
+    buildCommand: pnpm install && pnpm --filter @pa/api build && pnpm --filter @pa/api db:generate
+    startCommand: pnpm --filter @pa/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pa-db
+          property: connectionString
+      - key: CORS_ORIGIN
+        sync: false
+    healthCheckPath: /api/v1/health
+
+  # Web UI
+  - type: web
+    name: pa-web
+    runtime: node
+    plan: starter
+    buildCommand: pnpm install && pnpm --filter @pa/web build
+    startCommand: pnpm --filter @pa/web start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+
+databases:
+  - name: pa-db
+    databaseName: pa
+    plan: starter
+    postgresMajorVersion: 15

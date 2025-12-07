@@ -1,0 +1,129 @@
+// PA (Personal Assistant) - Database Schema
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// User Model
+// ==========================================
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  apiKey       String    @unique @map("api_key")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  projects Project[]
+  labels   Label[]
+  notes    Note[]
+  actions  Action[]
+
+  @@map("users")
+}
+
+// ==========================================
+// Project Model
+// ==========================================
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes   Note[]
+  actions Action[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("projects")
+}
+
+// ==========================================
+// Label Model
+// ==========================================
+
+model Label {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes   Note[]   @relation("NoteLabels")
+  actions Action[] @relation("ActionLabels")
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("labels")
+}
+
+// ==========================================
+// Note Model
+// ==========================================
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  projectId Int?     @map("project_id")
+  summary   String
+  important Boolean  @default(false)
+  source    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  labels  Label[]  @relation("NoteLabels")
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([important])
+  @@index([createdAt])
+  @@map("notes")
+}
+
+// ==========================================
+// Action Model
+// ==========================================
+
+model Action {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  projectId     Int?      @map("project_id")
+  title         String
+  urgency       Int
+  importance    Int
+  priorityScore Int       @map("priority_score")
+  status        String    @default("open")
+  source        String
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  completedAt   DateTime? @map("completed_at")
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  labels  Label[]  @relation("ActionLabels")
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([status])
+  @@index([priorityScore(sort: Desc)])
+  @@index([createdAt])
+  @@map("actions")
+}
