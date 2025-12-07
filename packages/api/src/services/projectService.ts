@@ -18,7 +18,7 @@ export async function getProjects(userId: number): Promise<Project[]> {
     },
   });
 
-  return projects.map((p) => ({
+  return projects.map((p: typeof projects[number]) => ({
     id: p.id,
     name: p.name,
     noteCount: p._count.notes,

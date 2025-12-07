@@ -18,7 +18,7 @@ export async function getLabels(userId: number): Promise<Label[]> {
     },
   });
 
-  return labels.map((l) => ({
+  return labels.map((l: typeof labels[number]) => ({
     id: l.id,
     name: l.name,
     noteCount: l._count.notes,
