@@ -48,16 +48,23 @@ export async function sessionMiddleware(
 /**
  * API Key authentication middleware for MCP server
  * Reads X-API-Key header and validates against database
+ * Also accepts session-based auth (for web UI)
  */
 export async function apiKeyAuth(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // If user is already authenticated via session, allow through
+  if (req.user) {
+    next();
+    return;
+  }
+
   const apiKey = req.headers['x-api-key'] as string | undefined;
 
   if (!apiKey) {
-    const error = unauthorizedError('API key is required. Provide it via X-API-Key header.');
+    const error = unauthorizedError('Authentication required. Provide API key via X-API-Key header or login via web.');
     res.status(error.statusCode).json({
       success: false,
       error: {
