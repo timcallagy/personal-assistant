@@ -7,21 +7,25 @@ const prisma = new PrismaClient();
 async function main(): Promise<void> {
   console.log('Seeding database...');
 
+  // Get credentials from environment or use defaults
+  const username = process.env['PA_SEED_USERNAME'] || 'testuser';
+  const password = process.env['PA_SEED_PASSWORD'] || 'testpassword';
+
   // Generate API key
   const apiKey = crypto.randomBytes(16).toString('hex');
 
   // Hash password
-  const passwordHash = await bcrypt.hash('testpassword', 12);
+  const passwordHash = await bcrypt.hash(password, 12);
 
   // Create test user
   const user = await prisma.user.upsert({
-    where: { username: 'testuser' },
+    where: { username },
     update: {
       passwordHash,
       apiKey,
     },
     create: {
-      username: 'testuser',
+      username,
       passwordHash,
       apiKey,
     },
@@ -29,10 +33,10 @@ async function main(): Promise<void> {
 
   console.log('');
   console.log('='.repeat(60));
-  console.log('Test user created/updated:');
+  console.log('User created/updated:');
   console.log('='.repeat(60));
   console.log(`  Username: ${user.username}`);
-  console.log(`  Password: testpassword`);
+  console.log(`  Password: ${password}`);
   console.log(`  API Key:  ${apiKey}`);
   console.log('='.repeat(60));
   console.log('');
