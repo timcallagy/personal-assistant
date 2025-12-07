@@ -4,7 +4,7 @@ services:
     name: pa-api
     runtime: node
     plan: starter
-    buildCommand: pnpm install && pnpm --filter @pa/api build && pnpm --filter @pa/api db:generate
+    buildCommand: pnpm install && pnpm --filter @pa/shared build && pnpm --filter @pa/api build && pnpm --filter @pa/api db:generate
     startCommand: pnpm --filter @pa/api start
     envVars:
       - key: NODE_ENV
@@ -24,7 +24,7 @@ services:
     name: pa-web
     runtime: node
     plan: starter
-    buildCommand: pnpm install && pnpm --filter @pa/web build
+    buildCommand: pnpm install && pnpm --filter @pa/shared build && pnpm --filter @pa/web build
     startCommand: pnpm --filter @pa/web start
     envVars:
       - key: NODE_ENV
