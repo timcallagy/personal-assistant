@@ -35,5 +35,5 @@ services:
 databases:
   - name: pa-db
     databaseName: pa
-    plan: starter
-    postgresMajorVersion: 15
+    plan: free
+    postgresMajorVersion: 16
