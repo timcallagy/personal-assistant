@@ -29,7 +29,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   let pagination = { page: 1, limit: 12, total: 0, totalPages: 0, hasMore: false };
   let categories: import('@/lib/blog-api').BlogCategory[] = [];
   let tags: import('@/lib/blog-api').TagWithCount[] = [];
-  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null; publishedAt: string | null }[] = [];
   let config: import('@/lib/blog-api').BlogConfig | null = null;
 
   try {

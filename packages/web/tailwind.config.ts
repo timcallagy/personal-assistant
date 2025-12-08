@@ -45,7 +45,7 @@ const config: Config = {
         'blog-border': '#eeeeee',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Open Sans', 'sans-serif'],
         serif: ['Droid Serif', 'Georgia', 'serif'],
       },
     },

@@ -5,8 +5,18 @@ import type { BlogCategory, TagWithCount, BlogConfig } from '@/lib/blog-api';
 interface SidebarProps {
   categories: BlogCategory[];
   tags: TagWithCount[];
-  popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[];
+  popularPosts: { id: number; title: string; slug: string; featuredImage: string | null; publishedAt: string | null }[];
   config: BlogConfig | null;
+}
+
+function formatDate(dateString: string | null): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 }
 
 export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps) {
@@ -74,15 +84,27 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
       {popularPosts.length > 0 && (
         <div className="widget">
           <h3 className="widget-title">Popular Posts</h3>
-          <ul className="space-y-3">
+          <ul className="tptn-posts">
             {popularPosts.map((post) => (
-              <li key={post.id}>
-                <Link
-                  href={`/post/${post.slug}`}
-                  className="text-blog-secondary hover:text-blog-accent transition-colors text-sm"
-                >
-                  {post.title}
-                </Link>
+              <li key={post.id} className="tptn-post-item">
+                {post.featuredImage && (
+                  <Link href={`/post/${post.slug}`} className="tptn-thumb-link">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.featuredImage}
+                      alt=""
+                      className="tptn-thumb"
+                    />
+                  </Link>
+                )}
+                <span className="tptn-after-thumb">
+                  <Link href={`/post/${post.slug}`} className="tptn-title-link">
+                    <span className="tptn-title">{post.title}</span>
+                  </Link>
+                  {post.publishedAt && (
+                    <span className="tptn-date">{formatDate(post.publishedAt)}</span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

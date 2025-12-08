@@ -38,7 +38,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   let posts: import('@/lib/blog-api').BlogPostSummary[] = [];
   let pagination = { page: 1, limit: 12, total: 0, totalPages: 0, hasMore: false };
   let tags: import('@/lib/blog-api').TagWithCount[] = [];
-  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null; publishedAt: string | null }[] = [];
   let config: import('@/lib/blog-api').BlogConfig | null = null;
 
   try {

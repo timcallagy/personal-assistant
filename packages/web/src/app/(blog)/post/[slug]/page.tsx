@@ -41,7 +41,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   let categories: import('@/lib/blog-api').BlogCategory[] = [];
   let tags: import('@/lib/blog-api').TagWithCount[] = [];
-  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null; publishedAt: string | null }[] = [];
   let config: import('@/lib/blog-api').BlogConfig | null = null;
 
   try {

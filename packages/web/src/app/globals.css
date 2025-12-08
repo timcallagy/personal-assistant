@@ -154,4 +154,142 @@
   .blog-prose img {
     @apply my-6 max-w-full h-auto;
   }
+
+  /* Featured Carousel */
+  .featured-carousel {
+    @apply w-full;
+  }
+
+  .carousel-slide {
+    @apply block;
+  }
+
+  .post-thumbnail-carousel {
+    position: relative;
+    width: 100%;
+    background-position: center center;
+    background-size: cover;
+    background-color: #5F5849;
+    padding-top: 56.25%; /* 16:9 aspect ratio */
+  }
+
+  .post-thumbnail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(95, 88, 73, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+  }
+
+  .carousel-slide:hover .post-thumbnail-overlay {
+    background: rgba(95, 88, 73, 0.65);
+  }
+
+  .entry-header-carousel {
+    text-align: center;
+    padding: 1rem;
+    max-width: 400px;
+  }
+
+  .entry-meta-carousel {
+    margin-bottom: 0.5rem;
+  }
+
+  .cat-link-carousel {
+    @apply text-xs uppercase tracking-wider font-semibold;
+    color: #FDFF91;
+  }
+
+  .entry-title-carousel {
+    @apply font-serif text-lg md:text-xl lg:text-2xl font-bold uppercase leading-tight;
+    color: #fff;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    z-index: 10;
+  }
+
+  .carousel-nav:hover {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .carousel-nav-prev {
+    left: 0;
+  }
+
+  .carousel-nav-next {
+    right: 0;
+  }
+
+  /* Popular Posts (tptn style) */
+  .tptn-posts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tptn-post-item {
+    display: block;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .tptn-post-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .tptn-thumb-link {
+    float: left;
+    margin-right: 1rem;
+  }
+
+  .tptn-thumb {
+    width: 76px;
+    height: 76px;
+    object-fit: cover;
+  }
+
+  .tptn-after-thumb {
+    display: block;
+    overflow: hidden;
+  }
+
+  .tptn-title-link {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .tptn-title {
+    @apply text-sm font-medium text-blog-primary hover:text-blog-accent transition-colors;
+    display: block;
+    line-height: 1.4;
+  }
+
+  .tptn-date {
+    @apply text-xs text-blog-muted;
+    display: block;
+  }
 }
