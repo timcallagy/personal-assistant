@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700;1,800&family=Droid+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans text-primary bg-background;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* Masonry layout */
+  .masonry {
+    column-count: 1;
+    column-gap: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .masonry {
+      column-count: 2;
+    }
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 2rem;
+  }
+
+  /* Post card styling */
+  .post-card {
+    @apply bg-white border border-border overflow-hidden transition-shadow duration-300;
+  }
+
+  .post-card:hover {
+    @apply shadow-lg;
+  }
+
+  /* Entry meta styling */
+  .entry-meta {
+    @apply text-sm text-muted;
+  }
+
+  .entry-meta span::after {
+    content: '•';
+    @apply mx-2;
+  }
+
+  .entry-meta span:last-child::after {
+    content: '';
+  }
+
+  /* Category link */
+  .cat-link {
+    @apply text-accent uppercase tracking-wider text-xs font-semibold hover:text-primary transition-colors;
+  }
+
+  /* Read more link */
+  .read-more {
+    @apply text-accent hover:text-primary transition-colors inline-flex items-center gap-1;
+  }
+
+  .read-more::after {
+    content: '→';
+  }
+
+  /* Sidebar widget */
+  .widget {
+    @apply mb-8 pb-8 border-b border-border last:border-0;
+  }
+
+  .widget-title {
+    @apply font-serif text-lg mb-4 pb-2 border-b border-border;
+  }
+
+  /* Newsletter form */
+  .newsletter-input {
+    @apply w-full px-4 py-3 border border-border focus:border-accent focus:outline-none transition-colors;
+  }
+
+  .newsletter-btn {
+    @apply w-full px-4 py-3 bg-primary text-white font-semibold hover:bg-accent transition-colors;
+  }
+
+  /* Prose styling for markdown content */
+  .prose {
+    @apply text-primary leading-relaxed;
+  }
+
+  .prose h1 {
+    @apply font-serif text-3xl md:text-4xl font-bold mb-6 mt-8;
+  }
+
+  .prose h2 {
+    @apply font-serif text-2xl md:text-3xl font-bold mb-4 mt-8;
+  }
+
+  .prose h3 {
+    @apply font-serif text-xl md:text-2xl font-bold mb-3 mt-6;
+  }
+
+  .prose p {
+    @apply mb-4;
+  }
+
+  .prose a {
+    @apply text-accent hover:text-primary underline transition-colors;
+  }
+
+  .prose ul, .prose ol {
+    @apply mb-4 pl-6;
+  }
+
+  .prose li {
+    @apply mb-2;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-accent pl-4 italic my-6 text-secondary;
+  }
+
+  .prose pre {
+    @apply bg-surface p-4 overflow-x-auto my-6 text-sm;
+  }
+
+  .prose code {
+    @apply bg-surface px-1 py-0.5 text-sm;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .prose img {
+    @apply my-6 max-w-full h-auto;
+  }
+}
