@@ -225,3 +225,231 @@ export function getPriorityLevel(score: number): PriorityLevel {
 export function calculatePriorityScore(urgency: number, importance: number): number {
   return urgency * importance;
 }
+
+// ============================================
+// Blog Types
+// ============================================
+
+export const POST_STATUS = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  SCHEDULED: 'SCHEDULED',
+} as const;
+
+export type PostStatus = (typeof POST_STATUS)[keyof typeof POST_STATUS];
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  featuredImage: string | null;
+  metaDescription: string | null;
+  category: string;
+  tags: string[];
+  status: PostStatus;
+  publishAt: Date | null;
+  publishedAt: Date | null;
+  viewCount: number;
+  authorId: number;
+  author: {
+    id: number;
+    username: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface BlogPostSummary {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  featuredImage: string | null;
+  category: string;
+  categoryName: string;
+  tags: string[];
+  publishedAt: Date | null;
+  readingTime: number;
+  author: {
+    name: string;
+  };
+}
+
+export interface BlogCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  sortOrder: number;
+  postCount?: number;
+}
+
+export interface NewsletterSubscriber {
+  id: number;
+  email: string;
+  subscribedAt: Date;
+  source: string;
+  unsubscribedAt: Date | null;
+}
+
+export interface BlogConfig {
+  id: number;
+  showPromoBanner: boolean;
+  promoBannerImage: string | null;
+  promoBannerLink: string | null;
+  promoBannerAlt: string | null;
+  postsPerPage: number;
+  featuredPostsCount: number;
+  siteTitle: string;
+  siteDescription: string | null;
+  socialLinkedIn: string | null;
+  socialGitHub: string | null;
+  updatedAt: Date;
+}
+
+// ============================================
+// Blog API Request Types
+// ============================================
+
+export interface CreateBlogPostRequest {
+  title: string;
+  content: string;
+  category: string;
+  excerpt?: string;
+  featuredImage?: string;
+  metaDescription?: string;
+  tags?: string[];
+  status?: PostStatus;
+  publishAt?: string;
+}
+
+export interface UpdateBlogPostRequest {
+  title?: string;
+  slug?: string;
+  content?: string;
+  category?: string;
+  excerpt?: string;
+  featuredImage?: string;
+  metaDescription?: string;
+  tags?: string[];
+  status?: PostStatus;
+  publishAt?: string;
+}
+
+export interface NewsletterSubscribeRequest {
+  email: string;
+  consent: boolean;
+  source?: string;
+}
+
+export interface UpdateBlogConfigRequest {
+  showPromoBanner?: boolean;
+  promoBannerImage?: string;
+  promoBannerLink?: string;
+  promoBannerAlt?: string;
+  postsPerPage?: number;
+  featuredPostsCount?: number;
+  siteTitle?: string;
+  siteDescription?: string;
+  socialLinkedIn?: string;
+  socialGitHub?: string;
+}
+
+// ============================================
+// Blog API Response Types
+// ============================================
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export interface BlogPostsResponse {
+  posts: BlogPostSummary[];
+  pagination: Pagination;
+}
+
+export interface BlogCategoriesResponse {
+  categories: BlogCategory[];
+}
+
+export interface BlogTagsResponse {
+  tags: { name: string; count: number }[];
+}
+
+export interface NewsletterSubscribeResponse {
+  message: string;
+  email: string;
+}
+
+export interface SubscribersResponse {
+  subscribers: NewsletterSubscriber[];
+  pagination: Pagination;
+  stats: {
+    total: number;
+    active: number;
+    unsubscribed: number;
+  };
+}
+
+// ============================================
+// Blog Utility Functions
+// ============================================
+
+/**
+ * Calculate reading time based on word count
+ * @param content - The text content
+ * @returns Reading time in minutes (rounded up)
+ */
+export function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200;
+  const wordCount = content.trim().split(/\s+/).length;
+  return Math.ceil(wordCount / wordsPerMinute);
+}
+
+/**
+ * Generate URL-friendly slug from title
+ * @param title - The title to convert
+ * @returns URL-friendly slug
+ */
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Collapse multiple hyphens
+    .substring(0, 100); // Limit length
+}
+
+/**
+ * Generate excerpt from content if not provided
+ * @param content - The full content
+ * @param maxLength - Maximum excerpt length (default 200)
+ * @returns Truncated excerpt
+ */
+export function generateExcerpt(content: string, maxLength: number = 200): string {
+  // Remove markdown formatting
+  const plainText = content
+    .replace(/#{1,6}\s/g, '') // Remove headers
+    .replace(/\*\*|__/g, '') // Remove bold
+    .replace(/\*|_/g, '') // Remove italic
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
+    .replace(/`{1,3}[^`]*`{1,3}/g, '') // Remove code blocks
+    .replace(/\n+/g, ' ') // Replace newlines with spaces
+    .trim();
+
+  if (plainText.length <= maxLength) {
+    return plainText;
+  }
+
+  // Truncate at word boundary
+  const truncated = plainText.substring(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
+}

@@ -6,6 +6,7 @@ import { labelsRouter } from './labels.js';
 import { notesRouter } from './notes.js';
 import { actionsRouter } from './actions.js';
 import { searchRouter } from './search.js';
+import { blogRouter } from './blog/index.js';
 
 const router = Router();
 
@@ -29,5 +30,8 @@ router.use('/actions', actionsRouter);
 
 // Search routes
 router.use('/search', searchRouter);
+
+// Blog routes
+router.use('/blog', blogRouter);
 
 export { router };

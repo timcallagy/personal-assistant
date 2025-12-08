@@ -23,10 +23,11 @@ model User {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  projects Project[]
-  labels   Label[]
-  notes    Note[]
-  actions  Action[]
+  projects  Project[]
+  labels    Label[]
+  notes     Note[]
+  actions   Action[]
+  blogPosts BlogPost[]
 
   @@map("users")
 }
@@ -126,4 +127,85 @@ model Action {
   @@index([priorityScore(sort: Desc)])
   @@index([createdAt])
   @@map("actions")
+}
+
+// ==========================================
+// Blog Models
+// ==========================================
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+model BlogPost {
+  id              Int        @id @default(autoincrement())
+  title           String
+  slug            String     @unique
+  content         String     @db.Text
+  excerpt         String?    @db.VarChar(300)
+  featuredImage   String?    @map("featured_image")
+  metaDescription String?    @map("meta_description") @db.VarChar(160)
+  category        String
+  tags            String[]   @default([])
+  status          PostStatus @default(DRAFT)
+  publishAt       DateTime?  @map("publish_at")
+  publishedAt     DateTime?  @map("published_at")
+  viewCount       Int        @default(0) @map("view_count")
+  authorId        Int        @map("author_id")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([status, publishedAt])
+  @@index([category])
+  @@index([authorId])
+  @@map("blog_posts")
+}
+
+model BlogCategory {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  @@index([sortOrder])
+  @@map("blog_categories")
+}
+
+model NewsletterSubscriber {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  subscribedAt   DateTime  @default(now()) @map("subscribed_at")
+  consentText    String    @map("consent_text")
+  ipAddress      String?   @map("ip_address")
+  source         String    @default("blog-sidebar")
+  unsubscribedAt DateTime? @map("unsubscribed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([email])
+  @@index([unsubscribedAt])
+  @@map("newsletter_subscribers")
+}
+
+model BlogConfig {
+  id                 Int      @id @default(1)
+  showPromoBanner    Boolean  @default(true) @map("show_promo_banner")
+  promoBannerImage   String?  @map("promo_banner_image")
+  promoBannerLink    String?  @map("promo_banner_link")
+  promoBannerAlt     String?  @map("promo_banner_alt")
+  postsPerPage       Int      @default(12) @map("posts_per_page")
+  featuredPostsCount Int      @default(5) @map("featured_posts_count")
+  siteTitle          String   @default("Tim Callagy") @map("site_title")
+  siteDescription    String?  @map("site_description")
+  socialLinkedIn     String?  @map("social_linkedin")
+  socialGitHub       String?  @map("social_github")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("blog_config")
 }
