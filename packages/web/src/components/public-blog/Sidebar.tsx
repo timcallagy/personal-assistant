@@ -25,8 +25,14 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
       {/* About Widget */}
       <div className="widget">
         <h3 className="widget-title">About</h3>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://pa-api-6uyh.onrender.com/api/v1/blog/images/about-photo.jpg"
+          alt="Tim Callagy"
+          className="w-full mb-4 rounded"
+        />
         <p className="text-blog-secondary text-sm leading-relaxed">
-          {config?.siteDescription || 'Exploring the intersection of AI and practical business applications. Sharing insights on leveraging artificial intelligence for learning, coding, marketing, and innovation.'}
+          I'm Tim, I write about practical applications of AI.
         </p>
       </div>
 
