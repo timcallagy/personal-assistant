@@ -9,12 +9,12 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const config = await blogApi.getConfig();
     return {
-      title: config.siteTitle,
+      title: 'Home',
       description: config.siteDescription || 'AI insights for professionals',
     };
   } catch {
     return {
-      title: 'Tim Callagy',
+      title: 'Home',
       description: 'AI insights for professionals',
     };
   }
