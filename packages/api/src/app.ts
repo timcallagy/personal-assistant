@@ -9,13 +9,26 @@ import { errorHandler, notFoundHandler, sessionMiddleware } from './middleware/i
 // Create Express application
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - configure helmet to allow cross-origin images
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
-// CORS configuration
+// CORS configuration - allow multiple origins
+const allowedOrigins = config.corsOrigin.split(',').map((o) => o.trim());
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
