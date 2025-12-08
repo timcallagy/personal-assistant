@@ -81,6 +81,26 @@ export const tools = {
     },
   },
 
+  get_note: {
+    description: 'Get a single note by ID with full content. Use when user wants to see the complete text of a specific note.',
+    schema: z.object({
+      id: z.coerce.number().describe('Note ID'),
+    }),
+    handler: async (args: { id: number }) => {
+      const note = await apiClient.getNote(args.id);
+
+      const labels = note.labels.length > 0 ? `Labels: ${note.labels.join(', ')}\n` : '';
+      const important = note.important ? 'Important: Yes\n' : '';
+      const created = new Date(note.createdAt).toLocaleDateString();
+
+      return `**Note #${note.id}**
+Project: ${note.project}
+${labels}${important}Created: ${created}
+
+${note.summary}`;
+    },
+  },
+
   get_actions: {
     description: 'Retrieve action items/tasks. Use when user wants to see their todo list, open tasks, or check what needs to be done.',
     schema: z.object({
