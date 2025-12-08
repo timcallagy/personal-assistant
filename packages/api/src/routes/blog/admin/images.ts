@@ -7,6 +7,11 @@ import { config } from '../../../config.js';
 import { asyncHandler } from '../../../middleware/index.js';
 import { validationError } from '../../../lib/errors.js';
 
+// Helper to build full public URL for images
+function getImageUrl(filename: string): string {
+  return `${config.apiPublicUrl}/api/v1/blog/images/${filename}`;
+}
+
 const router = Router();
 
 // Ensure upload directory exists
@@ -62,8 +67,8 @@ router.post(
       throw validationError('No image file provided');
     }
 
-    // Build the public URL for the image
-    const imageUrl = `/api/v1/blog/images/${req.file.filename}`;
+    // Build the full public URL for the image
+    const imageUrl = getImageUrl(req.file.filename);
 
     res.status(201).json({
       success: true,
@@ -96,7 +101,7 @@ router.get(
         const stats = fs.statSync(filepath);
         return {
           filename,
-          url: `/api/v1/blog/images/${filename}`,
+          url: getImageUrl(filename),
           size: stats.size,
           uploadedAt: stats.mtime,
         };

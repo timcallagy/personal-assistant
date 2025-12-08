@@ -57,13 +57,8 @@ export function ImageUpload({ value, onChange, label = 'Featured Image' }: Image
     fileInputRef.current?.click();
   };
 
-  // Determine if value is an internal URL (starts with /api/v1/blog/images/)
-  const isInternalImage = value.startsWith('/api/v1/blog/images/');
-
-  // Build full URL for preview
-  const previewUrl = isInternalImage
-    ? `${process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3001/api/v1'}${value.replace('/api/v1', '')}`
-    : value;
+  // Use the URL directly - it should be a full URL from the API
+  const previewUrl = value;
 
   return (
     <div className="space-y-2">

@@ -23,6 +23,8 @@ services:
         sync: false
       - key: UPLOAD_DIR
         value: /var/data/uploads
+      - key: API_PUBLIC_URL
+        sync: false
     healthCheckPath: /api/v1/health
 
   # Web UI

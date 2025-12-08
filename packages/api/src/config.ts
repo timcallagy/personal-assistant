@@ -11,6 +11,7 @@ export const config = {
   sessionSecret: process.env['SESSION_SECRET'] || 'default-secret-change-me',
   corsOrigin: process.env['CORS_ORIGIN'] || 'http://localhost:3000',
   uploadDir: process.env['UPLOAD_DIR'] || path.resolve(__dirname, '../uploads'),
+  apiPublicUrl: process.env['API_PUBLIC_URL'] || 'http://localhost:3001',
 
   get isDevelopment(): boolean {
     return this.nodeEnv === 'development';
