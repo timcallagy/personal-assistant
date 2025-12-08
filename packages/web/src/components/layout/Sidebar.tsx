@@ -7,10 +7,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/notes', label: 'Notes', icon: '📝' },
-  { href: '/actions', label: 'Actions', icon: '✅' },
-  { href: '/blog', label: 'Blog', icon: '✍️' },
+  { href: '/pa/dashboard', label: 'Dashboard', icon: '📊' },
+  { href: '/pa/notes', label: 'Notes', icon: '📝' },
+  { href: '/pa/actions', label: 'Actions', icon: '✅' },
+  { href: '/pa/blog', label: 'Blog', icon: '✍️' },
 ];
 
 export function Sidebar() {
@@ -45,7 +45,7 @@ export function Sidebar() {
       `}>
       {/* Logo */}
       <div className="p-4 border-b border-background-tertiary">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/pa/dashboard" className="flex items-center gap-2">
           <span className="text-2xl font-bold text-accent">PA</span>
           <span className="text-foreground-secondary text-sm">Personal Assistant</span>
         </Link>

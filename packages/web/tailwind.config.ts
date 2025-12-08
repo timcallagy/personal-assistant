@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Custom dark theme palette
+        // Custom dark theme palette (PA)
         background: {
           DEFAULT: '#0f172a', // slate-900
           secondary: '#1e293b', // slate-800
@@ -35,6 +35,18 @@ const config: Config = {
           medium: '#eab308', // yellow-500
           low: '#22c55e', // green-500
         },
+        // Blog theme colors (light theme)
+        'blog-primary': '#333333',
+        'blog-secondary': '#666666',
+        'blog-accent': '#c9a959', // Gold accent
+        'blog-muted': '#999999',
+        'blog-background': '#ffffff',
+        'blog-surface': '#f9f9f9',
+        'blog-border': '#eeeeee',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        serif: ['Droid Serif', 'Georgia', 'serif'],
       },
     },
   },

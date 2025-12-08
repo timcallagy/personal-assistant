@@ -15,7 +15,7 @@ export function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push('/pa/login');
     }
   }, [user, loading, router]);
 
