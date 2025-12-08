@@ -21,7 +21,7 @@ export default async function BlogLayout({
   return (
     <div className="min-h-screen flex flex-col bg-blog-background text-blog-primary font-sans">
       <Header
-        siteTitle={config?.siteTitle || 'Tim Callagy'}
+        siteTitle="Better Faster"
         categories={categories}
         socialLinkedIn={config?.socialLinkedIn || null}
         socialGitHub={config?.socialGitHub || null}

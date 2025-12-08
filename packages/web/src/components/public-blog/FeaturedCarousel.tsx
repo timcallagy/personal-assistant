@@ -58,7 +58,7 @@ export function FeaturedCarousel({ posts }: FeaturedCarouselProps) {
               className="post-thumbnail-carousel"
               style={{
                 backgroundImage: post.featuredImage
-                  ? `url(${post.featuredImage})`
+                  ? `url("${post.featuredImage}")`
                   : 'linear-gradient(135deg, #5F5849 0%, #3a3530 100%)',
               }}
             >

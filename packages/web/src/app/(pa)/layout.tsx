@@ -1,4 +1,12 @@
+import type { Metadata } from 'next';
 import { Providers } from '@/components/Providers';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'PA',
+    template: '%s | PA',
+  },
+};
 
 export default function PALayout({
   children,

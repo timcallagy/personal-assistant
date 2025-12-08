@@ -267,6 +267,7 @@
   }
 
   .tptn-thumb {
+    display: block;
     width: 76px;
     height: 76px;
     object-fit: cover;
