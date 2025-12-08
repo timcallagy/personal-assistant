@@ -27,18 +27,32 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const page = parseInt(params.page || '1', 10);
 
-  const [postsData, categoriesData, tagsData, popularData, config] = await Promise.all([
-    blogApi.getPosts({ page, limit: 12 }),
-    blogApi.getCategories(),
-    blogApi.getTags(),
-    blogApi.getPopularPosts(5),
-    blogApi.getConfig(),
-  ]);
+  // Fetch all data with error handling
+  let posts: import('@/lib/blog-api').BlogPostSummary[] = [];
+  let pagination = { page: 1, limit: 12, total: 0, totalPages: 0, hasMore: false };
+  let categories: import('@/lib/blog-api').BlogCategory[] = [];
+  let tags: import('@/lib/blog-api').TagWithCount[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let config: import('@/lib/blog-api').BlogConfig | null = null;
 
-  const { posts, pagination } = postsData;
-  const { categories } = categoriesData;
-  const { tags } = tagsData;
-  const { posts: popularPosts } = popularData;
+  try {
+    const [postsData, categoriesData, tagsData, popularData, configData] = await Promise.all([
+      blogApi.getPosts({ page, limit: 12 }),
+      blogApi.getCategories(),
+      blogApi.getTags(),
+      blogApi.getPopularPosts(5),
+      blogApi.getConfig(),
+    ]);
+
+    posts = postsData.posts;
+    pagination = postsData.pagination;
+    categories = categoriesData.categories;
+    tags = tagsData.tags;
+    popularPosts = popularData.posts;
+    config = configData;
+  } catch (e) {
+    console.error('Failed to fetch blog data:', e);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

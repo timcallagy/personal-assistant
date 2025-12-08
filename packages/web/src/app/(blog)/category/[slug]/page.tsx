@@ -12,17 +12,21 @@ interface CategoryPageProps {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { categories } = await blogApi.getCategories();
-  const category = categories.find((c) => c.slug === slug);
+  try {
+    const { categories } = await blogApi.getCategories();
+    const category = categories.find((c) => c.slug === slug);
 
-  if (!category) {
-    return { title: 'Category Not Found' };
+    if (!category) {
+      return { title: 'Category Not Found' };
+    }
+
+    return {
+      title: category.name,
+      description: category.description || `Browse posts in ${category.name}`,
+    };
+  } catch {
+    return { title: 'Category' };
   }
-
-  return {
-    title: category.name,
-    description: category.description || `Browse posts in ${category.name}`,
-  };
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
@@ -30,21 +34,42 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const sp = await searchParams;
   const page = parseInt(sp.page || '1', 10);
 
-  const { categories } = await blogApi.getCategories();
+  let categories: import('@/lib/blog-api').BlogCategory[] = [];
+  let posts: import('@/lib/blog-api').BlogPostSummary[] = [];
+  let pagination = { page: 1, limit: 12, total: 0, totalPages: 0, hasMore: false };
+  let tags: import('@/lib/blog-api').TagWithCount[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let config: import('@/lib/blog-api').BlogConfig | null = null;
+
+  try {
+    const categoriesData = await blogApi.getCategories();
+    categories = categoriesData.categories;
+  } catch (e) {
+    console.error('Failed to fetch categories:', e);
+  }
+
   const category = categories.find((c) => c.slug === slug);
 
   if (!category) {
     notFound();
   }
 
-  const [postsData, tagsData, popularData, config] = await Promise.all([
-    blogApi.getPosts({ page, limit: 12, category: slug }),
-    blogApi.getTags(),
-    blogApi.getPopularPosts(5),
-    blogApi.getConfig(),
-  ]);
+  try {
+    const [postsData, tagsData, popularData, configData] = await Promise.all([
+      blogApi.getPosts({ page, limit: 12, category: slug }),
+      blogApi.getTags(),
+      blogApi.getPopularPosts(5),
+      blogApi.getConfig(),
+    ]);
 
-  const { posts, pagination } = postsData;
+    posts = postsData.posts;
+    pagination = postsData.pagination;
+    tags = tagsData.tags;
+    popularPosts = popularData.posts;
+    config = configData;
+  } catch (e) {
+    console.error('Failed to fetch category page data:', e);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -85,8 +110,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         <div className="lg:w-80 flex-shrink-0">
           <Sidebar
             categories={categories}
-            tags={tagsData.tags}
-            popularPosts={popularData.posts}
+            tags={tags}
+            popularPosts={popularPosts}
             config={config}
           />
         </div>

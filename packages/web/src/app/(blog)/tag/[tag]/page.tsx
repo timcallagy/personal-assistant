@@ -25,15 +25,31 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   const page = parseInt(sp.page || '1', 10);
   const decodedTag = decodeURIComponent(tag);
 
-  const [postsData, categoriesData, tagsData, popularData, config] = await Promise.all([
-    blogApi.getPosts({ page, limit: 12, tag: decodedTag }),
-    blogApi.getCategories(),
-    blogApi.getTags(),
-    blogApi.getPopularPosts(5),
-    blogApi.getConfig(),
-  ]);
+  let posts: import('@/lib/blog-api').BlogPostSummary[] = [];
+  let pagination = { page: 1, limit: 12, total: 0, totalPages: 0, hasMore: false };
+  let categories: import('@/lib/blog-api').BlogCategory[] = [];
+  let tags: import('@/lib/blog-api').TagWithCount[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let config: import('@/lib/blog-api').BlogConfig | null = null;
 
-  const { posts, pagination } = postsData;
+  try {
+    const [postsData, categoriesData, tagsData, popularData, configData] = await Promise.all([
+      blogApi.getPosts({ page, limit: 12, tag: decodedTag }),
+      blogApi.getCategories(),
+      blogApi.getTags(),
+      blogApi.getPopularPosts(5),
+      blogApi.getConfig(),
+    ]);
+
+    posts = postsData.posts;
+    pagination = postsData.pagination;
+    categories = categoriesData.categories;
+    tags = tagsData.tags;
+    popularPosts = popularData.posts;
+    config = configData;
+  } catch (e) {
+    console.error('Failed to fetch tag page data:', e);
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -71,9 +87,9 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
         {/* Sidebar */}
         <div className="lg:w-80 flex-shrink-0">
           <Sidebar
-            categories={categoriesData.categories}
-            tags={tagsData.tags}
-            popularPosts={popularData.posts}
+            categories={categories}
+            tags={tags}
+            popularPosts={popularPosts}
             config={config}
           />
         </div>

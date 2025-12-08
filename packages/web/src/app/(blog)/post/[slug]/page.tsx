@@ -39,12 +39,26 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  const [categoriesData, tagsData, popularData, config] = await Promise.all([
-    blogApi.getCategories(),
-    blogApi.getTags(),
-    blogApi.getPopularPosts(5),
-    blogApi.getConfig(),
-  ]);
+  let categories: import('@/lib/blog-api').BlogCategory[] = [];
+  let tags: import('@/lib/blog-api').TagWithCount[] = [];
+  let popularPosts: { id: number; title: string; slug: string; featuredImage: string | null }[] = [];
+  let config: import('@/lib/blog-api').BlogConfig | null = null;
+
+  try {
+    const [categoriesData, tagsData, popularData, configData] = await Promise.all([
+      blogApi.getCategories(),
+      blogApi.getTags(),
+      blogApi.getPopularPosts(5),
+      blogApi.getConfig(),
+    ]);
+
+    categories = categoriesData.categories;
+    tags = tagsData.tags;
+    popularPosts = popularData.posts;
+    config = configData;
+  } catch (e) {
+    console.error('Failed to fetch sidebar data:', e);
+  }
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '';
@@ -199,9 +213,9 @@ export default async function PostPage({ params }: PostPageProps) {
         {/* Sidebar */}
         <div className="lg:w-80 flex-shrink-0">
           <Sidebar
-            categories={categoriesData.categories}
-            tags={tagsData.tags}
-            popularPosts={popularData.posts}
+            categories={categories}
+            tags={tags}
+            popularPosts={popularPosts}
             config={config}
           />
         </div>
