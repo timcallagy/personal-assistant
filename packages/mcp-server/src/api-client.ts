@@ -14,7 +14,24 @@ import type {
   CompleteActionsResponseData,
   ProjectsResponseData,
   LabelsResponseData,
+  BlogPost,
+  BlogCategory,
+  PostStatus,
 } from '@pa/shared';
+
+// Admin-specific blog post summary (includes status, publishAt)
+export interface AdminBlogPostSummary {
+  id: number;
+  title: string;
+  slug: string;
+  status: PostStatus;
+  category: string;
+  publishAt: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: { username: string };
+}
 
 class ApiError extends Error {
   constructor(
@@ -236,5 +253,88 @@ export const apiClient = {
   async healthCheck(): Promise<{ database: string }> {
     const data = await request<{ database: string }>('/health');
     return data;
+  },
+
+  // Blog Posts
+  async getBlogPosts(filters?: {
+    page?: number;
+    limit?: number;
+    status?: PostStatus | 'all';
+    search?: string;
+  }): Promise<{ posts: AdminBlogPostSummary[]; pagination: { total: number; page: number; totalPages: number } }> {
+    const params = new URLSearchParams();
+    if (filters?.page) params.set('page', String(filters.page));
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.search) params.set('search', filters.search);
+
+    const query = params.toString();
+    return request<{ posts: AdminBlogPostSummary[]; pagination: { total: number; page: number; totalPages: number } }>(
+      `/blog/admin/posts${query ? `?${query}` : ''}`
+    );
+  },
+
+  async getBlogPost(id: number): Promise<BlogPost> {
+    return request<BlogPost>(`/blog/admin/posts/${id}`);
+  },
+
+  async createBlogPost(data: {
+    title: string;
+    content: string;
+    category: string;
+    excerpt?: string;
+    featuredImage?: string;
+    metaDescription?: string;
+    tags?: string[];
+    status?: PostStatus;
+    publishAt?: string;
+  }): Promise<BlogPost> {
+    return request<BlogPost>('/blog/admin/posts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateBlogPost(
+    id: number,
+    data: {
+      title?: string;
+      slug?: string;
+      content?: string;
+      category?: string;
+      excerpt?: string;
+      featuredImage?: string;
+      metaDescription?: string;
+      tags?: string[];
+      status?: PostStatus;
+      publishAt?: string;
+    }
+  ): Promise<BlogPost> {
+    return request<BlogPost>(`/blog/admin/posts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await request(`/blog/admin/posts/${id}`, { method: 'DELETE' });
+  },
+
+  async publishBlogPost(id: number): Promise<BlogPost> {
+    return request<BlogPost>(`/blog/admin/posts/${id}/publish`, {
+      method: 'POST',
+    });
+  },
+
+  async unpublishBlogPost(id: number): Promise<BlogPost> {
+    return request<BlogPost>(`/blog/admin/posts/${id}/unpublish`, {
+      method: 'POST',
+    });
+  },
+
+  // Blog Categories
+  async getBlogCategories(): Promise<BlogCategory[]> {
+    const data = await request<{ categories: BlogCategory[] }>('/blog/categories');
+    return data.categories;
   },
 };

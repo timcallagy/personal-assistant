@@ -370,6 +370,209 @@ export const tools = {
       return parts.join('\n');
     },
   },
+
+  // ==========================================
+  // BLOG TOOLS
+  // ==========================================
+
+  get_blog_posts: {
+    description: 'List blog posts. Use when user wants to see their blog posts or manage blog content.',
+    schema: z.object({
+      status: z.enum(['DRAFT', 'PUBLISHED', 'SCHEDULED', 'all']).optional().default('all').describe('Filter by post status'),
+      limit: z.coerce.number().optional().default(20).describe('Maximum posts to return'),
+      search: z.string().optional().describe('Search in title/content'),
+    }),
+    handler: async (args: {
+      status?: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'all';
+      limit?: number;
+      search?: string;
+    }) => {
+      const { posts, pagination } = await apiClient.getBlogPosts({
+        status: args.status,
+        limit: args.limit,
+        search: args.search,
+      });
+
+      if (posts.length === 0) {
+        return 'No blog posts found matching the criteria.';
+      }
+
+      const header = `Found ${pagination.total} post${pagination.total !== 1 ? 's' : ''}${pagination.total > posts.length ? ` (showing ${posts.length})` : ''}:\n\n`;
+      const postsList = posts
+        .map((p) => {
+          const status = p.status === 'PUBLISHED' ? '✓' : p.status === 'SCHEDULED' ? '⏰' : '📝';
+          const date = p.publishedAt
+            ? new Date(p.publishedAt).toLocaleDateString()
+            : p.publishAt
+              ? `Scheduled: ${new Date(p.publishAt).toLocaleDateString()}`
+              : 'Draft';
+          return `[${p.id}] ${status} ${p.title}\n   Category: ${p.category} | ${date}`;
+        })
+        .join('\n\n');
+
+      return header + postsList;
+    },
+  },
+
+  get_blog_post: {
+    description: 'Get a single blog post by ID. Use when user wants to view or edit a specific post.',
+    schema: z.object({
+      id: z.coerce.number().describe('Blog post ID'),
+    }),
+    handler: async (args: { id: number }) => {
+      const post = await apiClient.getBlogPost(args.id);
+
+      const status = post.status === 'PUBLISHED' ? 'Published' : post.status === 'SCHEDULED' ? 'Scheduled' : 'Draft';
+      const tags = post.tags.length > 0 ? post.tags.join(', ') : 'none';
+
+      return `**${post.title}**
+ID: ${post.id}
+Slug: ${post.slug}
+Status: ${status}
+Category: ${post.category}
+Tags: ${tags}
+Views: ${post.viewCount}
+Created: ${new Date(post.createdAt).toLocaleDateString()}
+${post.publishedAt ? `Published: ${new Date(post.publishedAt).toLocaleDateString()}` : ''}
+
+**Excerpt:**
+${post.excerpt || '(no excerpt)'}
+
+**Content:**
+${post.content}`;
+    },
+  },
+
+  get_blog_categories: {
+    description: 'Get all blog categories. Use when user needs to see available categories for posts.',
+    schema: z.object({}),
+    handler: async () => {
+      const categories = await apiClient.getBlogCategories();
+
+      if (categories.length === 0) {
+        return 'No blog categories found.';
+      }
+
+      return 'Available blog categories:\n' + categories
+        .map((c) => `- ${c.name} (${c.slug})${c.description ? `: ${c.description}` : ''}`)
+        .join('\n');
+    },
+  },
+
+  create_blog_post: {
+    description: 'Create a new blog post. Use when user wants to write a new blog article.',
+    schema: z.object({
+      title: z.string().describe('Post title'),
+      content: z.string().describe('Post content in Markdown'),
+      category: z.string().describe('Category slug (e.g., ai-fundamentals, prompt-engineering)'),
+      excerpt: z.string().optional().describe('Brief summary (max 300 chars)'),
+      tags: z.array(z.string()).optional().describe('Tags for the post'),
+      status: z.enum(['DRAFT', 'PUBLISHED']).optional().default('DRAFT').describe('Post status'),
+      meta_description: z.string().optional().describe('SEO meta description (max 160 chars)'),
+      featured_image: z.string().optional().describe('Featured image URL'),
+    }),
+    handler: async (args: {
+      title: string;
+      content: string;
+      category: string;
+      excerpt?: string;
+      tags?: string[];
+      status?: 'DRAFT' | 'PUBLISHED';
+      meta_description?: string;
+      featured_image?: string;
+    }) => {
+      const post = await apiClient.createBlogPost({
+        title: args.title,
+        content: args.content,
+        category: args.category,
+        excerpt: args.excerpt,
+        tags: args.tags,
+        status: args.status,
+        metaDescription: args.meta_description,
+        featuredImage: args.featured_image,
+      });
+
+      const status = post.status === 'PUBLISHED' ? 'Published' : 'Draft';
+      return `Blog post created successfully!
+- ID: ${post.id}
+- Title: ${post.title}
+- Slug: ${post.slug}
+- Status: ${status}
+- Category: ${post.category}`;
+    },
+  },
+
+  update_blog_post: {
+    description: 'Update an existing blog post.',
+    schema: z.object({
+      id: z.coerce.number().describe('Blog post ID to update'),
+      title: z.string().optional().describe('New title'),
+      content: z.string().optional().describe('New content in Markdown'),
+      category: z.string().optional().describe('New category slug'),
+      excerpt: z.string().optional().describe('New excerpt'),
+      tags: z.array(z.string()).optional().describe('New tags (replaces existing)'),
+      meta_description: z.string().optional().describe('New SEO meta description'),
+      featured_image: z.string().optional().describe('New featured image URL'),
+    }),
+    handler: async (args: {
+      id: number;
+      title?: string;
+      content?: string;
+      category?: string;
+      excerpt?: string;
+      tags?: string[];
+      meta_description?: string;
+      featured_image?: string;
+    }) => {
+      const post = await apiClient.updateBlogPost(args.id, {
+        title: args.title,
+        content: args.content,
+        category: args.category,
+        excerpt: args.excerpt,
+        tags: args.tags,
+        metaDescription: args.meta_description,
+        featuredImage: args.featured_image,
+      });
+
+      return `Blog post ${post.id} updated successfully!
+- Title: ${post.title}
+- Slug: ${post.slug}
+- Category: ${post.category}`;
+    },
+  },
+
+  publish_blog_post: {
+    description: 'Publish a draft blog post immediately.',
+    schema: z.object({
+      id: z.coerce.number().describe('Blog post ID to publish'),
+    }),
+    handler: async (args: { id: number }) => {
+      const post = await apiClient.publishBlogPost(args.id);
+      return `Blog post "${post.title}" published successfully!\nSlug: ${post.slug}\nPublished at: ${new Date(post.publishedAt!).toLocaleString()}`;
+    },
+  },
+
+  unpublish_blog_post: {
+    description: 'Unpublish a published blog post (revert to draft).',
+    schema: z.object({
+      id: z.coerce.number().describe('Blog post ID to unpublish'),
+    }),
+    handler: async (args: { id: number }) => {
+      const post = await apiClient.unpublishBlogPost(args.id);
+      return `Blog post "${post.title}" unpublished and reverted to draft.`;
+    },
+  },
+
+  delete_blog_post: {
+    description: 'Permanently delete a blog post.',
+    schema: z.object({
+      id: z.coerce.number().describe('Blog post ID to delete'),
+    }),
+    handler: async (args: { id: number }) => {
+      await apiClient.deleteBlogPost(args.id);
+      return `Blog post ${args.id} deleted successfully.`;
+    },
+  },
 };
 
 export type ToolName = keyof typeof tools;
