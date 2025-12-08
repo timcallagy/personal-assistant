@@ -6,6 +6,14 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'pa-api-6uyh.onrender.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.onrender.com',
+      },
+      {
+        protocol: 'https',
         hostname: '**',
       },
     ],
