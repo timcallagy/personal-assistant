@@ -9,9 +9,17 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) {
+const sizeClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
+
+export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }: ModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -41,7 +49,7 @@ export function Modal({ isOpen, onClose, title, children, footer }: ModalProps) 
       />
 
       {/* Modal */}
-      <div className="relative bg-background-secondary border border-background-tertiary rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div className={`relative bg-background-secondary border border-background-tertiary rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-background-tertiary">
           <h2 className="text-lg font-semibold text-foreground">{title}</h2>

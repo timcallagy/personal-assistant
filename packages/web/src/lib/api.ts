@@ -326,4 +326,142 @@ export const search = {
   },
 };
 
+// Blog Posts
+export type PostStatus = 'DRAFT' | 'PUBLISHED' | 'SCHEDULED';
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  featuredImage: string | null;
+  metaDescription: string | null;
+  category: string;
+  tags: string[];
+  status: PostStatus;
+  publishAt: string | null;
+  publishedAt: string | null;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: number;
+    username: string;
+  };
+}
+
+export interface BlogPostSummary {
+  id: number;
+  title: string;
+  slug: string;
+  status: PostStatus;
+  category: string;
+  publishAt: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: { username: string };
+}
+
+export interface BlogCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  sortOrder: number;
+  postCount?: number;
+}
+
+export interface BlogPostsResponse {
+  posts: BlogPostSummary[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+export interface BlogCategoriesResponse {
+  categories: BlogCategory[];
+}
+
+export interface BlogPostsFilter {
+  page?: number;
+  limit?: number;
+  status?: PostStatus | 'all';
+  search?: string;
+}
+
+export const blogPosts = {
+  list: (filters?: BlogPostsFilter) => {
+    const params = new URLSearchParams();
+    if (filters?.page) params.set('page', String(filters.page));
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.search) params.set('search', filters.search);
+    const query = params.toString();
+    return request<BlogPostsResponse>(`/blog/admin/posts${query ? `?${query}` : ''}`);
+  },
+
+  get: (id: number) => request<BlogPost>(`/blog/admin/posts/${id}`),
+
+  create: (data: {
+    title: string;
+    content: string;
+    category: string;
+    excerpt?: string;
+    featuredImage?: string;
+    metaDescription?: string;
+    tags?: string[];
+    status?: PostStatus;
+    publishAt?: string;
+  }) =>
+    request<BlogPost>('/blog/admin/posts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (
+    id: number,
+    data: {
+      title?: string;
+      slug?: string;
+      content?: string;
+      category?: string;
+      excerpt?: string;
+      featuredImage?: string;
+      metaDescription?: string;
+      tags?: string[];
+      status?: PostStatus;
+      publishAt?: string;
+    }
+  ) =>
+    request<BlogPost>(`/blog/admin/posts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    request<{ message: string }>(`/blog/admin/posts/${id}`, {
+      method: 'DELETE',
+    }),
+
+  publish: (id: number) =>
+    request<BlogPost>(`/blog/admin/posts/${id}/publish`, {
+      method: 'POST',
+    }),
+
+  unpublish: (id: number) =>
+    request<BlogPost>(`/blog/admin/posts/${id}/unpublish`, {
+      method: 'POST',
+    }),
+};
+
+export const blogCategories = {
+  list: () => request<BlogCategoriesResponse>('/blog/categories'),
+};
+
 export { ApiError };
