@@ -464,4 +464,50 @@ export const blogCategories = {
   list: () => request<BlogCategoriesResponse>('/blog/categories'),
 };
 
+// Blog Images
+export interface BlogImage {
+  filename: string;
+  url: string;
+  size: number;
+  mimetype?: string;
+  uploadedAt?: string;
+}
+
+export interface BlogImagesResponse {
+  images: BlogImage[];
+}
+
+export const blogImages = {
+  list: () => request<BlogImagesResponse>('/blog/admin/images'),
+
+  upload: async (file: File): Promise<BlogImage> => {
+    const url = `${API_BASE_URL}/blog/admin/images`;
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+      // Don't set Content-Type header - browser will set it with boundary
+    });
+
+    const data = (await response.json()) as ApiResponse<BlogImage>;
+
+    if (!data.success || !response.ok) {
+      throw new ApiError(
+        data.error?.code || 'UPLOAD_ERROR',
+        data.error?.message || 'Failed to upload image'
+      );
+    }
+
+    return data.data as BlogImage;
+  },
+
+  delete: (filename: string) =>
+    request<{ message: string }>(`/blog/admin/images/${filename}`, {
+      method: 'DELETE',
+    }),
+};
+
 export { ApiError };

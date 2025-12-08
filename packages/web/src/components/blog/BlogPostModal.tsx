@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Modal, Button, Input, Select, MultiSelect, Textarea } from '@/components/ui';
 import { BlogPost, BlogCategory, PostStatus } from '@/lib/api';
+import { ImageUpload } from './ImageUpload';
 
 interface BlogPostModalProps {
   isOpen: boolean;
@@ -199,11 +200,10 @@ export function BlogPostModal({
           helperText={`${excerpt.length}/300 characters`}
         />
 
-        <Input
-          label="Featured Image URL"
+        <ImageUpload
           value={featuredImage}
-          onChange={(e) => setFeaturedImage(e.target.value)}
-          placeholder="https://..."
+          onChange={setFeaturedImage}
+          label="Featured Image"
         />
 
         <Input

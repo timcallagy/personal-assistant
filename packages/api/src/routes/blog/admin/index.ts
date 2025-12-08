@@ -3,6 +3,7 @@ import { apiKeyAuth, asyncHandler } from '../../../middleware/index.js';
 import { adminPostsRouter } from './posts.js';
 import { adminSubscribersRouter } from './subscribers.js';
 import { adminConfigRouter } from './config.js';
+import { adminImagesRouter } from './images.js';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.get(
 router.use('/posts', adminPostsRouter);
 router.use('/subscribers', adminSubscribersRouter);
 router.use('/config', adminConfigRouter);
+router.use('/images', adminImagesRouter);
 
 export { router as adminRouter };
