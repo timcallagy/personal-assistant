@@ -50,9 +50,12 @@ router.get(
     };
 
     res.json({
-      subscribers,
-      pagination,
-      stats,
+      success: true,
+      data: {
+        subscribers,
+        pagination,
+        stats,
+      },
     });
   })
 );

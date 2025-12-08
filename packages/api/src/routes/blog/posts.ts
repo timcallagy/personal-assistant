@@ -99,7 +99,7 @@ router.get(
       hasMore: page < totalPages,
     };
 
-    res.json({ posts: postSummaries, pagination });
+    res.json({ success: true, data: { posts: postSummaries, pagination } });
   })
 );
 
@@ -175,27 +175,30 @@ router.get(
     });
 
     res.json({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      content: post.content,
-      excerpt: post.excerpt || generateExcerpt(post.content),
-      featuredImage: post.featuredImage,
-      metaDescription: post.metaDescription,
-      category: post.category,
-      categoryName: category?.name || post.category,
-      tags: post.tags,
-      publishedAt: post.publishedAt,
-      readingTime: calculateReadingTime(post.content),
-      viewCount: post.viewCount,
-      author: {
-        id: post.author.id,
-        name: post.author.username,
-        username: post.author.username,
+      success: true,
+      data: {
+        id: post.id,
+        title: post.title,
+        slug: post.slug,
+        content: post.content,
+        excerpt: post.excerpt || generateExcerpt(post.content),
+        featuredImage: post.featuredImage,
+        metaDescription: post.metaDescription,
+        category: post.category,
+        categoryName: category?.name || post.category,
+        tags: post.tags,
+        publishedAt: post.publishedAt,
+        readingTime: calculateReadingTime(post.content),
+        viewCount: post.viewCount,
+        author: {
+          id: post.author.id,
+          name: post.author.username,
+          username: post.author.username,
+        },
+        relatedPosts,
+        previousPost,
+        nextPost,
       },
-      relatedPosts,
-      previousPost,
-      nextPost,
     });
   })
 );
@@ -266,7 +269,7 @@ router.get(
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
 
-    res.json({ tags });
+    res.json({ success: true, data: { tags } });
   })
 );
 
@@ -296,7 +299,7 @@ router.get(
       },
     });
 
-    res.json({ posts });
+    res.json({ success: true, data: { posts } });
   })
 );
 

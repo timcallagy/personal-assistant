@@ -20,23 +20,26 @@ router.get(
     if (!config) {
       // Return defaults
       res.json({
-        id: 1,
-        showPromoBanner: true,
-        promoBannerImage: null,
-        promoBannerLink: null,
-        promoBannerAlt: null,
-        postsPerPage: 12,
-        featuredPostsCount: 5,
-        siteTitle: 'Tim Callagy',
-        siteDescription: null,
-        socialLinkedIn: null,
-        socialGitHub: null,
-        updatedAt: null,
+        success: true,
+        data: {
+          id: 1,
+          showPromoBanner: true,
+          promoBannerImage: null,
+          promoBannerLink: null,
+          promoBannerAlt: null,
+          postsPerPage: 12,
+          featuredPostsCount: 5,
+          siteTitle: 'Tim Callagy',
+          siteDescription: null,
+          socialLinkedIn: null,
+          socialGitHub: null,
+          updatedAt: null,
+        },
       });
       return;
     }
 
-    res.json(config);
+    res.json({ success: true, data: config });
   })
 );
 
@@ -133,7 +136,7 @@ router.put(
       },
     });
 
-    res.json(config);
+    res.json({ success: true, data: config });
   })
 );
 

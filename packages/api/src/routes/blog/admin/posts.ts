@@ -67,19 +67,22 @@ router.get(
     };
 
     res.json({
-      posts: posts.map((p) => ({
-        id: p.id,
-        title: p.title,
-        slug: p.slug,
-        status: p.status,
-        category: p.category,
-        publishAt: p.publishAt,
-        publishedAt: p.publishedAt,
-        createdAt: p.createdAt,
-        updatedAt: p.updatedAt,
-        author: { username: p.author.username },
-      })),
-      pagination,
+      success: true,
+      data: {
+        posts: posts.map((p) => ({
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          status: p.status,
+          category: p.category,
+          publishAt: p.publishAt,
+          publishedAt: p.publishedAt,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          author: { username: p.author.username },
+        })),
+        pagination,
+      },
     });
   })
 );
@@ -113,7 +116,7 @@ router.get(
       throw notFoundError('Post not found');
     }
 
-    res.json(post);
+    res.json({ success: true, data: post });
   })
 );
 
@@ -220,7 +223,7 @@ router.post(
       },
     });
 
-    res.status(201).json(post);
+    res.status(201).json({ success: true, data: post });
   })
 );
 
@@ -358,7 +361,7 @@ router.put(
       },
     });
 
-    res.json(post);
+    res.json({ success: true, data: post });
   })
 );
 
@@ -432,7 +435,7 @@ router.post(
       },
     });
 
-    res.json(post);
+    res.json({ success: true, data: post });
   })
 );
 
@@ -474,7 +477,7 @@ router.post(
       },
     });
 
-    res.json(post);
+    res.json({ success: true, data: post });
   })
 );
 

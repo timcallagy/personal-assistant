@@ -39,7 +39,7 @@ router.get(
       })
     );
 
-    res.json({ categories: categoriesWithCounts });
+    res.json({ success: true, data: { categories: categoriesWithCounts } });
   })
 );
 

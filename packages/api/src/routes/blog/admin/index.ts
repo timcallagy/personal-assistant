@@ -14,9 +14,12 @@ router.get(
   '/health',
   asyncHandler(async (req: Request, res: Response) => {
     res.json({
-      status: 'ok',
-      service: 'blog-admin',
-      user: req.user?.username,
+      success: true,
+      data: {
+        status: 'ok',
+        service: 'blog-admin',
+        user: req.user?.username,
+      },
     });
   })
 );

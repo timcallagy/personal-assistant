@@ -18,28 +18,34 @@ router.get(
     // Return defaults if not found
     if (!config) {
       res.json({
-        siteTitle: 'Tim Callagy',
-        siteDescription: null,
-        socialLinkedIn: null,
-        socialGitHub: null,
-        showPromoBanner: true,
-        promoBannerImage: null,
-        promoBannerLink: null,
-        promoBannerAlt: null,
+        success: true,
+        data: {
+          siteTitle: 'Tim Callagy',
+          siteDescription: null,
+          socialLinkedIn: null,
+          socialGitHub: null,
+          showPromoBanner: true,
+          promoBannerImage: null,
+          promoBannerLink: null,
+          promoBannerAlt: null,
+        },
       });
       return;
     }
 
     // Return only public fields
     res.json({
-      siteTitle: config.siteTitle,
-      siteDescription: config.siteDescription,
-      socialLinkedIn: config.socialLinkedIn,
-      socialGitHub: config.socialGitHub,
-      showPromoBanner: config.showPromoBanner,
-      promoBannerImage: config.promoBannerImage,
-      promoBannerLink: config.promoBannerLink,
-      promoBannerAlt: config.promoBannerAlt,
+      success: true,
+      data: {
+        siteTitle: config.siteTitle,
+        siteDescription: config.siteDescription,
+        socialLinkedIn: config.socialLinkedIn,
+        socialGitHub: config.socialGitHub,
+        showPromoBanner: config.showPromoBanner,
+        promoBannerImage: config.promoBannerImage,
+        promoBannerLink: config.promoBannerLink,
+        promoBannerAlt: config.promoBannerAlt,
+      },
     });
   })
 );
