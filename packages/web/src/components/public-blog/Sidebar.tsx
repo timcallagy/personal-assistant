@@ -32,7 +32,7 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
           className="w-full mb-4 rounded"
         />
         <p className="text-blog-secondary text-sm leading-relaxed">
-          I'm Tim, I write about practical applications of AI.
+          I'm Tim, I write about practical applications of AI. Photo taken by my incredibly talented daughter.
         </p>
       </div>
 

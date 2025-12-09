@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { config } from './config.js';
 import type {
   Note,
@@ -18,6 +20,25 @@ import type {
   BlogCategory,
   PostStatus,
 } from '@pa/shared';
+
+// Image upload constants
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+};
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+// Image upload response interface
+export interface ImageUploadResponse {
+  filename: string;
+  url: string;
+  size: number;
+  mimetype: string;
+}
 
 // Admin-specific blog post summary (includes status, publishAt)
 export interface AdminBlogPostSummary {
@@ -41,6 +62,37 @@ class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+// Validate image file before upload
+function validateImageFile(filePath: string): { buffer: Buffer; mimetype: string; filename: string } {
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    throw new ApiError('FILE_NOT_FOUND', `File not found at ${filePath}. Please verify the file exists.`);
+  }
+
+  // Get file extension and validate type
+  const ext = path.extname(filePath).toLowerCase();
+  const mimetype = ALLOWED_IMAGE_TYPES[ext];
+  if (!mimetype) {
+    throw new ApiError(
+      'INVALID_FILE_TYPE',
+      `Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed. Received: ${ext}`
+    );
+  }
+
+  // Read file and check size
+  const buffer = fs.readFileSync(filePath);
+  if (buffer.length > MAX_IMAGE_SIZE) {
+    const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
+    throw new ApiError(
+      'FILE_TOO_LARGE',
+      `File size (${sizeMB}MB) exceeds the 5MB limit. Please use a smaller image.`
+    );
+  }
+
+  const filename = path.basename(filePath);
+  return { buffer, mimetype, filename };
 }
 
 async function request<T>(
@@ -336,5 +388,39 @@ export const apiClient = {
   async getBlogCategories(): Promise<BlogCategory[]> {
     const data = await request<{ categories: BlogCategory[] }>('/blog/categories');
     return data.categories;
+  },
+
+  // Image Upload
+  async uploadImage(filePath: string): Promise<ImageUploadResponse> {
+    // Validate the file and get its contents
+    const { buffer, mimetype, filename } = validateImageFile(filePath);
+
+    // Create form data with the file
+    // Node.js 18+ has built-in FormData and Blob support
+    const blob = new Blob([buffer], { type: mimetype });
+    const formData = new FormData();
+    formData.append('image', blob, filename);
+
+    // Make the request without Content-Type header (fetch sets it automatically for FormData)
+    const url = `${config.apiUrl}/blog/admin/images`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': config.apiKey,
+      },
+      body: formData,
+    });
+
+    const data = (await response.json()) as ApiResponse<ImageUploadResponse>;
+
+    if (!data.success || !response.ok) {
+      throw new ApiError(
+        data.error?.code || 'UPLOAD_FAILED',
+        data.error?.message || 'Failed to upload image to the server'
+      );
+    }
+
+    return data.data as ImageUploadResponse;
   },
 };

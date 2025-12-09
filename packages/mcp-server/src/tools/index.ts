@@ -1,6 +1,14 @@
 import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { apiClient } from '../api-client.js';
 import { getPriorityLevel } from '@pa/shared';
+
+// ES module path resolution
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const CONFIG_DIR = path.join(__dirname, '..', 'config');
 
 // Tool definitions with schemas
 export const tools = {
@@ -591,6 +599,52 @@ ${post.content}`;
     handler: async (args: { id: number }) => {
       await apiClient.deleteBlogPost(args.id);
       return `Blog post ${args.id} deleted successfully.`;
+    },
+  },
+
+  get_blog_instructions: {
+    description: 'Get the global blog post formatting instructions. Returns the content of the blog instructions configuration file.',
+    schema: z.object({}),
+    handler: async () => {
+      const instructionsPath = path.join(CONFIG_DIR, 'blog-instructions.md');
+
+      if (!fs.existsSync(instructionsPath)) {
+        throw new Error(
+          'Blog instructions file not found at config/blog-instructions.md. Please create this file with your formatting instructions.'
+        );
+      }
+
+      const content = fs.readFileSync(instructionsPath, 'utf-8');
+      return content;
+    },
+  },
+
+  upload_blog_image: {
+    description: 'Upload a local image file to the blog. Returns the public URL for use in blog posts as featured image or embedded content.',
+    schema: z.object({
+      file_path: z.string().describe('Absolute path to the local image file (JPEG, PNG, GIF, or WebP)'),
+    }),
+    handler: async (args: { file_path: string }) => {
+      // Validate that the path is absolute
+      if (!path.isAbsolute(args.file_path)) {
+        throw new Error(`Please provide an absolute file path. Received: ${args.file_path}`);
+      }
+
+      try {
+        const result = await apiClient.uploadImage(args.file_path);
+
+        return `Image uploaded successfully!
+- Filename: ${result.filename}
+- URL: ${result.url}
+- Size: ${result.size} bytes
+- Type: ${result.mimetype}`;
+      } catch (error) {
+        // Re-throw with cleaner message if it's our ApiError
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+        throw new Error('Failed to upload image. Please try again.');
+      }
     },
   },
 };

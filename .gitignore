@@ -40,3 +40,10 @@ packages/api/prisma/*.db-journal
 
 # Misc
 *.tsbuildinfo
+
+# Blog template (reference only, not part of project)
+blog-template/
+
+# Blog post images (local staging)
+images/blog_post_images/*
+!images/blog_post_images/.gitkeep
