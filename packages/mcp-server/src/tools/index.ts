@@ -48,7 +48,7 @@ export const tools = {
     description: 'Retrieve saved notes. Use when user wants to recall stored information, check their notes, or look up saved context.',
     schema: z.object({
       project: z.string().optional().describe('Filter by project name'),
-      labels: z.array(z.string()).optional().describe('Filter by labels'),
+      labels: z.string().optional().describe('Filter by labels (comma-separated for multiple)'),
       important: z.boolean().optional().describe('Filter by important flag'),
       from_date: z.string().optional().describe('Filter notes created after this date (ISO8601)'),
       to_date: z.string().optional().describe('Filter notes created before this date (ISO8601)'),
@@ -56,15 +56,18 @@ export const tools = {
     }),
     handler: async (args: {
       project?: string;
-      labels?: string[];
+      labels?: string;
       important?: boolean;
       from_date?: string;
       to_date?: string;
       limit?: number;
     }) => {
+      const labelsArray = args.labels
+        ? args.labels.split(',').map((l) => l.trim()).filter(Boolean)
+        : undefined;
       const { notes, total } = await apiClient.getNotes({
         project: args.project,
-        labels: args.labels,
+        labels: labelsArray,
         important: args.important,
         fromDate: args.from_date,
         toDate: args.to_date,
@@ -113,21 +116,24 @@ ${note.summary}`;
     description: 'Retrieve action items/tasks. Use when user wants to see their todo list, open tasks, or check what needs to be done.',
     schema: z.object({
       project: z.string().optional().describe('Filter by project name'),
-      labels: z.array(z.string()).optional().describe('Filter by labels'),
+      labels: z.string().optional().describe('Filter by labels (comma-separated for multiple)'),
       status: z.enum(['open', 'completed']).optional().default('open').describe('Filter by status'),
       top: z.coerce.number().optional().describe('Return only top N by priority'),
       limit: z.coerce.number().optional().default(20).describe('Maximum actions to return'),
     }),
     handler: async (args: {
       project?: string;
-      labels?: string[];
+      labels?: string;
       status?: 'open' | 'completed';
       top?: number;
       limit?: number;
     }) => {
+      const labelsArray = args.labels
+        ? args.labels.split(',').map((l) => l.trim()).filter(Boolean)
+        : undefined;
       const { actions, total } = await apiClient.getActions({
         project: args.project,
-        labels: args.labels,
+        labels: labelsArray,
         status: args.status,
         top: args.top,
         limit: args.limit,
@@ -244,19 +250,22 @@ ${note.summary}`;
     schema: z.object({
       summary: z.string().describe('The note content/summary'),
       project: z.string().describe('Project name this note belongs to'),
-      labels: z.array(z.string()).optional().describe('Optional labels for categorization'),
+      labels: z.string().optional().describe('Optional labels for categorization (comma-separated for multiple)'),
       important: z.boolean().optional().default(false).describe('Mark as important'),
     }),
     handler: async (args: {
       summary: string;
       project: string;
-      labels?: string[];
+      labels?: string;
       important?: boolean;
     }) => {
+      const labelsArray = args.labels
+        ? args.labels.split(',').map((l) => l.trim()).filter(Boolean)
+        : undefined;
       const note = await apiClient.createNote({
         summary: args.summary,
         project: args.project,
-        labels: args.labels,
+        labels: labelsArray,
         important: args.important,
       });
 
@@ -271,21 +280,24 @@ ${note.summary}`;
     schema: z.object({
       title: z.string().describe('Action title/description'),
       project: z.string().describe('Project name this action belongs to'),
-      labels: z.array(z.string()).optional().describe('Optional labels for categorization'),
+      labels: z.string().optional().describe('Optional labels for categorization (comma-separated for multiple)'),
       urgency: z.coerce.number().min(1).max(5).describe('Urgency rating (1=low, 5=high)'),
       importance: z.coerce.number().min(1).max(5).describe('Importance rating (1=low, 5=high)'),
     }),
     handler: async (args: {
       title: string;
       project: string;
-      labels?: string[];
+      labels?: string;
       urgency: number;
       importance: number;
     }) => {
+      const labelsArray = args.labels
+        ? args.labels.split(',').map((l) => l.trim()).filter(Boolean)
+        : undefined;
       const action = await apiClient.createAction({
         title: args.title,
         project: args.project,
-        labels: args.labels,
+        labels: labelsArray,
         urgency: args.urgency,
         importance: args.importance,
       });
@@ -302,20 +314,23 @@ ${note.summary}`;
       id: z.coerce.number().describe('Note ID to edit'),
       summary: z.string().optional().describe('New summary'),
       project: z.string().optional().describe('New project'),
-      labels: z.array(z.string()).optional().describe('New labels (replaces existing)'),
+      labels: z.string().optional().describe('New labels (replaces existing, comma-separated for multiple)'),
       important: z.boolean().optional().describe('New important flag'),
     }),
     handler: async (args: {
       id: number;
       summary?: string;
       project?: string;
-      labels?: string[];
+      labels?: string;
       important?: boolean;
     }) => {
+      const labelsArray = args.labels
+        ? args.labels.split(',').map((l) => l.trim()).filter(Boolean)
+        : undefined;
       const note = await apiClient.updateNote(args.id, {
         summary: args.summary,
         project: args.project,
-        labels: args.labels,
+        labels: labelsArray,
         important: args.important,
       });
 
@@ -329,7 +344,7 @@ ${note.summary}`;
       id: z.coerce.number().describe('Action ID to edit'),
       title: z.string().optional().describe('New title'),
       project: z.string().optional().describe('New project'),
-      labels: z.array(z.string()).optional().describe('New labels (replaces existing)'),
+      labels: z.string().optional().describe('New labels (replaces existing, comma-separated for multiple)'),
       urgency: z.coerce.number().min(1).max(5).optional().describe('New urgency (1-5)'),
       importance: z.coerce.number().min(1).max(5).optional().describe('New importance (1-5)'),
     }),
@@ -337,14 +352,17 @@ ${note.summary}`;
       id: number;
       title?: string;
       project?: string;
-      labels?: string[];
+      labels?: string;
       urgency?: number;
       importance?: number;
     }) => {
+      const labelsArray = args.labels
+        ? args.labels.split(',').map((l) => l.trim()).filter(Boolean)
+        : undefined;
       const action = await apiClient.updateAction(args.id, {
         title: args.title,
         project: args.project,
-        labels: args.labels,
+        labels: labelsArray,
         urgency: args.urgency,
         importance: args.importance,
       });
