@@ -27,12 +27,32 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
         <h3 className="widget-title">About</h3>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://pa-api-6uyh.onrender.com/api/v1/blog/images/1765235364819-c359c35a508e5e45.jpg"
+          src="https://pa-api-6uyh.onrender.com/api/v1/blog/images/1765375733449-4440edbf008afbda.jpg"
           alt="Tim Callagy"
           className="w-full mb-4 rounded"
         />
-        <p className="text-blog-secondary text-sm leading-relaxed">
-          I'm Tim, I write about practical applications of AI. Photo taken by my incredibly talented daughter.
+        <p className="text-blog-secondary text-sm leading-relaxed mb-2">
+          I'm Tim, I write about practical applications of AI.
+        </p>
+        <p className="text-blog-muted text-xs italic mb-3">
+          Photo taken by my very talented daughter.
+        </p>
+        <p className="text-blog-secondary text-sm">
+          <a
+            href="https://www.linkedin.com/in/timcallagy/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blog-accent transition-colors"
+          >
+            LinkedIn
+          </a>
+          {' · '}
+          <a
+            href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#99;&#97;&#108;&#108;&#97;&#103;&#121;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;"
+            className="hover:text-blog-accent transition-colors"
+          >
+            &#116;&#105;&#109;&#99;&#97;&#108;&#108;&#97;&#103;&#121;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;
+          </a>
         </p>
       </div>
 
@@ -78,7 +98,7 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
                 href={`/category/${cat.slug}`}
                 className="flex justify-between items-center text-blog-secondary hover:text-blog-accent transition-colors"
               >
-                <span>{cat.name}</span>
+                <span>{cat.name.replace(/^AI for /i, '')}</span>
                 <span className="text-blog-muted text-sm">({cat.postCount})</span>
               </Link>
             </li>

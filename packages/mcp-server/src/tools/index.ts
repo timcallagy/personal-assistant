@@ -8,7 +8,8 @@ import { getPriorityLevel } from '@pa/shared';
 // ES module path resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const CONFIG_DIR = path.join(__dirname, '..', 'config');
+// From dist/tools/ go up to dist/, then up to package root, then into config/
+const CONFIG_DIR = path.join(__dirname, '..', '..', 'config');
 
 // Tool definitions with schemas
 export const tools = {
