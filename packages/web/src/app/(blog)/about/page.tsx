@@ -55,31 +55,23 @@ export default async function AboutPage() {
           social media or leave comments on posts.
         </p>
 
-        {config?.socialLinkedIn && (
-          <p>
-            <a
-              href={config.socialLinkedIn}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2"
-            >
-              Connect on LinkedIn
-            </a>
-          </p>
-        )}
-
-        {config?.socialGitHub && (
-          <p>
-            <a
-              href={config.socialGitHub}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2"
-            >
-              View my projects on GitHub
-            </a>
-          </p>
-        )}
+        <p>
+          <a
+            href="https://www.linkedin.com/in/timcallagy/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blog-accent transition-colors"
+          >
+            LinkedIn
+          </a>
+          {' · '}
+          <a
+            href="mailto:timcallagy@gmail.com"
+            className="hover:text-blog-accent transition-colors"
+          >
+            timcallagy@gmail.com
+          </a>
+        </p>
       </div>
     </div>
   );

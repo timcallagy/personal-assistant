@@ -27,7 +27,7 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
         <h3 className="widget-title">About</h3>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://pa-api-6uyh.onrender.com/api/v1/blog/images/1765375733449-4440edbf008afbda.jpg"
+          src="https://pa-api-6uyh.onrender.com/api/v1/blog/images/1765586456719-de1a33a1f3f6e1ce.jpg"
           alt="Tim Callagy"
           className="w-full mb-4 rounded"
         />
