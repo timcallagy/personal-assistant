@@ -23,11 +23,13 @@ model User {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  projects  Project[]
-  labels    Label[]
-  notes     Note[]
-  actions   Action[]
-  blogPosts BlogPost[]
+  projects   Project[]
+  labels     Label[]
+  notes      Note[]
+  actions    Action[]
+  blogPosts  BlogPost[]
+  companies  Company[]
+  jobProfile JobProfile?
 
   @@map("users")
 }
@@ -208,4 +210,89 @@ model BlogConfig {
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   @@map("blog_config")
+}
+
+// ==========================================
+// Job Tracker Models
+// ==========================================
+
+model Company {
+  id            Int          @id @default(autoincrement())
+  userId        Int          @map("user_id")
+  name          String
+  careerPageUrl String       @map("career_page_url")
+  atsType       String?      @map("ats_type") // greenhouse, lever, workday, ashby, smartrecruiters, custom
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs      JobListing[]
+  crawlLogs CrawlLog[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([active])
+  @@map("companies")
+}
+
+model JobProfile {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique @map("user_id")
+  keywords   String[] @default([])
+  titles     String[] @default([])
+  locations  String[] @default([])
+  remoteOnly Boolean  @default(false) @map("remote_only")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("job_profiles")
+}
+
+model JobListing {
+  id          Int       @id @default(autoincrement())
+  companyId   Int       @map("company_id")
+  externalId  String    @map("external_id") // Job ID from the source
+  title       String
+  url         String
+  location    String?
+  remote      Boolean   @default(false)
+  department  String?
+  description String?   @db.Text
+  postedAt    DateTime? @map("posted_at")
+  firstSeenAt DateTime  @default(now()) @map("first_seen_at")
+  lastSeenAt  DateTime  @default(now()) @map("last_seen_at")
+  status      String    @default("new") // new, viewed, applied, dismissed
+  matchScore  Float?    @map("match_score")
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, externalId])
+  @@index([companyId])
+  @@index([status])
+  @@index([matchScore(sort: Desc)])
+  @@map("job_listings")
+}
+
+model CrawlLog {
+  id          Int       @id @default(autoincrement())
+  companyId   Int       @map("company_id")
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  status      String    @default("running") // running, success, failed
+  jobsFound   Int       @default(0) @map("jobs_found")
+  newJobs     Int       @default(0) @map("new_jobs")
+  error       String?
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([startedAt(sort: Desc)])
+  @@map("crawl_logs")
 }
