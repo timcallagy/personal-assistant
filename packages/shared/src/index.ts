@@ -560,6 +560,10 @@ export interface JobListingsFilter {
   minScore?: number;
   limit?: number;
   offset?: number;
+  /** Filter to jobs matching these location keywords (e.g., "Europe", "Dublin", "EMEA") */
+  locationInclude?: string[];
+  /** Exclude jobs matching these location keywords (e.g., "North America", "US", "Sydney") */
+  locationExclude?: string[];
 }
 
 // ============================================

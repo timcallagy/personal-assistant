@@ -24,12 +24,17 @@ export const jobListingsController = {
     const minScoreParam = req.query['minScore'] as string | undefined;
     const limitParam = req.query['limit'] as string | undefined;
     const offsetParam = req.query['offset'] as string | undefined;
+    const locationIncludeParam = req.query['locationInclude'] as string | undefined;
+    const locationExcludeParam = req.query['locationExclude'] as string | undefined;
 
     const companyId = companyIdParam ? parseInt(companyIdParam, 10) : undefined;
     const status = statusParam as JobStatus | undefined;
     const minScore = minScoreParam ? parseFloat(minScoreParam) : undefined;
     const limit = limitParam ? parseInt(limitParam, 10) : 50;
     const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+    // Parse comma-separated location filters
+    const locationInclude = locationIncludeParam ? locationIncludeParam.split(',').map((s) => s.trim()) : undefined;
+    const locationExclude = locationExcludeParam ? locationExcludeParam.split(',').map((s) => s.trim()) : undefined;
 
     // Validate status if provided
     if (status && !validStatuses.includes(status)) {
@@ -42,6 +47,8 @@ export const jobListingsController = {
       minScore,
       limit,
       offset,
+      locationInclude,
+      locationExclude,
     });
 
     res.json({

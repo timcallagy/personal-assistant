@@ -870,18 +870,24 @@ Last updated: ${new Date(profile.updatedAt).toLocaleDateString()}`;
       status: z.string().optional().describe('Filter by status: new, viewed, applied, dismissed'),
       min_score: z.string().optional().describe('Minimum match score (0-100)'),
       limit: z.string().optional().describe('Maximum number of results (default 20)'),
+      location_include: z.string().optional().describe('Only show jobs matching these locations (comma-separated, e.g., "Europe,Dublin,EMEA,Remote")'),
+      location_exclude: z.string().optional().describe('Exclude jobs matching these locations (comma-separated, e.g., "North America,US,Sydney,Boston")'),
     }),
     handler: async (args: {
       company_id?: string;
       status?: string;
       min_score?: string;
       limit?: string;
+      location_include?: string;
+      location_exclude?: string;
     }) => {
       const filter: {
         companyId?: number;
         status?: string;
         minScore?: number;
         limit?: number;
+        locationInclude?: string;
+        locationExclude?: string;
       } = {};
 
       if (args.company_id) {
@@ -892,6 +898,12 @@ Last updated: ${new Date(profile.updatedAt).toLocaleDateString()}`;
       }
       if (args.min_score) {
         filter.minScore = parseFloat(args.min_score);
+      }
+      if (args.location_include) {
+        filter.locationInclude = args.location_include;
+      }
+      if (args.location_exclude) {
+        filter.locationExclude = args.location_exclude;
       }
       filter.limit = args.limit ? parseInt(args.limit, 10) : 20;
 

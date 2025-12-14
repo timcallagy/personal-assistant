@@ -563,6 +563,8 @@ export const apiClient = {
     minScore?: number;
     limit?: number;
     offset?: number;
+    locationInclude?: string;
+    locationExclude?: string;
   }): Promise<{ listings: JobListing[]; total: number }> {
     const params = new URLSearchParams();
     if (filter?.companyId) params.set('companyId', String(filter.companyId));
@@ -570,6 +572,8 @@ export const apiClient = {
     if (filter?.minScore) params.set('minScore', String(filter.minScore));
     if (filter?.limit) params.set('limit', String(filter.limit));
     if (filter?.offset) params.set('offset', String(filter.offset));
+    if (filter?.locationInclude) params.set('locationInclude', filter.locationInclude);
+    if (filter?.locationExclude) params.set('locationExclude', filter.locationExclude);
     const queryString = params.toString();
     return request<{ listings: JobListing[]; total: number }>(`/jobs/listings${queryString ? `?${queryString}` : ''}`);
   },

@@ -52,7 +52,7 @@ export async function getJobListings(
   userId: number,
   filter: JobListingsFilter = {}
 ): Promise<{ listings: JobListing[]; total: number }> {
-  const { companyId, status, minScore, limit = 50, offset = 0 } = filter;
+  const { companyId, status, minScore, limit = 50, offset = 0, locationInclude, locationExclude } = filter;
 
   // Build where clause
   const where: {
@@ -75,11 +75,8 @@ export async function getJobListings(
     where.matchScore = { gte: minScore };
   }
 
-  // Get total count
-  const total = await prisma.jobListing.count({ where });
-
-  // Get listings
-  const listings = await prisma.jobListing.findMany({
+  // Get listings first (we'll filter by location in memory since it requires checking both title and location)
+  let listings = await prisma.jobListing.findMany({
     where,
     include: {
       company: {
@@ -87,12 +84,30 @@ export async function getJobListings(
       },
     },
     orderBy: [{ matchScore: 'desc' }, { firstSeenAt: 'desc' }],
-    take: limit,
-    skip: offset,
   });
 
+  // Apply location filters (check both location field and title)
+  if (locationInclude && locationInclude.length > 0) {
+    listings = listings.filter((listing) => {
+      const searchText = `${listing.title} ${listing.location || ''}`.toLowerCase();
+      return locationInclude.some((loc) => searchText.includes(loc.toLowerCase()));
+    });
+  }
+
+  if (locationExclude && locationExclude.length > 0) {
+    listings = listings.filter((listing) => {
+      const searchText = `${listing.title} ${listing.location || ''}`.toLowerCase();
+      return !locationExclude.some((loc) => searchText.includes(loc.toLowerCase()));
+    });
+  }
+
+  const total = listings.length;
+
+  // Apply pagination after location filtering
+  const paginatedListings = listings.slice(offset, offset + limit);
+
   return {
-    listings: listings.map(transformListing),
+    listings: paginatedListings.map(transformListing),
     total,
   };
 }
