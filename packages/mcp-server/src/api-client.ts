@@ -21,6 +21,8 @@ import type {
   PostStatus,
   Company,
   JobProfile,
+  JobListing,
+  CrawlLog,
   CompaniesResponseData,
   JobProfileResponseData,
 } from '@pa/shared';
@@ -491,5 +493,110 @@ export const apiClient = {
     await request<{ message: string }>('/jobs/profile', {
       method: 'DELETE',
     });
+  },
+
+  // Job Crawling
+  async crawlCompany(companyId: number): Promise<{
+    companyId: number;
+    companyName: string;
+    status: 'success' | 'failed';
+    jobsFound: number;
+    newJobs: number;
+    error?: string;
+  }> {
+    const data = await request<{ result: {
+      companyId: number;
+      companyName: string;
+      status: 'success' | 'failed';
+      jobsFound: number;
+      newJobs: number;
+      error?: string;
+    } }>(`/jobs/crawl/${companyId}`, {
+      method: 'POST',
+    });
+    return data.result;
+  },
+
+  async crawlAllCompanies(): Promise<{
+    companiesCrawled: number;
+    totalJobsFound: number;
+    newJobsFound: number;
+    results: Array<{
+      companyId: number;
+      companyName: string;
+      status: 'success' | 'failed';
+      jobsFound: number;
+      newJobs: number;
+      error?: string;
+    }>;
+  }> {
+    return request<{
+      companiesCrawled: number;
+      totalJobsFound: number;
+      newJobsFound: number;
+      results: Array<{
+        companyId: number;
+        companyName: string;
+        status: 'success' | 'failed';
+        jobsFound: number;
+        newJobs: number;
+        error?: string;
+      }>;
+    }>('/jobs/crawl/all', {
+      method: 'POST',
+    });
+  },
+
+  async getCrawlLogs(companyId?: number, limit?: number): Promise<CrawlLog[]> {
+    const params = new URLSearchParams();
+    if (companyId) params.set('companyId', String(companyId));
+    if (limit) params.set('limit', String(limit));
+    const queryString = params.toString();
+    const data = await request<{ logs: CrawlLog[] }>(`/jobs/crawl/logs${queryString ? `?${queryString}` : ''}`);
+    return data.logs;
+  },
+
+  // Job Listings
+  async getJobListings(filter?: {
+    companyId?: number;
+    status?: string;
+    minScore?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ listings: JobListing[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filter?.companyId) params.set('companyId', String(filter.companyId));
+    if (filter?.status) params.set('status', filter.status);
+    if (filter?.minScore) params.set('minScore', String(filter.minScore));
+    if (filter?.limit) params.set('limit', String(filter.limit));
+    if (filter?.offset) params.set('offset', String(filter.offset));
+    const queryString = params.toString();
+    return request<{ listings: JobListing[]; total: number }>(`/jobs/listings${queryString ? `?${queryString}` : ''}`);
+  },
+
+  async getJobListing(id: number): Promise<JobListing> {
+    const data = await request<{ listing: JobListing }>(`/jobs/listings/${id}`);
+    return data.listing;
+  },
+
+  async updateJobStatus(id: number, status: string): Promise<JobListing> {
+    const data = await request<{ listing: JobListing }>(`/jobs/listings/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+    return data.listing;
+  },
+
+  async getJobStats(): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+    newSinceLastWeek: number;
+  }> {
+    const data = await request<{ stats: {
+      total: number;
+      byStatus: Record<string, number>;
+      newSinceLastWeek: number;
+    } }>('/jobs/listings/stats');
+    return data.stats;
   },
 };

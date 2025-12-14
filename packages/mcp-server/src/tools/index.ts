@@ -807,6 +807,188 @@ Last updated: ${new Date(profile.updatedAt).toLocaleDateString()}`;
 - Remote only: ${profile.remoteOnly ? 'Yes' : 'No'}`;
     },
   },
+
+  // ==========================================
+  // Job Crawling
+  // ==========================================
+
+  crawl_company_jobs: {
+    description: 'Crawl a specific company\'s career page to fetch job listings. Use list_job_companies to get company IDs.',
+    schema: z.object({
+      company_id: z.string().describe('The company ID to crawl'),
+    }),
+    handler: async (args: { company_id: string }) => {
+      const companyId = parseInt(args.company_id, 10);
+      if (isNaN(companyId)) {
+        return 'Invalid company ID. Please provide a valid numeric ID.';
+      }
+
+      const result = await apiClient.crawlCompany(companyId);
+
+      if (result.status === 'failed') {
+        return `Failed to crawl ${result.companyName}: ${result.error}`;
+      }
+
+      return `Crawled ${result.companyName}:
+- Jobs found: ${result.jobsFound}
+- New jobs: ${result.newJobs}`;
+    },
+  },
+
+  crawl_all_jobs: {
+    description: 'Crawl all active companies\' career pages to fetch job listings. This may take a few minutes.',
+    schema: z.object({}),
+    handler: async () => {
+      const result = await apiClient.crawlAllCompanies();
+
+      const successCount = result.results.filter((r) => r.status === 'success').length;
+      const failedCount = result.results.filter((r) => r.status === 'failed').length;
+
+      let output = `Crawl Complete!
+- Companies crawled: ${result.companiesCrawled}
+- Total jobs found: ${result.totalJobsFound}
+- New jobs found: ${result.newJobsFound}
+- Successful: ${successCount}
+- Failed: ${failedCount}`;
+
+      if (failedCount > 0) {
+        const failed = result.results.filter((r) => r.status === 'failed');
+        output += '\n\nFailed companies:';
+        for (const f of failed) {
+          output += `\n- ${f.companyName}: ${f.error}`;
+        }
+      }
+
+      return output;
+    },
+  },
+
+  get_job_listings: {
+    description: 'Get discovered job listings from crawled career pages. Jobs are sorted by match score.',
+    schema: z.object({
+      company_id: z.string().optional().describe('Filter by company ID'),
+      status: z.string().optional().describe('Filter by status: new, viewed, applied, dismissed'),
+      min_score: z.string().optional().describe('Minimum match score (0-100)'),
+      limit: z.string().optional().describe('Maximum number of results (default 20)'),
+    }),
+    handler: async (args: {
+      company_id?: string;
+      status?: string;
+      min_score?: string;
+      limit?: string;
+    }) => {
+      const filter: {
+        companyId?: number;
+        status?: string;
+        minScore?: number;
+        limit?: number;
+      } = {};
+
+      if (args.company_id) {
+        filter.companyId = parseInt(args.company_id, 10);
+      }
+      if (args.status) {
+        filter.status = args.status;
+      }
+      if (args.min_score) {
+        filter.minScore = parseFloat(args.min_score);
+      }
+      filter.limit = args.limit ? parseInt(args.limit, 10) : 20;
+
+      const { listings, total } = await apiClient.getJobListings(filter);
+
+      if (listings.length === 0) {
+        return 'No job listings found. Try crawling some companies first with crawl_all_jobs.';
+      }
+
+      let output = `Found ${total} jobs (showing ${listings.length}):\n`;
+
+      for (const job of listings) {
+        const score = job.matchScore !== null ? `[${job.matchScore}%]` : '[--]';
+        const status = job.status !== 'new' ? ` (${job.status})` : '';
+        const remote = job.remote ? ' [Remote]' : '';
+        output += `\n${score} ${job.title}${status}${remote}`;
+        output += `\n    Company: ${job.companyName || 'Unknown'}`;
+        if (job.location) output += ` | Location: ${job.location}`;
+        output += `\n    URL: ${job.url}`;
+        output += `\n    ID: ${job.id}\n`;
+      }
+
+      return output;
+    },
+  },
+
+  update_job_status: {
+    description: 'Update the status of a job listing (e.g., mark as viewed, applied, or dismissed).',
+    schema: z.object({
+      job_id: z.string().describe('The job listing ID'),
+      status: z.string().describe('New status: new, viewed, applied, dismissed'),
+    }),
+    handler: async (args: { job_id: string; status: string }) => {
+      const jobId = parseInt(args.job_id, 10);
+      if (isNaN(jobId)) {
+        return 'Invalid job ID. Please provide a valid numeric ID.';
+      }
+
+      const validStatuses = ['new', 'viewed', 'applied', 'dismissed'];
+      if (!validStatuses.includes(args.status)) {
+        return `Invalid status. Must be one of: ${validStatuses.join(', ')}`;
+      }
+
+      const listing = await apiClient.updateJobStatus(jobId, args.status);
+      return `Updated job "${listing.title}" status to: ${listing.status}`;
+    },
+  },
+
+  get_job_stats: {
+    description: 'Get statistics about your job listings.',
+    schema: z.object({}),
+    handler: async () => {
+      const stats = await apiClient.getJobStats();
+
+      let output = `**Job Statistics**
+- Total jobs tracked: ${stats.total}
+- New this week: ${stats.newSinceLastWeek}
+
+**By Status:**`;
+
+      for (const [status, count] of Object.entries(stats.byStatus)) {
+        output += `\n- ${status}: ${count}`;
+      }
+
+      return output;
+    },
+  },
+
+  get_crawl_history: {
+    description: 'View recent crawl history for job tracker.',
+    schema: z.object({
+      company_id: z.string().optional().describe('Filter by company ID'),
+      limit: z.string().optional().describe('Maximum number of results (default 10)'),
+    }),
+    handler: async (args: { company_id?: string; limit?: string }) => {
+      const companyId = args.company_id ? parseInt(args.company_id, 10) : undefined;
+      const limit = args.limit ? parseInt(args.limit, 10) : 10;
+
+      const logs = await apiClient.getCrawlLogs(companyId, limit);
+
+      if (logs.length === 0) {
+        return 'No crawl history found. Use crawl_all_jobs to start crawling.';
+      }
+
+      let output = `**Recent Crawls** (${logs.length})\n`;
+
+      for (const log of logs) {
+        const status = log.status === 'success' ? '✓' : log.status === 'failed' ? '✗' : '⋯';
+        const date = new Date(log.startedAt).toLocaleString();
+        output += `\n${status} ${log.companyName || `Company #${log.companyId}`}`;
+        output += `\n  ${date} | Found: ${log.jobsFound} | New: ${log.newJobs}`;
+        if (log.error) output += `\n  Error: ${log.error}`;
+      }
+
+      return output;
+    },
+  },
 };
 
 export type ToolName = keyof typeof tools;
