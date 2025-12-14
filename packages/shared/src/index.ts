@@ -453,3 +453,143 @@ export function generateExcerpt(content: string, maxLength: number = 200): strin
   const lastSpace = truncated.lastIndexOf(' ');
   return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
 }
+
+// ============================================
+// Job Tracker Types
+// ============================================
+
+export const JOB_STATUS = {
+  NEW: 'new',
+  VIEWED: 'viewed',
+  APPLIED: 'applied',
+  DISMISSED: 'dismissed',
+} as const;
+
+export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS];
+
+export const ATS_TYPES = {
+  GREENHOUSE: 'greenhouse',
+  LEVER: 'lever',
+  ASHBY: 'ashby',
+  SMARTRECRUITERS: 'smartrecruiters',
+  WORKDAY: 'workday',
+  CUSTOM: 'custom',
+} as const;
+
+export type AtsType = (typeof ATS_TYPES)[keyof typeof ATS_TYPES];
+
+export interface Company {
+  id: number;
+  name: string;
+  careerPageUrl: string;
+  atsType: AtsType | null;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface JobProfile {
+  id: number;
+  keywords: string[];
+  titles: string[];
+  locations: string[];
+  remoteOnly: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface JobListing {
+  id: number;
+  companyId: number;
+  companyName?: string;
+  externalId: string;
+  title: string;
+  url: string;
+  location: string | null;
+  remote: boolean;
+  department: string | null;
+  description: string | null;
+  postedAt: Date | null;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+  status: JobStatus;
+  matchScore: number | null;
+}
+
+export interface CrawlLog {
+  id: number;
+  companyId: number;
+  companyName?: string;
+  startedAt: Date;
+  completedAt: Date | null;
+  status: 'running' | 'success' | 'failed';
+  jobsFound: number;
+  newJobs: number;
+  error: string | null;
+}
+
+// ============================================
+// Job Tracker API Request Types
+// ============================================
+
+export interface CreateCompanyRequest {
+  name: string;
+  careerPageUrl: string;
+}
+
+export interface UpdateCompanyRequest {
+  name?: string;
+  careerPageUrl?: string;
+  active?: boolean;
+}
+
+export interface UpdateJobProfileRequest {
+  keywords?: string[];
+  titles?: string[];
+  locations?: string[];
+  remoteOnly?: boolean;
+}
+
+export interface UpdateJobStatusRequest {
+  status: JobStatus;
+}
+
+export interface JobListingsFilter {
+  companyId?: number;
+  status?: JobStatus;
+  minScore?: number;
+  limit?: number;
+  offset?: number;
+}
+
+// ============================================
+// Job Tracker API Response Types
+// ============================================
+
+export interface CompaniesResponseData {
+  companies: Company[];
+  total: number;
+}
+
+export interface JobProfileResponseData {
+  profile: JobProfile | null;
+}
+
+export interface JobListingsResponseData {
+  listings: JobListing[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CrawlResponseData {
+  crawlId: number;
+  companiesCrawled: number;
+  totalJobsFound: number;
+  newJobsFound: number;
+}
+
+export interface CrawlLogsResponseData {
+  logs: CrawlLog[];
+  total: number;
+}

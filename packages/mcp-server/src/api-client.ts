@@ -19,6 +19,10 @@ import type {
   BlogPost,
   BlogCategory,
   PostStatus,
+  Company,
+  JobProfile,
+  CompaniesResponseData,
+  JobProfileResponseData,
 } from '@pa/shared';
 
 // Image upload constants
@@ -422,5 +426,70 @@ export const apiClient = {
     }
 
     return data.data as ImageUploadResponse;
+  },
+
+  // ==========================================
+  // Job Tracker
+  // ==========================================
+
+  // Companies
+  async getCompanies(activeOnly?: boolean): Promise<{ companies: Company[]; total: number }> {
+    const params = activeOnly ? '?active=true' : '';
+    return request<CompaniesResponseData>(`/jobs/companies${params}`);
+  },
+
+  async getCompany(id: number): Promise<Company> {
+    const data = await request<{ company: Company }>(`/jobs/companies/${id}`);
+    return data.company;
+  },
+
+  async createCompany(data: { name: string; careerPageUrl: string }): Promise<Company> {
+    const result = await request<{ company: Company }>('/jobs/companies', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return result.company;
+  },
+
+  async updateCompany(
+    id: number,
+    data: { name?: string; careerPageUrl?: string; active?: boolean }
+  ): Promise<Company> {
+    const result = await request<{ company: Company }>(`/jobs/companies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return result.company;
+  },
+
+  async deleteCompany(id: number): Promise<void> {
+    await request<{ message: string }>(`/jobs/companies/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Job Profile
+  async getJobProfile(): Promise<JobProfile | null> {
+    const data = await request<JobProfileResponseData>('/jobs/profile');
+    return data.profile;
+  },
+
+  async upsertJobProfile(data: {
+    keywords?: string[];
+    titles?: string[];
+    locations?: string[];
+    remoteOnly?: boolean;
+  }): Promise<JobProfile> {
+    const result = await request<{ profile: JobProfile }>('/jobs/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return result.profile;
+  },
+
+  async deleteJobProfile(): Promise<void> {
+    await request<{ message: string }>('/jobs/profile', {
+      method: 'DELETE',
+    });
   },
 };

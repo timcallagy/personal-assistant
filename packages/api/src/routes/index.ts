@@ -7,6 +7,7 @@ import { notesRouter } from './notes.js';
 import { actionsRouter } from './actions.js';
 import { searchRouter } from './search.js';
 import { blogRouter } from './blog/index.js';
+import { jobsRouter } from './jobs/index.js';
 
 const router = Router();
 
@@ -33,5 +34,8 @@ router.use('/search', searchRouter);
 
 // Blog routes
 router.use('/blog', blogRouter);
+
+// Job tracker routes
+router.use('/jobs', jobsRouter);
 
 export { router };

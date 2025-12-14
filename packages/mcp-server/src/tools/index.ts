@@ -666,6 +666,147 @@ ${post.content}`;
       }
     },
   },
+
+  // ==========================================
+  // JOB TRACKER TOOLS
+  // ==========================================
+
+  list_job_companies: {
+    description: 'List all companies being tracked for job opportunities.',
+    schema: z.object({
+      active_only: z.boolean().optional().default(false).describe('Only show active companies'),
+    }),
+    handler: async (args: { active_only?: boolean }) => {
+      const { companies, total } = await apiClient.getCompanies(args.active_only);
+
+      if (companies.length === 0) {
+        return 'No companies being tracked. Use add_job_company to add companies.';
+      }
+
+      const header = `Tracking ${total} compan${total !== 1 ? 'ies' : 'y'}:\n\n`;
+      const list = companies
+        .map((c) => {
+          const status = c.active ? '✓' : '○';
+          const ats = c.atsType ? ` [${c.atsType}]` : '';
+          return `[${c.id}] ${status} ${c.name}${ats}\n    ${c.careerPageUrl}`;
+        })
+        .join('\n\n');
+
+      return header + list;
+    },
+  },
+
+  add_job_company: {
+    description: 'Add a company to track for job opportunities. Automatically detects the ATS type from the career page URL.',
+    schema: z.object({
+      name: z.string().describe('Company name'),
+      career_url: z.string().describe('URL of the company career page'),
+    }),
+    handler: async (args: { name: string; career_url: string }) => {
+      const company = await apiClient.createCompany({
+        name: args.name,
+        careerPageUrl: args.career_url,
+      });
+
+      const atsInfo = company.atsType ? ` (detected: ${company.atsType})` : '';
+      return `Company added successfully!
+- ID: ${company.id}
+- Name: ${company.name}
+- Career URL: ${company.careerPageUrl}${atsInfo}`;
+    },
+  },
+
+  update_job_company: {
+    description: 'Update a tracked company.',
+    schema: z.object({
+      id: z.coerce.number().describe('Company ID'),
+      name: z.string().optional().describe('New company name'),
+      career_url: z.string().optional().describe('New career page URL'),
+      active: z.boolean().optional().describe('Set active status'),
+    }),
+    handler: async (args: { id: number; name?: string; career_url?: string; active?: boolean }) => {
+      const company = await apiClient.updateCompany(args.id, {
+        name: args.name,
+        careerPageUrl: args.career_url,
+        active: args.active,
+      });
+
+      const status = company.active ? 'active' : 'inactive';
+      return `Company ${company.id} updated!
+- Name: ${company.name}
+- Career URL: ${company.careerPageUrl}
+- Status: ${status}`;
+    },
+  },
+
+  remove_job_company: {
+    description: 'Remove a company from tracking. This also removes all associated job listings.',
+    schema: z.object({
+      id: z.coerce.number().describe('Company ID to remove'),
+    }),
+    handler: async (args: { id: number }) => {
+      await apiClient.deleteCompany(args.id);
+      return `Company ${args.id} removed from tracking.`;
+    },
+  },
+
+  get_job_profile: {
+    description: 'Get your job search profile (keywords, titles, locations, remote preference).',
+    schema: z.object({}),
+    handler: async () => {
+      const profile = await apiClient.getJobProfile();
+
+      if (!profile) {
+        return 'No job profile set. Use set_job_profile to define your job preferences.';
+      }
+
+      const keywords = profile.keywords.length > 0 ? profile.keywords.join(', ') : 'none';
+      const titles = profile.titles.length > 0 ? profile.titles.join(', ') : 'none';
+      const locations = profile.locations.length > 0 ? profile.locations.join(', ') : 'any';
+      const remote = profile.remoteOnly ? 'Yes (remote only)' : 'No (open to on-site)';
+
+      return `**Job Profile**
+- Keywords: ${keywords}
+- Titles: ${titles}
+- Locations: ${locations}
+- Remote only: ${remote}
+
+Last updated: ${new Date(profile.updatedAt).toLocaleDateString()}`;
+    },
+  },
+
+  set_job_profile: {
+    description: 'Set or update your job search profile. All parameters are optional - only provided values will be updated.',
+    schema: z.object({
+      keywords: z.string().optional().describe('Comma-separated keywords (e.g., "operations, strategy, product")'),
+      titles: z.string().optional().describe('Comma-separated job title patterns (e.g., "Head of, VP, Director")'),
+      locations: z.string().optional().describe('Comma-separated locations (e.g., "London, Remote, UK")'),
+      remote_only: z.boolean().optional().describe('Only show remote jobs'),
+    }),
+    handler: async (args: {
+      keywords?: string;
+      titles?: string;
+      locations?: string;
+      remote_only?: boolean;
+    }) => {
+      const profile = await apiClient.upsertJobProfile({
+        keywords: args.keywords?.split(',').map((k) => k.trim()).filter(Boolean),
+        titles: args.titles?.split(',').map((t) => t.trim()).filter(Boolean),
+        locations: args.locations?.split(',').map((l) => l.trim()).filter(Boolean),
+        remoteOnly: args.remote_only,
+      });
+
+      const keywords = profile.keywords.length > 0 ? profile.keywords.join(', ') : 'none';
+      const titles = profile.titles.length > 0 ? profile.titles.join(', ') : 'none';
+      const locations = profile.locations.length > 0 ? profile.locations.join(', ') : 'any';
+
+      return `Job profile updated!
+- Keywords: ${keywords}
+- Titles: ${titles}
+- Locations: ${locations}
+- Remote only: ${profile.remoteOnly ? 'Yes' : 'No'}`;
+    },
+  },
 };
 
 export type ToolName = keyof typeof tools;
