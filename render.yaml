@@ -4,7 +4,7 @@ services:
     name: pa-api
     runtime: node
     plan: starter
-    buildCommand: pnpm install --prod=false && pnpm exec playwright install chromium && rm -rf node_modules/.prisma node_modules/.pnpm/@prisma+client*/node_modules/.prisma && pnpm --filter @pa/shared build && pnpm --filter @pa/api db:generate && pnpm --filter @pa/api db:push && pnpm --filter @pa/api build
+    buildCommand: pnpm install --prod=false && PLAYWRIGHT_BROWSERS_PATH=/var/data/uploads/.playwright pnpm exec playwright install chromium && rm -rf node_modules/.prisma node_modules/.pnpm/@prisma+client*/node_modules/.prisma && pnpm --filter @pa/shared build && pnpm --filter @pa/api db:generate && pnpm --filter @pa/api db:push && pnpm --filter @pa/api build
     startCommand: pnpm --filter @pa/api start
     disk:
       name: blog-images
@@ -15,6 +15,8 @@ services:
         value: production
       - key: PORT
         value: 3001
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /var/data/uploads/.playwright
       - key: DATABASE_URL
         fromDatabase:
           name: pa-db
