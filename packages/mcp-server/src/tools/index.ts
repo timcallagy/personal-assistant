@@ -398,7 +398,13 @@ ${note.summary}`;
   complete_actions: {
     description: 'Mark actions as completed.',
     schema: z.object({
-      ids: z.array(z.coerce.number()).describe('Array of action IDs to mark as completed'),
+      ids: z
+        .string()
+        .describe('Array of action IDs to mark as completed')
+        .transform((val) => {
+          // Handle comma-separated string: "16,17,18" or single value "16"
+          return val.split(',').map((id) => parseInt(id.trim(), 10));
+        }),
     }),
     handler: async (args: { ids: number[] }) => {
       const result = await apiClient.completeActions(args.ids);
