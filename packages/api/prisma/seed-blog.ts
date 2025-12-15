@@ -14,6 +14,7 @@ const categories = [
   },
   { name: 'AI for Innovation', slug: 'ai-for-innovation', sortOrder: 6 },
   { name: 'AI for Data Insights', slug: 'ai-for-data-insights', sortOrder: 7 },
+  { name: 'Book Reviews', slug: 'book-reviews', sortOrder: 8 },
 ];
 
 async function main() {
