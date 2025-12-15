@@ -20,12 +20,23 @@ export function PostCard({ post }: PostCardProps) {
     <article className="post-card masonry-item">
       {/* Featured Image */}
       {post.featuredImage && (
-        <Link href={`/post/${post.slug}`} className="block aspect-video relative overflow-hidden">
+        <Link
+          href={`/post/${post.slug}`}
+          className={`block relative overflow-hidden ${
+            post.category === 'book-reviews'
+              ? 'aspect-[3/4] bg-gray-100'
+              : 'aspect-video'
+          }`}
+        >
           <Image
             src={post.featuredImage}
             alt={post.title}
             fill
-            className="object-cover hover:scale-105 transition-transform duration-300"
+            className={`transition-transform duration-300 ${
+              post.category === 'book-reviews'
+                ? 'object-contain hover:scale-105'
+                : 'object-cover hover:scale-105'
+            }`}
           />
         </Link>
       )}
