@@ -722,13 +722,13 @@ ${post.content}`;
       id: z.coerce.number().describe('Company ID'),
       name: z.string().optional().describe('New company name'),
       career_url: z.string().optional().describe('New career page URL'),
-      active: z.boolean().optional().describe('Set active status'),
+      active: z.string().optional().describe('Set active status (true/false)'),
     }),
-    handler: async (args: { id: number; name?: string; career_url?: string; active?: boolean }) => {
+    handler: async (args: { id: number; name?: string; career_url?: string; active?: string }) => {
       const company = await apiClient.updateCompany(args.id, {
         name: args.name,
         careerPageUrl: args.career_url,
-        active: args.active,
+        active: args.active !== undefined ? args.active === 'true' : undefined,
       });
 
       const status = company.active ? 'active' : 'inactive';
