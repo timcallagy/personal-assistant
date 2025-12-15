@@ -78,12 +78,18 @@ export default async function PostPage({ params }: PostPageProps) {
         <article className="flex-1 max-w-none">
           {/* Featured Image */}
           {post.featuredImage && (
-            <div className="relative aspect-video mb-8 overflow-hidden">
+            <div className={`relative mb-8 overflow-hidden ${
+              post.category === 'book-reviews'
+                ? 'max-w-md mx-auto'
+                : 'aspect-video'
+            }`}>
               <Image
                 src={post.featuredImage}
                 alt={post.title}
-                fill
-                className="object-cover"
+                {...(post.category === 'book-reviews'
+                  ? { width: 400, height: 600, className: 'w-full h-auto' }
+                  : { fill: true, className: 'object-cover' }
+                )}
                 priority
               />
             </div>

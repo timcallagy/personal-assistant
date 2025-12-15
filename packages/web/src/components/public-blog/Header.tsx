@@ -35,7 +35,7 @@ export function Header({ siteTitle, categories, socialLinkedIn, socialGitHub }: 
                 </svg>
               </button>
               <div className="absolute top-full left-0 w-56 bg-white border border-blog-border shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                {categories.map((cat) => (
+                {categories.filter((cat) => cat.slug !== 'book-reviews').map((cat) => (
                   <Link
                     key={cat.slug}
                     href={`/category/${cat.slug}`}
@@ -46,6 +46,9 @@ export function Header({ siteTitle, categories, socialLinkedIn, socialGitHub }: 
                 ))}
               </div>
             </div>
+            <Link href="/category/book-reviews" className="text-blog-secondary hover:text-blog-accent transition-colors">
+              Book Reviews
+            </Link>
             <Link href="/about" className="text-blog-secondary hover:text-blog-accent transition-colors">
               About
             </Link>
@@ -109,7 +112,7 @@ export function Header({ siteTitle, categories, socialLinkedIn, socialGitHub }: 
                 Home
               </Link>
               <div className="px-4 py-2 text-blog-muted text-sm uppercase tracking-wider">Categories</div>
-              {categories.map((cat) => (
+              {categories.filter((cat) => cat.slug !== 'book-reviews').map((cat) => (
                 <Link
                   key={cat.slug}
                   href={`/category/${cat.slug}`}
@@ -119,6 +122,13 @@ export function Header({ siteTitle, categories, socialLinkedIn, socialGitHub }: 
                   {cat.name}
                 </Link>
               ))}
+              <Link
+                href="/category/book-reviews"
+                className="px-4 py-2 text-blog-secondary hover:text-blog-accent transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Book Reviews
+              </Link>
               <Link
                 href="/about"
                 className="px-4 py-2 text-blog-secondary hover:text-blog-accent transition-colors"

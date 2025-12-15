@@ -44,7 +44,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       blogApi.getTags(),
       blogApi.getPopularPosts(5),
       blogApi.getConfig(),
-      blogApi.getPosts({ limit: 5 }), // Get latest 5 posts for carousel
+      blogApi.getPosts({ limit: 10 }), // Get latest posts for carousel (fetch extra to filter out book reviews)
     ]);
 
     posts = postsData.posts;
@@ -53,7 +53,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     tags = tagsData.tags;
     popularPosts = popularData.posts;
     config = configData;
-    featuredPosts = featuredData.posts;
+    // Exclude book reviews from carousel (their varied image sizes don't work well)
+    featuredPosts = featuredData.posts
+      .filter((p) => p.category !== 'book-reviews')
+      .slice(0, 5);
   } catch (e) {
     console.error('Failed to fetch blog data:', e);
   }
