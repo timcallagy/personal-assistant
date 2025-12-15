@@ -33,6 +33,13 @@ interface UseActionsReturn {
       importance?: number;
     }
   ) => Promise<Action>;
+  updateActionOptimistic: (
+    id: number,
+    data: {
+      urgency: number;
+      importance: number;
+    }
+  ) => Promise<void>;
   deleteAction: (id: number) => Promise<void>;
   completeActions: (ids: number[]) => Promise<{
     completed: number[];
@@ -98,6 +105,44 @@ export function useActions(options: UseActionsOptions = {}): UseActionsReturn {
     return response.action;
   };
 
+  /**
+   * Optimistically update an action's urgency/importance.
+   * Updates UI immediately, then syncs with server.
+   * Rolls back on error.
+   */
+  const updateActionOptimistic = async (
+    id: number,
+    data: { urgency: number; importance: number }
+  ): Promise<void> => {
+    // Store original state for rollback
+    const originalActions = [...actions];
+
+    // Optimistically update local state
+    setActions((prev) =>
+      prev.map((action) =>
+        action.id === id
+          ? {
+              ...action,
+              urgency: data.urgency,
+              importance: data.importance,
+              priorityScore: data.urgency * data.importance,
+            }
+          : action
+      )
+    );
+
+    try {
+      // Sync with server
+      await actionsApi.update(id, data);
+    } catch (err) {
+      // Rollback on error
+      setActions(originalActions);
+      const message = err instanceof ApiError ? err.message : 'Failed to update action';
+      setError(message);
+      throw err;
+    }
+  };
+
   const deleteAction = async (id: number): Promise<void> => {
     await actionsApi.delete(id);
     await fetchActions();
@@ -119,6 +164,7 @@ export function useActions(options: UseActionsOptions = {}): UseActionsReturn {
     refresh: fetchActions,
     createAction,
     updateAction,
+    updateActionOptimistic,
     deleteAction,
     completeActions,
   };

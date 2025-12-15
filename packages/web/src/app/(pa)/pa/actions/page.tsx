@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Layout } from '@/components/layout';
-import { ActionsList, ActionModal } from '@/components/actions';
+import { ActionsList, ActionModal, ActionsGrid, ViewToggle } from '@/components/actions';
 import { Button } from '@/components/ui';
 import { useActions, useProjects, useLabels } from '@/hooks';
 import { Action } from '@/lib/api';
@@ -16,6 +16,7 @@ export default function ActionsPage() {
     refresh,
     createAction,
     updateAction,
+    updateActionOptimistic,
     deleteAction,
     completeActions,
   } = useActions();
@@ -26,6 +27,7 @@ export default function ActionsPage() {
   const [selectedAction, setSelectedAction] = useState<Action | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [completing, setCompleting] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const handleNewAction = () => {
     setSelectedAction(null);
@@ -80,6 +82,10 @@ export default function ActionsPage() {
     }
   };
 
+  const handleActionMove = async (id: number, urgency: number, importance: number) => {
+    await updateActionOptimistic(id, { urgency, importance });
+  };
+
   return (
     <Layout>
       <div className="p-6">
@@ -91,7 +97,8 @@ export default function ActionsPage() {
               {total} open action{total !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <ViewToggle view={viewMode} onChange={setViewMode} />
             {selectedIds.length > 0 && (
               <Button
                 variant="secondary"
@@ -122,15 +129,24 @@ export default function ActionsPage() {
           </div>
         )}
 
-        {/* Actions List */}
-        <ActionsList
-          actions={actions}
-          loading={loading}
-          onActionClick={handleActionClick}
-          selectedIds={selectedIds}
-          onSelect={handleSelect}
-          selectable
-        />
+        {/* Actions List or Grid */}
+        {viewMode === 'list' ? (
+          <ActionsList
+            actions={actions}
+            loading={loading}
+            onActionClick={handleActionClick}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
+            selectable
+          />
+        ) : (
+          <ActionsGrid
+            actions={actions}
+            loading={loading}
+            onActionClick={handleActionClick}
+            onActionMove={handleActionMove}
+          />
+        )}
 
         {/* Action Modal */}
         <ActionModal
