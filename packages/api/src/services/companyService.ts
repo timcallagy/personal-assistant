@@ -1,5 +1,5 @@
 import { prisma, notFoundError, conflictError } from '../lib/index.js';
-import type { Company, AtsType } from '@pa/shared';
+import type { Company, AtsType, CompanyStage } from '@pa/shared';
 
 // ============================================
 // Transform Functions
@@ -11,6 +11,11 @@ function transformCompany(company: {
   careerPageUrl: string;
   atsType: string | null;
   active: boolean;
+  description?: string | null;
+  headquarters?: string | null;
+  foundedYear?: number | null;
+  revenueEstimate?: string | null;
+  stage?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): Company {
@@ -20,6 +25,11 @@ function transformCompany(company: {
     careerPageUrl: company.careerPageUrl,
     atsType: company.atsType as AtsType | null,
     active: company.active,
+    description: company.description ?? null,
+    headquarters: company.headquarters ?? null,
+    foundedYear: company.foundedYear ?? null,
+    revenueEstimate: company.revenueEstimate ?? null,
+    stage: (company.stage as CompanyStage | null) ?? null,
     createdAt: company.createdAt,
     updatedAt: company.updatedAt,
   };
@@ -122,7 +132,16 @@ export async function createCompany(
 export async function updateCompany(
   userId: number,
   id: number,
-  data: { name?: string; careerPageUrl?: string; active?: boolean }
+  data: {
+    name?: string;
+    careerPageUrl?: string;
+    active?: boolean;
+    description?: string | null;
+    headquarters?: string | null;
+    foundedYear?: number | null;
+    revenueEstimate?: string | null;
+    stage?: string | null;
+  }
 ): Promise<Company> {
   // Verify ownership
   const existing = await prisma.company.findFirst({
@@ -149,6 +168,11 @@ export async function updateCompany(
     careerPageUrl?: string;
     active?: boolean;
     atsType?: string;
+    description?: string | null;
+    headquarters?: string | null;
+    foundedYear?: number | null;
+    revenueEstimate?: string | null;
+    stage?: string | null;
   } = {};
 
   if (data.name !== undefined) updateData.name = data.name;
@@ -157,6 +181,11 @@ export async function updateCompany(
     updateData.atsType = detectAtsType(data.careerPageUrl) || undefined;
   }
   if (data.active !== undefined) updateData.active = data.active;
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.headquarters !== undefined) updateData.headquarters = data.headquarters;
+  if (data.foundedYear !== undefined) updateData.foundedYear = data.foundedYear;
+  if (data.revenueEstimate !== undefined) updateData.revenueEstimate = data.revenueEstimate;
+  if (data.stage !== undefined) updateData.stage = data.stage;
 
   const company = await prisma.company.update({
     where: { id },

@@ -217,14 +217,20 @@ model BlogConfig {
 // ==========================================
 
 model Company {
-  id            Int          @id @default(autoincrement())
-  userId        Int          @map("user_id")
-  name          String
-  careerPageUrl String       @map("career_page_url")
-  atsType       String?      @map("ats_type") // greenhouse, lever, workday, ashby, smartrecruiters, custom
-  active        Boolean      @default(true)
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  id              Int          @id @default(autoincrement())
+  userId          Int          @map("user_id")
+  name            String
+  careerPageUrl   String       @map("career_page_url")
+  atsType         String?      @map("ats_type") // greenhouse, lever, workday, ashby, smartrecruiters, custom
+  active          Boolean      @default(true)
+  // Company metadata
+  description     String?      // What the company does (1 sentence)
+  headquarters    String?      // HQ location
+  foundedYear     Int?         @map("founded_year")
+  revenueEstimate String?      @map("revenue_estimate") // e.g. "$10M-$50M", "$100M+"
+  stage           String?      // pre-seed, seed, series-a, series-b, series-c, growth, public, acquired
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
 
   // Relations
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)

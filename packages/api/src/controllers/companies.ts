@@ -83,8 +83,17 @@ export const companiesController = {
       return;
     }
 
-    const { name, careerPageUrl, active } = req.body;
-    const updateData: { name?: string; careerPageUrl?: string; active?: boolean } = {};
+    const { name, careerPageUrl, active, description, headquarters, foundedYear, revenueEstimate, stage } = req.body;
+    const updateData: {
+      name?: string;
+      careerPageUrl?: string;
+      active?: boolean;
+      description?: string | null;
+      headquarters?: string | null;
+      foundedYear?: number | null;
+      revenueEstimate?: string | null;
+      stage?: string | null;
+    } = {};
 
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length === 0) {
@@ -107,6 +116,23 @@ export const companiesController = {
 
     if (active !== undefined) {
       updateData.active = Boolean(active);
+    }
+
+    // Metadata fields (allow null to clear)
+    if (description !== undefined) {
+      updateData.description = description ? String(description).trim() : null;
+    }
+    if (headquarters !== undefined) {
+      updateData.headquarters = headquarters ? String(headquarters).trim() : null;
+    }
+    if (foundedYear !== undefined) {
+      updateData.foundedYear = foundedYear ? parseInt(foundedYear, 10) : null;
+    }
+    if (revenueEstimate !== undefined) {
+      updateData.revenueEstimate = revenueEstimate ? String(revenueEstimate).trim() : null;
+    }
+    if (stage !== undefined) {
+      updateData.stage = stage ? String(stage).trim() : null;
     }
 
     const company = await companyService.updateCompany(userId, id, updateData);

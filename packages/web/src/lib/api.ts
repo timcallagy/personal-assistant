@@ -518,12 +518,20 @@ export type JobStatus = 'new' | 'viewed' | 'applied' | 'dismissed';
 
 export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters' | 'workday' | 'custom';
 
+export type CompanyStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b' | 'series-c' | 'growth' | 'public' | 'acquired';
+
 export interface Company {
   id: number;
   name: string;
   careerPageUrl: string;
   atsType: AtsType | null;
   active: boolean;
+  // Metadata
+  description: string | null;
+  headquarters: string | null;
+  foundedYear: number | null;
+  revenueEstimate: string | null;
+  stage: CompanyStage | null;
   createdAt: string;
   updatedAt: string;
 }

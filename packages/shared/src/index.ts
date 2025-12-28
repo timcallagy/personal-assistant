@@ -478,12 +478,31 @@ export const ATS_TYPES = {
 
 export type AtsType = (typeof ATS_TYPES)[keyof typeof ATS_TYPES];
 
+export const COMPANY_STAGES = {
+  PRE_SEED: 'pre-seed',
+  SEED: 'seed',
+  SERIES_A: 'series-a',
+  SERIES_B: 'series-b',
+  SERIES_C: 'series-c',
+  GROWTH: 'growth',
+  PUBLIC: 'public',
+  ACQUIRED: 'acquired',
+} as const;
+
+export type CompanyStage = (typeof COMPANY_STAGES)[keyof typeof COMPANY_STAGES];
+
 export interface Company {
   id: number;
   name: string;
   careerPageUrl: string;
   atsType: AtsType | null;
   active: boolean;
+  // Metadata
+  description: string | null;
+  headquarters: string | null;
+  foundedYear: number | null;
+  revenueEstimate: string | null;
+  stage: CompanyStage | null;
   createdAt: Date;
   updatedAt: Date;
 }

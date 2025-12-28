@@ -1,6 +1,7 @@
 'use client';
 
-import { Company, CrawlLog } from '@/lib/api';
+import { useState, useRef, useEffect } from 'react';
+import { Company, CrawlLog, CompanyStage } from '@/lib/api';
 
 type CrawlStatus = 'working' | 'manual' | 'error' | 'never';
 
@@ -44,12 +45,101 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString();
 }
 
+function formatStage(stage: CompanyStage | null): string {
+  if (!stage) return 'Unknown';
+  const stageLabels: Record<CompanyStage, string> = {
+    'pre-seed': 'Pre-Seed',
+    'seed': 'Seed',
+    'series-a': 'Series A',
+    'series-b': 'Series B',
+    'series-c': 'Series C',
+    'growth': 'Growth',
+    'public': 'Public',
+    'acquired': 'Acquired',
+  };
+  return stageLabels[stage] || stage;
+}
+
 const statusConfig: Record<CrawlStatus, { dot: string; text: string }> = {
   working: { dot: 'bg-success', text: 'Auto-crawl working' },
   manual: { dot: 'bg-warning', text: 'Manual check needed' },
   error: { dot: 'bg-error', text: 'Crawl error' },
   never: { dot: 'bg-foreground-muted', text: 'Never crawled' },
 };
+
+function CompanyInfoPopover({ company, onClose }: { company: Company; onClose: () => void }) {
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+
+  const hasMetadata = company.description || company.headquarters || company.foundedYear || company.revenueEstimate || company.stage;
+
+  return (
+    <div
+      ref={popoverRef}
+      className="absolute left-0 top-full mt-1 z-50 w-72 p-3 bg-background-secondary border border-background-tertiary rounded-lg shadow-lg"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h5 className="font-medium text-foreground">{company.name}</h5>
+        <button
+          onClick={onClose}
+          className="p-1 text-foreground-muted hover:text-foreground rounded"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {hasMetadata ? (
+        <div className="space-y-2 text-sm">
+          {company.description && (
+            <p className="text-foreground-secondary">{company.description}</p>
+          )}
+          <div className="grid grid-cols-2 gap-2 text-foreground-muted">
+            {company.headquarters && (
+              <div>
+                <span className="text-foreground-secondary">HQ:</span>{' '}
+                {company.headquarters}
+              </div>
+            )}
+            {company.foundedYear && (
+              <div>
+                <span className="text-foreground-secondary">Founded:</span>{' '}
+                {company.foundedYear}
+              </div>
+            )}
+            {company.revenueEstimate && (
+              <div>
+                <span className="text-foreground-secondary">Revenue:</span>{' '}
+                {company.revenueEstimate}
+              </div>
+            )}
+            {company.stage && (
+              <div>
+                <span className="text-foreground-secondary">Stage:</span>{' '}
+                {formatStage(company.stage)}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-foreground-muted italic">
+          No company info available
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function CompanyCard({
   company,
@@ -60,6 +150,7 @@ export function CompanyCard({
   onRefresh,
   isRefreshing,
 }: CompanyCardProps) {
+  const [showInfo, setShowInfo] = useState(false);
   const crawlStatus = getCrawlStatus(company, lastCrawl);
   const { dot, text } = statusConfig[crawlStatus];
 
@@ -67,7 +158,7 @@ export function CompanyCard({
     <div
       id={`company-${company.id}`}
       onClick={onClick}
-      className={`p-3 rounded-md cursor-pointer transition-colors ${
+      className={`p-3 rounded-md cursor-pointer transition-colors relative ${
         isActive
           ? 'bg-background-secondary border-l-2 border-accent'
           : 'hover:bg-background-secondary/50'
@@ -76,14 +167,28 @@ export function CompanyCard({
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
-        <h4 className="font-medium text-foreground truncate">{company.name}</h4>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <h4 className="font-medium text-foreground truncate">{company.name}</h4>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowInfo(!showInfo);
+            }}
+            className="p-0.5 text-foreground-muted hover:text-accent transition-colors rounded flex-shrink-0"
+            title="Company info"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+        </div>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onRefresh();
           }}
           disabled={isRefreshing}
-          className="p-1 text-foreground-muted hover:text-accent transition-colors rounded hover:bg-background-tertiary disabled:opacity-50"
+          className="p-1 text-foreground-muted hover:text-accent transition-colors rounded hover:bg-background-tertiary disabled:opacity-50 flex-shrink-0"
           title="Refresh jobs"
         >
           {isRefreshing ? (
@@ -98,6 +203,11 @@ export function CompanyCard({
           )}
         </button>
       </div>
+
+      {/* Info Popover */}
+      {showInfo && (
+        <CompanyInfoPopover company={company} onClose={() => setShowInfo(false)} />
+      )}
 
       {/* Status */}
       <div className="mt-2 flex items-center gap-1.5 text-sm text-foreground-secondary">
