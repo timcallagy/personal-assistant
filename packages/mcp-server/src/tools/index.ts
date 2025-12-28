@@ -723,25 +723,53 @@ ${post.content}`;
   },
 
   update_job_company: {
-    description: 'Update a tracked company.',
+    description: 'Update a tracked company including metadata (description, headquarters, foundedYear, revenueEstimate, stage).',
     schema: z.object({
       id: z.coerce.number().describe('Company ID'),
       name: z.string().optional().describe('New company name'),
       career_url: z.string().optional().describe('New career page URL'),
       active: z.string().optional().describe('Set active status (true/false)'),
+      description: z.string().optional().describe('What the company does (1 sentence)'),
+      headquarters: z.string().optional().describe('Company HQ location'),
+      founded_year: z.coerce.number().optional().describe('Year company was founded'),
+      revenue_estimate: z.string().optional().describe('Revenue estimate (e.g. "$10M-$50M", "$1B+")'),
+      stage: z.string().optional().describe('Funding stage: pre-seed, seed, series-a, series-b, series-c, growth, public, acquired'),
     }),
-    handler: async (args: { id: number; name?: string; career_url?: string; active?: string }) => {
+    handler: async (args: {
+      id: number;
+      name?: string;
+      career_url?: string;
+      active?: string;
+      description?: string;
+      headquarters?: string;
+      founded_year?: number;
+      revenue_estimate?: string;
+      stage?: string;
+    }) => {
       const company = await apiClient.updateCompany(args.id, {
         name: args.name,
         careerPageUrl: args.career_url,
         active: args.active !== undefined ? args.active === 'true' : undefined,
+        description: args.description,
+        headquarters: args.headquarters,
+        foundedYear: args.founded_year,
+        revenueEstimate: args.revenue_estimate,
+        stage: args.stage,
       });
 
       const status = company.active ? 'active' : 'inactive';
-      return `Company ${company.id} updated!
-- Name: ${company.name}
-- Career URL: ${company.careerPageUrl}
-- Status: ${status}`;
+      const parts = [
+        `Company ${company.id} updated!`,
+        `- Name: ${company.name}`,
+        `- Career URL: ${company.careerPageUrl}`,
+        `- Status: ${status}`,
+      ];
+      if (company.description) parts.push(`- Description: ${company.description}`);
+      if (company.headquarters) parts.push(`- HQ: ${company.headquarters}`);
+      if (company.foundedYear) parts.push(`- Founded: ${company.foundedYear}`);
+      if (company.revenueEstimate) parts.push(`- Revenue: ${company.revenueEstimate}`);
+      if (company.stage) parts.push(`- Stage: ${company.stage}`);
+      return parts.join('\n');
     },
   },
 

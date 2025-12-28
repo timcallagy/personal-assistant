@@ -455,7 +455,16 @@ export const apiClient = {
 
   async updateCompany(
     id: number,
-    data: { name?: string; careerPageUrl?: string; active?: boolean }
+    data: {
+      name?: string;
+      careerPageUrl?: string;
+      active?: boolean;
+      description?: string;
+      headquarters?: string;
+      foundedYear?: number;
+      revenueEstimate?: string;
+      stage?: string;
+    }
   ): Promise<Company> {
     const result = await request<{ company: Company }>(`/jobs/companies/${id}`, {
       method: 'PUT',

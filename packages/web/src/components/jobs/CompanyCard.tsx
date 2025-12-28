@@ -80,14 +80,23 @@ function CompanyInfoPopover({ company, onClose }: { company: Company; onClose: (
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   const hasMetadata = company.description || company.headquarters || company.foundedYear || company.revenueEstimate || company.stage;
 
   return (
-    <div
-      ref={popoverRef}
-      className="absolute left-0 top-full mt-1 z-50 w-72 p-3 bg-background-secondary border border-background-tertiary rounded-lg shadow-lg"
-      onClick={(e) => e.stopPropagation()}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div
+        ref={popoverRef}
+        className="w-80 max-w-[90vw] p-4 bg-background-secondary border border-background-tertiary rounded-lg shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
       <div className="flex items-center justify-between mb-2">
         <h5 className="font-medium text-foreground">{company.name}</h5>
         <button
@@ -137,6 +146,7 @@ function CompanyInfoPopover({ company, onClose }: { company: Company; onClose: (
           No company info available
         </p>
       )}
+      </div>
     </div>
   );
 }
