@@ -510,4 +510,189 @@ export const blogImages = {
     }),
 };
 
+// ============================================
+// Job Tracker Types
+// ============================================
+
+export type JobStatus = 'new' | 'viewed' | 'applied' | 'dismissed';
+
+export type AtsType = 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters' | 'workday' | 'custom';
+
+export interface Company {
+  id: number;
+  name: string;
+  careerPageUrl: string;
+  atsType: AtsType | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobListing {
+  id: number;
+  companyId: number;
+  companyName?: string;
+  externalId: string;
+  title: string;
+  url: string;
+  location: string | null;
+  remote: boolean;
+  department: string | null;
+  description: string | null;
+  salaryRange?: string | null;
+  postedAt: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  status: JobStatus;
+  matchScore: number | null;
+}
+
+export interface JobProfile {
+  id: number;
+  keywords: string[];
+  titles: string[];
+  locations: string[];
+  remoteOnly: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrawlLog {
+  id: number;
+  companyId: number;
+  companyName?: string;
+  startedAt: string;
+  completedAt: string | null;
+  status: 'running' | 'success' | 'failed';
+  jobsFound: number;
+  newJobs: number;
+  error: string | null;
+}
+
+export interface JobStats {
+  totalJobs: number;
+  totalCompanies: number;
+  newSinceLastRefresh: number;
+  applicationsSubmitted: number;
+  lastRefreshAt: string | null;
+}
+
+// Job Tracker Filter Types
+export interface JobListingsFilter {
+  companyId?: number;
+  status?: JobStatus;
+  minScore?: number;
+  limit?: number;
+  offset?: number;
+  locationInclude?: string[];
+  locationExclude?: string[];
+}
+
+export interface CompaniesFilter {
+  activeOnly?: boolean;
+}
+
+// Job Tracker Response Types
+export interface CompaniesResponse {
+  companies: Company[];
+  total: number;
+}
+
+export interface JobListingsResponse {
+  listings: JobListing[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface JobProfileResponse {
+  profile: JobProfile | null;
+}
+
+export interface CrawlResponse {
+  crawlId: number;
+  companiesCrawled: number;
+  totalJobsFound: number;
+  newJobsFound: number;
+}
+
+export interface CrawlLogsResponse {
+  logs: CrawlLog[];
+  total: number;
+}
+
+// Job Tracker API
+export const jobs = {
+  // Companies
+  listCompanies: (filters?: CompaniesFilter) => {
+    const params = new URLSearchParams();
+    if (filters?.activeOnly !== undefined) {
+      params.set('activeOnly', String(filters.activeOnly));
+    }
+    const query = params.toString();
+    return request<CompaniesResponse>(`/jobs/companies${query ? `?${query}` : ''}`);
+  },
+
+  getCompany: (id: number) => request<Company>(`/jobs/companies/${id}`),
+
+  // Listings
+  listJobs: (filters?: JobListingsFilter) => {
+    const params = new URLSearchParams();
+    if (filters?.companyId) params.set('companyId', String(filters.companyId));
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.minScore) params.set('minScore', String(filters.minScore));
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    if (filters?.locationInclude?.length) {
+      params.set('locationInclude', filters.locationInclude.join(','));
+    }
+    if (filters?.locationExclude?.length) {
+      params.set('locationExclude', filters.locationExclude.join(','));
+    }
+    const query = params.toString();
+    return request<JobListingsResponse>(`/jobs/listings${query ? `?${query}` : ''}`);
+  },
+
+  getJob: (id: number) => request<JobListing>(`/jobs/listings/${id}`),
+
+  updateJobStatus: (id: number, status: JobStatus) =>
+    request<JobListing>(`/jobs/listings/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+
+  batchUpdateStatus: (ids: number[], status: JobStatus) =>
+    request<{ updated: number }>('/jobs/listings/batch-status', {
+      method: 'PUT',
+      body: JSON.stringify({ ids, status }),
+    }),
+
+  getStats: () => request<JobStats>('/jobs/listings/stats'),
+
+  // Profile
+  getProfile: () => request<JobProfileResponse>('/jobs/profile'),
+
+  updateProfile: (data: Partial<Omit<JobProfile, 'id' | 'createdAt' | 'updatedAt'>>) =>
+    request<JobProfile>('/jobs/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  // Crawling
+  crawlAll: () =>
+    request<CrawlResponse>('/jobs/crawl/all', {
+      method: 'POST',
+    }),
+
+  crawlCompany: (companyId: number) =>
+    request<CrawlResponse>(`/jobs/crawl/${companyId}`, {
+      method: 'POST',
+    }),
+
+  getCrawlLogs: (limit?: number) => {
+    const params = limit ? `?limit=${limit}` : '';
+    return request<CrawlLogsResponse>(`/jobs/crawl/logs${params}`);
+  },
+};
+
 export { ApiError };

@@ -10,6 +10,7 @@ const navItems = [
   { href: '/pa/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/pa/notes', label: 'Notes', icon: '📝' },
   { href: '/pa/actions', label: 'Actions', icon: '✅' },
+  { href: '/pa/jobs', label: 'Jobs', icon: '💼' },
   { href: '/pa/blog', label: 'Blog', icon: '✍️' },
 ];
 
