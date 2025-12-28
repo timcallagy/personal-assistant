@@ -15,14 +15,14 @@ interface CompanyCardProps {
 }
 
 function getCrawlStatus(company: Company, lastCrawl: CrawlLog | null): CrawlStatus {
-  if (company.atsType === 'custom' || company.atsType === null) {
-    return 'manual';
+  if (lastCrawl?.status === 'success') {
+    return 'working';
   }
   if (lastCrawl?.status === 'failed') {
     return 'error';
   }
-  if (lastCrawl?.status === 'success') {
-    return 'working';
+  if (company.atsType === 'custom' || company.atsType === null) {
+    return 'manual';
   }
   return 'never';
 }
