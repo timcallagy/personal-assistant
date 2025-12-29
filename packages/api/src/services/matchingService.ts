@@ -33,24 +33,51 @@ export function calculateMatchScore(
     return 50;
   }
 
-  let score = 0;
+  // Check which preferences the user has actually set
+  const hasTitles = profile.titles && profile.titles.length > 0;
+  const hasKeywords = profile.keywords && profile.keywords.length > 0;
+  const hasLocations = profile.locations && profile.locations.length > 0;
+  const hasRemotePreference = profile.remoteOnly === true;
 
-  // Title match (40 points)
-  score += calculateTitleScore(job.title, profile.titles);
-
-  // Keyword match (30 points)
-  const content = buildSearchableContent(job);
-  score += calculateKeywordScore(content, profile.keywords);
-
-  // Location match (20 points)
-  if (job.location) {
-    score += calculateLocationScore(job.location, profile.locations);
+  // If no preferences set at all, return neutral score
+  if (!hasTitles && !hasKeywords && !hasLocations && !hasRemotePreference) {
+    return 50;
   }
 
-  // Remote preference match (10 points)
-  score += calculateRemoteScore(job.remote ?? false, profile.remoteOnly);
+  let earnedPoints = 0;
+  let possiblePoints = 0;
 
-  return Math.min(MAX_SCORE, score);
+  // Title match (40 points) - only count if user has title preferences
+  if (hasTitles) {
+    possiblePoints += SCORING_WEIGHTS.TITLE_MATCH;
+    earnedPoints += calculateTitleScore(job.title, profile.titles);
+  }
+
+  // Keyword match (30 points) - only count if user has keyword preferences
+  if (hasKeywords) {
+    possiblePoints += SCORING_WEIGHTS.KEYWORD_MATCH;
+    const content = buildSearchableContent(job);
+    earnedPoints += calculateKeywordScore(content, profile.keywords);
+  }
+
+  // Location match (20 points) - only count if user has location preferences
+  if (hasLocations && job.location) {
+    possiblePoints += SCORING_WEIGHTS.LOCATION_MATCH;
+    earnedPoints += calculateLocationScore(job.location, profile.locations);
+  }
+
+  // Remote preference match (10 points) - only count if user wants remote only
+  if (hasRemotePreference) {
+    possiblePoints += SCORING_WEIGHTS.REMOTE_MATCH;
+    earnedPoints += calculateRemoteScore(job.remote ?? false, profile.remoteOnly);
+  }
+
+  // Calculate percentage score based on preferences actually set
+  if (possiblePoints === 0) {
+    return 50;
+  }
+
+  return Math.round((earnedPoints / possiblePoints) * 100);
 }
 
 /**
@@ -58,10 +85,6 @@ export function calculateMatchScore(
  * Awards full points if any profile title is found in the job title
  */
 function calculateTitleScore(jobTitle: string, profileTitles: string[]): number {
-  if (profileTitles.length === 0) {
-    return SCORING_WEIGHTS.TITLE_MATCH; // No preferences = full points
-  }
-
   const titleLower = jobTitle.toLowerCase();
 
   for (const title of profileTitles) {
@@ -89,10 +112,6 @@ function calculateTitleScore(jobTitle: string, profileTitles: string[]): number 
  * Awards points based on how many keywords are found (up to 30 points)
  */
 function calculateKeywordScore(content: string, keywords: string[]): number {
-  if (keywords.length === 0) {
-    return SCORING_WEIGHTS.KEYWORD_MATCH; // No preferences = full points
-  }
-
   const contentLower = content.toLowerCase();
   const matchedKeywords = keywords.filter((k) => contentLower.includes(k.toLowerCase()));
 
@@ -105,10 +124,6 @@ function calculateKeywordScore(content: string, keywords: string[]): number {
  * Calculate location match score
  */
 function calculateLocationScore(jobLocation: string, profileLocations: string[]): number {
-  if (profileLocations.length === 0) {
-    return SCORING_WEIGHTS.LOCATION_MATCH; // No preferences = full points
-  }
-
   const locationLower = jobLocation.toLowerCase();
 
   for (const loc of profileLocations) {

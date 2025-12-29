@@ -26,6 +26,21 @@ function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength).trim() + '...';
 }
 
+function stripHtml(text: string): string {
+  // Decode HTML entities
+  const decoded = text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+  // Strip HTML tags
+  const stripped = decoded.replace(/<[^>]*>/g, ' ');
+  // Normalize whitespace
+  return stripped.replace(/\s+/g, ' ').trim();
+}
+
 export function JobCard({ job, onMarkApplied, onMarkNotInterested, isNew }: JobCardProps) {
   const locationText = job.location || (job.remote ? 'Remote' : 'Location not specified');
   const isApplied = job.status === 'applied';
@@ -57,7 +72,7 @@ export function JobCard({ job, onMarkApplied, onMarkNotInterested, isNew }: JobC
         {/* Description */}
         {job.description && (
           <p className="text-sm text-foreground-secondary">
-            {truncateText(job.description, 150)}
+            {truncateText(stripHtml(job.description), 150)}
           </p>
         )}
 
