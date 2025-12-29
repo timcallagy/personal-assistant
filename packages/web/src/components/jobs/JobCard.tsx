@@ -3,7 +3,7 @@
 import { JobListing } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { MatchScoreBadge } from './MatchScoreBadge';
+import { ScoreBreakdownPopover } from './ScoreBreakdownPopover';
 
 interface JobCardProps {
   job: JobListing;
@@ -50,7 +50,7 @@ export function JobCard({ job, onMarkApplied, onMarkNotInterested, isNew }: JobC
       <div className="p-4 space-y-3">
         {/* Header */}
         <div className="flex items-start gap-3">
-          <MatchScoreBadge score={job.matchScore} />
+          <ScoreBreakdownPopover jobId={job.id} score={job.matchScore} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-foreground truncate">

@@ -184,3 +184,172 @@ export function calculateMatchScores(
 
   return scores;
 }
+
+/**
+ * Score breakdown for a single category
+ */
+export interface ScoreBreakdownCategory {
+  name: string;
+  earned: number;
+  possible: number;
+  percentage: number;
+  details: string;
+}
+
+/**
+ * Full score breakdown
+ */
+export interface ScoreBreakdown {
+  totalScore: number;
+  categories: ScoreBreakdownCategory[];
+  profilePreferences: {
+    titles: string[];
+    keywords: string[];
+    locations: string[];
+    remoteOnly: boolean;
+  };
+}
+
+/**
+ * Calculate match score with detailed breakdown
+ */
+export function calculateMatchScoreWithBreakdown(
+  job: { title: string; description?: string | null; department?: string | null; location?: string | null; remote?: boolean },
+  profile: JobProfile | null
+): ScoreBreakdown {
+  const categories: ScoreBreakdownCategory[] = [];
+
+  // Default profile preferences for display
+  const profilePreferences = {
+    titles: profile?.titles || [],
+    keywords: profile?.keywords || [],
+    locations: profile?.locations || [],
+    remoteOnly: profile?.remoteOnly || false,
+  };
+
+  // If no profile, return neutral score
+  if (!profile) {
+    return {
+      totalScore: 50,
+      categories: [{
+        name: 'No Profile',
+        earned: 50,
+        possible: 100,
+        percentage: 50,
+        details: 'No job profile set - showing neutral score',
+      }],
+      profilePreferences,
+    };
+  }
+
+  // Check which preferences the user has actually set
+  const hasTitles = profile.titles && profile.titles.length > 0;
+  const hasKeywords = profile.keywords && profile.keywords.length > 0;
+  const hasLocations = profile.locations && profile.locations.length > 0;
+  const hasRemotePreference = profile.remoteOnly === true;
+
+  // If no preferences set at all, return neutral score
+  if (!hasTitles && !hasKeywords && !hasLocations && !hasRemotePreference) {
+    return {
+      totalScore: 50,
+      categories: [{
+        name: 'No Preferences',
+        earned: 50,
+        possible: 100,
+        percentage: 50,
+        details: 'No preferences configured - showing neutral score',
+      }],
+      profilePreferences,
+    };
+  }
+
+  let totalEarned = 0;
+  let totalPossible = 0;
+
+  // Title match
+  if (hasTitles) {
+    const titleScore = calculateTitleScore(job.title, profile.titles);
+    const titleLower = job.title.toLowerCase();
+    const matchedTitles = profile.titles.filter(t => titleLower.includes(t.toLowerCase()));
+
+    totalPossible += SCORING_WEIGHTS.TITLE_MATCH;
+    totalEarned += titleScore;
+
+    categories.push({
+      name: 'Title Match',
+      earned: titleScore,
+      possible: SCORING_WEIGHTS.TITLE_MATCH,
+      percentage: Math.round((titleScore / SCORING_WEIGHTS.TITLE_MATCH) * 100),
+      details: matchedTitles.length > 0
+        ? `Matched: ${matchedTitles.join(', ')}`
+        : `No match for: ${profile.titles.join(', ')}`,
+    });
+  }
+
+  // Keyword match
+  if (hasKeywords) {
+    const content = buildSearchableContent(job);
+    const contentLower = content.toLowerCase();
+    const keywordScore = calculateKeywordScore(content, profile.keywords);
+    const matchedKeywords = profile.keywords.filter(k => contentLower.includes(k.toLowerCase()));
+
+    totalPossible += SCORING_WEIGHTS.KEYWORD_MATCH;
+    totalEarned += keywordScore;
+
+    categories.push({
+      name: 'Keywords',
+      earned: keywordScore,
+      possible: SCORING_WEIGHTS.KEYWORD_MATCH,
+      percentage: Math.round((keywordScore / SCORING_WEIGHTS.KEYWORD_MATCH) * 100),
+      details: matchedKeywords.length > 0
+        ? `Found: ${matchedKeywords.join(', ')}`
+        : `None found from: ${profile.keywords.join(', ')}`,
+    });
+  }
+
+  // Location match
+  if (hasLocations && job.location) {
+    const locationScore = calculateLocationScore(job.location, profile.locations);
+    const locationLower = job.location.toLowerCase();
+    const matchedLocations = profile.locations.filter(l => locationLower.includes(l.toLowerCase()));
+
+    totalPossible += SCORING_WEIGHTS.LOCATION_MATCH;
+    totalEarned += locationScore;
+
+    categories.push({
+      name: 'Location',
+      earned: locationScore,
+      possible: SCORING_WEIGHTS.LOCATION_MATCH,
+      percentage: Math.round((locationScore / SCORING_WEIGHTS.LOCATION_MATCH) * 100),
+      details: matchedLocations.length > 0
+        ? `Matched: ${matchedLocations.join(', ')}`
+        : `"${job.location}" doesn't match: ${profile.locations.join(', ')}`,
+    });
+  }
+
+  // Remote preference
+  if (hasRemotePreference) {
+    const remoteScore = calculateRemoteScore(job.remote ?? false, profile.remoteOnly);
+
+    totalPossible += SCORING_WEIGHTS.REMOTE_MATCH;
+    totalEarned += remoteScore;
+
+    categories.push({
+      name: 'Remote',
+      earned: remoteScore,
+      possible: SCORING_WEIGHTS.REMOTE_MATCH,
+      percentage: Math.round((remoteScore / SCORING_WEIGHTS.REMOTE_MATCH) * 100),
+      details: job.remote ? 'Job is remote ✓' : 'Job is not remote',
+    });
+  }
+
+  const totalScore = totalPossible > 0
+    ? Math.round((totalEarned / totalPossible) * 100)
+    : 50;
+
+  return {
+    totalScore,
+    categories,
+    profilePreferences,
+  };
+}

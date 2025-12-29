@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { useJobs } from '@/hooks/useJobs';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useJobStats } from '@/hooks/useJobStats';
-import { jobs as jobsApi, JobListing, CrawlLog } from '@/lib/api';
+import { jobs as jobsApi, JobListing, CrawlLog, CrawlResult } from '@/lib/api';
 import { StatsBar } from '@/components/jobs/StatsBar';
 import { JobFilters, JobsPageFilters } from '@/components/jobs/JobFilters';
 import { TopJobsSection } from '@/components/jobs/TopJobsSection';
@@ -190,21 +190,33 @@ export default function JobsPage() {
 
   // Error state for crawl operations
   const [crawlError, setCrawlError] = useState<string | null>(null);
+  const [failedCrawls, setFailedCrawls] = useState<CrawlResult[]>([]);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
 
   // Handlers
   const handleRefreshAll = useCallback(async () => {
     // Store current job IDs before refresh
     setPreviousJobIds(new Set(jobs.map((j) => j.id)));
     setCrawlError(null);
+    setFailedCrawls([]);
+    setShowErrorDetails(false);
 
     try {
-      await crawlAll();
+      const response = await crawlAll();
+
+      // Check for failed companies
+      const failed = response.results?.filter((r) => r.status === 'failed') || [];
+      if (failed.length > 0) {
+        setFailedCrawls(failed);
+        setCrawlError(`${failed.length} of ${response.companiesCrawled} companies failed to crawl`);
+      }
+
       await Promise.all([refreshJobs(), refreshStats()]);
 
       // Refresh crawl logs
       try {
-        const response = await jobsApi.getCrawlLogs(100);
-        setCrawlLogs(response.logs);
+        const logsResponse = await jobsApi.getCrawlLogs(100);
+        setCrawlLogs(logsResponse.logs);
       } catch {
         // Silently fail
       }
@@ -214,8 +226,8 @@ export default function JobsPage() {
       // Still try to refresh data in case partial success
       await Promise.all([refreshJobs(), refreshStats()]);
       try {
-        const response = await jobsApi.getCrawlLogs(100);
-        setCrawlLogs(response.logs);
+        const logsResponse = await jobsApi.getCrawlLogs(100);
+        setCrawlLogs(logsResponse.logs);
       } catch {
         // Silently fail
       }
@@ -324,19 +336,48 @@ export default function JobsPage() {
 
         {/* Error */}
         {(error || crawlError) && (
-          <div className="p-4 bg-error/20 text-error rounded-md">
-            {error || crawlError}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-4"
-              onClick={() => {
-                setCrawlError(null);
-                refreshJobs();
-              }}
-            >
-              Dismiss
-            </Button>
+          <div className="p-4 bg-error/20 text-error rounded-md space-y-2">
+            <div className="flex items-center justify-between">
+              <span>{error || crawlError}</span>
+              <div className="flex gap-2">
+                {failedCrawls.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowErrorDetails(!showErrorDetails)}
+                  >
+                    {showErrorDetails ? 'Hide Details' : 'Details'}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCrawlError(null);
+                    setFailedCrawls([]);
+                    setShowErrorDetails(false);
+                    refreshJobs();
+                  }}
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+            {showErrorDetails && failedCrawls.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-error/30">
+                <p className="text-sm font-medium mb-2">Failed companies:</p>
+                <ul className="text-sm space-y-1">
+                  {failedCrawls.map((result) => (
+                    <li key={result.companyId} className="flex justify-between">
+                      <span>{result.companyName}</span>
+                      <span className="text-foreground-muted truncate ml-4 max-w-xs">
+                        {result.error || 'Unknown error'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

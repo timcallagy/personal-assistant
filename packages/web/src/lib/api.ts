@@ -586,6 +586,29 @@ export interface JobStats {
   lastRefreshAt: string | null;
 }
 
+export interface ScoreBreakdownCategory {
+  name: string;
+  earned: number;
+  possible: number;
+  percentage: number;
+  details: string;
+}
+
+export interface ScoreBreakdown {
+  totalScore: number;
+  categories: ScoreBreakdownCategory[];
+  profilePreferences: {
+    titles: string[];
+    keywords: string[];
+    locations: string[];
+    remoteOnly: boolean;
+  };
+}
+
+export interface ScoreBreakdownResponse {
+  breakdown: ScoreBreakdown;
+}
+
 // Job Tracker Filter Types
 export interface JobListingsFilter {
   companyId?: number;
@@ -618,11 +641,20 @@ export interface JobProfileResponse {
   profile: JobProfile | null;
 }
 
+export interface CrawlResult {
+  companyId: number;
+  companyName: string;
+  status: 'success' | 'failed';
+  jobsFound: number;
+  newJobs: number;
+  error?: string;
+}
+
 export interface CrawlResponse {
-  crawlId: number;
   companiesCrawled: number;
   totalJobsFound: number;
   newJobsFound: number;
+  results: CrawlResult[];
 }
 
 export interface CrawlLogsResponse {
@@ -677,6 +709,9 @@ export const jobs = {
     }),
 
   getStats: () => request<JobStats>('/jobs/listings/stats'),
+
+  getScoreBreakdown: (id: number) =>
+    request<ScoreBreakdownResponse>(`/jobs/listings/${id}/score-breakdown`),
 
   // Profile
   getProfile: () => request<JobProfileResponse>('/jobs/profile'),

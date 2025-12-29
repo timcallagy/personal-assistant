@@ -5,6 +5,8 @@
 
 import { Request, Response } from 'express';
 import * as jobListingService from '../services/jobListingService.js';
+import * as jobProfileService from '../services/jobProfileService.js';
+import { calculateMatchScoreWithBreakdown } from '../services/matchingService.js';
 import { notFoundError, validationError } from '../lib/errors.js';
 import { JOB_STATUS, type JobStatus } from '@pa/shared';
 
@@ -166,6 +168,47 @@ export const jobListingsController = {
     res.json({
       success: true,
       data: { stats },
+    });
+  },
+
+  /**
+   * Get score breakdown for a job listing
+   * GET /jobs/listings/:id/score-breakdown
+   */
+  getScoreBreakdown: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user!.id;
+    const idParam = req.params['id'] ?? '';
+    const listingId = parseInt(idParam, 10);
+
+    if (isNaN(listingId)) {
+      throw notFoundError('Job listing', idParam);
+    }
+
+    // Get the job listing
+    const listing = await jobListingService.getJobListing(userId, listingId);
+
+    if (!listing) {
+      throw notFoundError('Job listing', String(listingId));
+    }
+
+    // Get the user's profile
+    const profile = await jobProfileService.getJobProfile(userId);
+
+    // Calculate the score breakdown
+    const breakdown = calculateMatchScoreWithBreakdown(
+      {
+        title: listing.title,
+        description: listing.description,
+        department: listing.department,
+        location: listing.location,
+        remote: listing.remote,
+      },
+      profile
+    );
+
+    res.json({
+      success: true,
+      data: { breakdown },
     });
   },
 };
