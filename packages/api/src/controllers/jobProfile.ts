@@ -16,7 +16,7 @@ export const jobProfileController = {
 
   upsert: async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
-    const { keywords, titles, locations, remoteOnly } = req.body;
+    const { keywords, titles, locations, locationExclusions, remoteOnly } = req.body;
 
     // Validate arrays
     const errors: Record<string, string> = {};
@@ -33,6 +33,10 @@ export const jobProfileController = {
       errors['locations'] = 'Locations must be an array of strings';
     }
 
+    if (locationExclusions !== undefined && !Array.isArray(locationExclusions)) {
+      errors['locationExclusions'] = 'Location exclusions must be an array of strings';
+    }
+
     if (Object.keys(errors).length > 0) {
       throw validationError('Invalid profile data', errors);
     }
@@ -41,6 +45,7 @@ export const jobProfileController = {
       keywords: keywords?.map((k: unknown) => String(k).trim()).filter(Boolean),
       titles: titles?.map((t: unknown) => String(t).trim()).filter(Boolean),
       locations: locations?.map((l: unknown) => String(l).trim()).filter(Boolean),
+      locationExclusions: locationExclusions?.map((l: unknown) => String(l).trim()).filter(Boolean),
       remoteOnly: remoteOnly !== undefined ? Boolean(remoteOnly) : undefined,
     });
 
