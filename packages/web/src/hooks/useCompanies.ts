@@ -25,7 +25,7 @@ export function useCompanies(): UseCompaniesReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await jobsApi.listCompanies();
+      const response = await jobsApi.listCompanies({ activeOnly: true });
       setCompanies(response.companies);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to fetch companies';

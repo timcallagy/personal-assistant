@@ -635,7 +635,7 @@ export const jobs = {
   listCompanies: (filters?: CompaniesFilter) => {
     const params = new URLSearchParams();
     if (filters?.activeOnly !== undefined) {
-      params.set('activeOnly', String(filters.activeOnly));
+      params.set('active', String(filters.activeOnly));
     }
     const query = params.toString();
     return request<CompaniesResponse>(`/jobs/companies${query ? `?${query}` : ''}`);
