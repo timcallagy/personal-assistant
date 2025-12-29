@@ -63,9 +63,8 @@ async function getBrowser(): Promise<Browser> {
         '--mute-audio',
         '--no-first-run',
         '--safebrowsing-disable-auto-update',
-        // Limit memory usage
+        // Limit memory usage (removed --single-process as it's unstable)
         '--js-flags=--max-old-space-size=256',
-        '--single-process',
       ],
     });
   }

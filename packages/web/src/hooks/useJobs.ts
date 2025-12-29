@@ -60,7 +60,16 @@ export function useJobs(options: UseJobsOptions = {}): UseJobsReturn {
       setTotal(response.total);
       setOffset(isLoadMore ? offset + LIMIT : LIMIT);
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Failed to fetch jobs';
+      let message: string;
+      if (err instanceof ApiError) {
+        message = err.message;
+      } else if (err instanceof Error) {
+        // Network errors, timeouts, etc.
+        message = `Failed to fetch jobs: ${err.message}`;
+      } else {
+        message = 'Failed to fetch jobs: Unknown error';
+      }
+      console.error('Jobs fetch error:', err);
       setError(message);
     } finally {
       setLoading(false);
