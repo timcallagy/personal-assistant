@@ -75,7 +75,35 @@ export async function getJobListings(
     where.matchScore = { gte: minScore };
   }
 
-  // Get listings first (we'll filter by location in memory since it requires checking both title and location)
+  // If no location filters, use efficient database pagination
+  const hasLocationFilters = (locationInclude && locationInclude.length > 0) ||
+                              (locationExclude && locationExclude.length > 0);
+
+  if (!hasLocationFilters) {
+    // Efficient path: let the database handle pagination
+    const [listings, total] = await Promise.all([
+      prisma.jobListing.findMany({
+        where,
+        include: {
+          company: {
+            select: { name: true },
+          },
+        },
+        orderBy: [{ matchScore: 'desc' }, { firstSeenAt: 'desc' }],
+        skip: offset,
+        take: limit,
+      }),
+      prisma.jobListing.count({ where }),
+    ]);
+
+    return {
+      listings: listings.map(transformListing),
+      total,
+    };
+  }
+
+  // Location filters require in-memory filtering (check both title and location)
+  // Note: This is less efficient but necessary for location filtering across title+location
   let listings = await prisma.jobListing.findMany({
     where,
     include: {
