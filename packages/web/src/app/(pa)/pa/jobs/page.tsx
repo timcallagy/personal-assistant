@@ -137,6 +137,18 @@ export default function JobsPage() {
     });
   }, [jobs, crawlLogs, pageFilters, newJobIds]);
 
+  // Filter companies based on crawl status
+  const filteredCompanies = useMemo(() => {
+    if (pageFilters.crawlStatus === 'all') {
+      return companies;
+    }
+    return companies.filter((company) => {
+      const log = crawlLogs.find((l) => l.companyId === company.id);
+      const status = log?.status === 'success' ? 'working' : log?.status === 'failed' ? 'error' : 'never';
+      return pageFilters.crawlStatus === status;
+    });
+  }, [companies, crawlLogs, pageFilters.crawlStatus]);
+
   // Top 10 jobs (highest match score, excluding applied)
   const topJobs = useMemo(() => {
     return filteredJobs
@@ -154,15 +166,13 @@ export default function JobsPage() {
       companyJobsMap.set(job.companyId, [...existing, job]);
     });
 
-    return companies
-      .filter((company) => companyJobsMap.has(company.id) || true)
-      .map((company) => ({
-        company,
-        jobs: (companyJobsMap.get(company.id) || []).sort(
-          (a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0)
-        ),
-      }));
-  }, [companies, filteredJobs]);
+    return filteredCompanies.map((company) => ({
+      company,
+      jobs: (companyJobsMap.get(company.id) || []).sort(
+        (a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0)
+      ),
+    }));
+  }, [filteredCompanies, filteredJobs]);
 
   // Handlers
   const handleRefreshAll = useCallback(async () => {
@@ -307,7 +317,7 @@ export default function JobsPage() {
 
         {/* Company Jobs Section (Split View) */}
         <CompanyJobsSection
-          companies={companies}
+          companies={filteredCompanies}
           jobsByCompany={jobsByCompany}
           crawlLogs={crawlLogs}
           loading={loading}
