@@ -11,6 +11,21 @@ import { getJobProfile } from './jobProfileService.js';
 import type { ParsedJob, CrawlResult } from './atsParsers/types.js';
 import type { CrawlLog, JobProfile } from '@pa/shared';
 
+// Simple mutex to prevent concurrent crawl operations (memory protection)
+let isCrawling = false;
+
+async function acquireCrawlLock(): Promise<boolean> {
+  if (isCrawling) {
+    return false;
+  }
+  isCrawling = true;
+  return true;
+}
+
+function releaseCrawlLock(): void {
+  isCrawling = false;
+}
+
 /**
  * Transform Prisma crawl log to API format
  */
@@ -143,9 +158,9 @@ async function saveJobs(
 }
 
 /**
- * Crawl a single company's career page
+ * Internal crawl function (used by both single and batch crawls)
  */
-export async function crawlCompany(
+async function crawlCompanyInternal(
   userId: number,
   companyId: number
 ): Promise<CrawlResult> {
@@ -208,6 +223,25 @@ export async function crawlCompany(
 }
 
 /**
+ * Crawl a single company's career page (public API with lock)
+ */
+export async function crawlCompany(
+  userId: number,
+  companyId: number
+): Promise<CrawlResult> {
+  // Acquire lock to prevent concurrent crawl operations
+  if (!await acquireCrawlLock()) {
+    throw new Error('A crawl operation is already in progress. Please wait and try again.');
+  }
+
+  try {
+    return await crawlCompanyInternal(userId, companyId);
+  } finally {
+    releaseCrawlLock();
+  }
+}
+
+/**
  * Crawl all active companies for a user
  */
 export async function crawlAllCompanies(userId: number): Promise<{
@@ -215,37 +249,46 @@ export async function crawlAllCompanies(userId: number): Promise<{
   totalJobsFound: number;
   newJobsFound: number;
 }> {
-  const companies = await prisma.company.findMany({
-    where: { userId, active: true },
-    orderBy: { name: 'asc' },
-  });
-
-  const results: CrawlResult[] = [];
-  let totalJobsFound = 0;
-  let newJobsFound = 0;
-
-  // Crawl sequentially to avoid overwhelming servers
-  for (const company of companies) {
-    const result = await crawlCompany(userId, company.id);
-    results.push(result);
-
-    if (result.status === 'success') {
-      totalJobsFound += result.jobsFound;
-      newJobsFound += result.newJobs;
-    }
-
-    // Small delay between companies
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Acquire lock to prevent concurrent crawl operations
+  if (!await acquireCrawlLock()) {
+    throw new Error('A crawl operation is already in progress. Please wait and try again.');
   }
 
-  // Close browser after batch crawl
-  await closeBrowser();
+  try {
+    const companies = await prisma.company.findMany({
+      where: { userId, active: true },
+      orderBy: { name: 'asc' },
+    });
 
-  return {
-    results,
-    totalJobsFound,
-    newJobsFound,
-  };
+    const results: CrawlResult[] = [];
+    let totalJobsFound = 0;
+    let newJobsFound = 0;
+
+    // Crawl sequentially to avoid overwhelming servers
+    for (const company of companies) {
+      const result = await crawlCompanyInternal(userId, company.id);
+      results.push(result);
+
+      if (result.status === 'success') {
+        totalJobsFound += result.jobsFound;
+        newJobsFound += result.newJobs;
+      }
+
+      // Small delay between companies
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    // Close browser after batch crawl
+    await closeBrowser();
+
+    return {
+      results,
+      totalJobsFound,
+      newJobsFound,
+    };
+  } finally {
+    releaseCrawlLock();
+  }
 }
 
 /**
@@ -280,35 +323,60 @@ export async function getCrawlLogs(
 
 /**
  * Recalculate match scores for all jobs when profile changes
+ * Processes in batches to avoid memory issues with large job counts
  */
 export async function recalculateMatchScores(userId: number): Promise<number> {
   const profile = await getJobProfile(userId);
-
-  const jobs = await prisma.jobListing.findMany({
-    where: { company: { userId } },
-    include: { company: true },
-  });
+  const BATCH_SIZE = 100;
 
   let updated = 0;
-  for (const job of jobs) {
-    const newScore = calculateMatchScore(
-      {
-        title: job.title,
-        description: job.description,
-        department: job.department,
-        location: job.location,
-        remote: job.remote,
-      },
-      profile
-    );
+  let offset = 0;
+  let hasMore = true;
 
-    if (newScore !== job.matchScore) {
-      await prisma.jobListing.update({
-        where: { id: job.id },
-        data: { matchScore: newScore },
-      });
-      updated++;
+  while (hasMore) {
+    // Fetch jobs in batches
+    const jobs = await prisma.jobListing.findMany({
+      where: { company: { userId } },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        department: true,
+        location: true,
+        remote: true,
+        matchScore: true,
+      },
+      skip: offset,
+      take: BATCH_SIZE,
+    });
+
+    if (jobs.length < BATCH_SIZE) {
+      hasMore = false;
     }
+
+    // Process batch
+    for (const job of jobs) {
+      const newScore = calculateMatchScore(
+        {
+          title: job.title,
+          description: job.description,
+          department: job.department,
+          location: job.location,
+          remote: job.remote,
+        },
+        profile
+      );
+
+      if (newScore !== job.matchScore) {
+        await prisma.jobListing.update({
+          where: { id: job.id },
+          data: { matchScore: newScore },
+        });
+        updated++;
+      }
+    }
+
+    offset += BATCH_SIZE;
   }
 
   return updated;

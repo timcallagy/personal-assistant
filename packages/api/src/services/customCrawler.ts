@@ -11,17 +11,62 @@ import type { ParsedJob } from './atsParsers/types.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CheerioSelection = cheerio.Cheerio<any>;
 
-// Singleton browser instance
+// Singleton browser instance with auto-close timeout
 let browser: Browser | null = null;
+let browserCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+
+// Auto-close browser after 30 seconds of inactivity to free memory
+const BROWSER_IDLE_TIMEOUT = 30000;
 
 /**
- * Get or create browser instance
+ * Schedule browser auto-close after idle period
+ */
+function scheduleBrowserClose(): void {
+  if (browserCloseTimeout) {
+    clearTimeout(browserCloseTimeout);
+  }
+  browserCloseTimeout = setTimeout(async () => {
+    await closeBrowser();
+  }, BROWSER_IDLE_TIMEOUT);
+}
+
+/**
+ * Cancel scheduled browser close (when starting a new crawl)
+ */
+function cancelBrowserClose(): void {
+  if (browserCloseTimeout) {
+    clearTimeout(browserCloseTimeout);
+    browserCloseTimeout = null;
+  }
+}
+
+/**
+ * Get or create browser instance with memory-efficient settings
  */
 async function getBrowser(): Promise<Browser> {
+  cancelBrowserClose();
   if (!browser || !browser.isConnected()) {
     browser = await chromium.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        // Memory optimizations
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-first-run',
+        '--safebrowsing-disable-auto-update',
+        // Limit memory usage
+        '--js-flags=--max-old-space-size=256',
+        '--single-process',
+      ],
     });
   }
   return browser;
@@ -31,8 +76,13 @@ async function getBrowser(): Promise<Browser> {
  * Close the browser instance
  */
 export async function closeBrowser(): Promise<void> {
+  cancelBrowserClose();
   if (browser) {
-    await browser.close();
+    try {
+      await browser.close();
+    } catch {
+      // Browser may already be closed
+    }
     browser = null;
   }
 }
@@ -343,6 +393,8 @@ export async function crawlCustomPage(careerUrl: string): Promise<ParsedJob[]> {
     return jobs;
   } finally {
     await page.close();
+    // Schedule browser close after idle period to free memory
+    scheduleBrowserClose();
   }
 }
 
