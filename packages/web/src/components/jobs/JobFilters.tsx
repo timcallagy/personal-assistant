@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 export interface JobsPageFilters {
   search: string;
-  crawlStatus: 'all' | 'working' | 'manual';
+  crawlStatus: 'all' | 'working' | 'error' | 'never';
   showNewOnly: boolean;
   showApplied: boolean;
 }
@@ -66,9 +66,10 @@ export function JobFilters({ filters, onChange }: JobFiltersProps) {
         onChange={(e) => updateFilter('crawlStatus', e.target.value as JobsPageFilters['crawlStatus'])}
         className="px-3 py-2 text-sm bg-background border border-background-tertiary rounded-md text-foreground focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
       >
-        <option value="all">All Companies</option>
-        <option value="working">Auto-crawl Only</option>
-        <option value="manual">Manual Only</option>
+        <option value="all">All crawl statuses</option>
+        <option value="working">Working</option>
+        <option value="error">Error</option>
+        <option value="never">Never crawled</option>
       </select>
 
       {/* New Only Checkbox */}

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Company, CrawlLog, CompanyStage } from '@/lib/api';
 
-type CrawlStatus = 'working' | 'manual' | 'error' | 'never';
+type CrawlStatus = 'working' | 'error' | 'never';
 
 interface CompanyCardProps {
   company: Company;
@@ -15,15 +15,12 @@ interface CompanyCardProps {
   isRefreshing: boolean;
 }
 
-function getCrawlStatus(company: Company, lastCrawl: CrawlLog | null): CrawlStatus {
+function getCrawlStatus(lastCrawl: CrawlLog | null): CrawlStatus {
   if (lastCrawl?.status === 'success') {
     return 'working';
   }
   if (lastCrawl?.status === 'failed') {
     return 'error';
-  }
-  if (company.atsType === 'custom' || company.atsType === null) {
-    return 'manual';
   }
   return 'never';
 }
@@ -61,8 +58,7 @@ function formatStage(stage: CompanyStage | null): string {
 }
 
 const statusConfig: Record<CrawlStatus, { dot: string; text: string }> = {
-  working: { dot: 'bg-success', text: 'Auto-crawl working' },
-  manual: { dot: 'bg-warning', text: 'Manual check needed' },
+  working: { dot: 'bg-success', text: 'Working' },
   error: { dot: 'bg-error', text: 'Crawl error' },
   never: { dot: 'bg-foreground-muted', text: 'Never crawled' },
 };
@@ -161,7 +157,7 @@ export function CompanyCard({
   isRefreshing,
 }: CompanyCardProps) {
   const [showInfo, setShowInfo] = useState(false);
-  const crawlStatus = getCrawlStatus(company, lastCrawl);
+  const crawlStatus = getCrawlStatus(lastCrawl);
   const { dot, text } = statusConfig[crawlStatus];
 
   return (

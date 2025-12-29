@@ -118,13 +118,9 @@ export default function JobsPage() {
 
       // Crawl status filter
       if (pageFilters.crawlStatus !== 'all') {
-        const company = companies.find((c) => c.id === job.companyId);
-        if (company) {
-          const log = crawlLogs.find((l) => l.companyId === company.id);
-          const isWorking = log?.status === 'success';
-          if (pageFilters.crawlStatus === 'working' && !isWorking) return false;
-          if (pageFilters.crawlStatus === 'manual' && isWorking) return false;
-        }
+        const log = crawlLogs.find((l) => l.companyId === job.companyId);
+        const status = log?.status === 'success' ? 'working' : log?.status === 'failed' ? 'error' : 'never';
+        if (pageFilters.crawlStatus !== status) return false;
       }
 
       // New only filter
@@ -139,7 +135,7 @@ export default function JobsPage() {
 
       return true;
     });
-  }, [jobs, companies, crawlLogs, pageFilters, newJobIds]);
+  }, [jobs, crawlLogs, pageFilters, newJobIds]);
 
   // Top 10 jobs (highest match score, excluding applied)
   const topJobs = useMemo(() => {
