@@ -24,11 +24,11 @@ export default function JobPreferencesPage() {
   useEffect(() => {
     if (profile) {
       setFormData({
-        keywords: profile.keywords,
-        titles: profile.titles,
-        locations: profile.locations,
-        locationExclusions: profile.locationExclusions,
-        remoteOnly: profile.remoteOnly,
+        keywords: profile.keywords || [],
+        titles: profile.titles || [],
+        locations: profile.locations || [],
+        locationExclusions: profile.locationExclusions || [],
+        remoteOnly: profile.remoteOnly ?? false,
       });
       setHasChanges(false);
     }
@@ -38,11 +38,11 @@ export default function JobPreferencesPage() {
   useEffect(() => {
     if (profile) {
       const changed =
-        JSON.stringify(formData.keywords) !== JSON.stringify(profile.keywords) ||
-        JSON.stringify(formData.titles) !== JSON.stringify(profile.titles) ||
-        JSON.stringify(formData.locations) !== JSON.stringify(profile.locations) ||
-        JSON.stringify(formData.locationExclusions) !== JSON.stringify(profile.locationExclusions) ||
-        formData.remoteOnly !== profile.remoteOnly;
+        JSON.stringify(formData.keywords) !== JSON.stringify(profile.keywords || []) ||
+        JSON.stringify(formData.titles) !== JSON.stringify(profile.titles || []) ||
+        JSON.stringify(formData.locations) !== JSON.stringify(profile.locations || []) ||
+        JSON.stringify(formData.locationExclusions) !== JSON.stringify(profile.locationExclusions || []) ||
+        formData.remoteOnly !== (profile.remoteOnly ?? false);
       setHasChanges(changed);
     }
   }, [formData, profile]);
