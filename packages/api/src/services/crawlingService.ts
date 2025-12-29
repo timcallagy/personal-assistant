@@ -27,6 +27,28 @@ function releaseCrawlLock(): void {
 }
 
 /**
+ * Clean up stuck crawl logs (running for more than 5 minutes)
+ * These are likely from crashed crawl operations
+ */
+async function cleanupStuckCrawlLogs(): Promise<number> {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+
+  const result = await prisma.crawlLog.updateMany({
+    where: {
+      status: 'running',
+      startedAt: { lt: fiveMinutesAgo },
+    },
+    data: {
+      status: 'failed',
+      completedAt: new Date(),
+      error: 'Crawl timed out or server restarted',
+    },
+  });
+
+  return result.count;
+}
+
+/**
  * Transform Prisma crawl log to API format
  */
 function transformCrawlLog(log: {
@@ -229,6 +251,9 @@ export async function crawlCompany(
   userId: number,
   companyId: number
 ): Promise<CrawlResult> {
+  // Clean up any stuck crawl logs before starting
+  await cleanupStuckCrawlLogs();
+
   // Acquire lock to prevent concurrent crawl operations
   if (!await acquireCrawlLock()) {
     throw new Error('A crawl operation is already in progress. Please wait and try again.');
@@ -249,6 +274,9 @@ export async function crawlAllCompanies(userId: number): Promise<{
   totalJobsFound: number;
   newJobsFound: number;
 }> {
+  // Clean up any stuck crawl logs before starting
+  await cleanupStuckCrawlLogs();
+
   // Acquire lock to prevent concurrent crawl operations
   if (!await acquireCrawlLock()) {
     throw new Error('A crawl operation is already in progress. Please wait and try again.');

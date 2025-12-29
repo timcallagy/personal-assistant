@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Company, CrawlLog, CompanyStage } from '@/lib/api';
 
-type CrawlStatus = 'working' | 'error' | 'never';
+type CrawlStatus = 'working' | 'running' | 'error' | 'never';
 
 interface CompanyCardProps {
   company: Company;
@@ -18,6 +18,15 @@ interface CompanyCardProps {
 function getCrawlStatus(lastCrawl: CrawlLog | null): CrawlStatus {
   if (lastCrawl?.status === 'success') {
     return 'working';
+  }
+  if (lastCrawl?.status === 'running') {
+    // Check if it's been stuck for more than 5 minutes (likely crashed)
+    const startedAt = new Date(lastCrawl.startedAt);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (startedAt < fiveMinutesAgo) {
+      return 'error'; // Treat stuck crawls as errors
+    }
+    return 'running';
   }
   if (lastCrawl?.status === 'failed') {
     return 'error';
@@ -59,6 +68,7 @@ function formatStage(stage: CompanyStage | null): string {
 
 const statusConfig: Record<CrawlStatus, { dot: string; text: string }> = {
   working: { dot: 'bg-success', text: 'Working' },
+  running: { dot: 'bg-warning', text: 'Crawling...' },
   error: { dot: 'bg-error', text: 'Crawl error' },
   never: { dot: 'bg-foreground-muted', text: 'Never crawled' },
 };

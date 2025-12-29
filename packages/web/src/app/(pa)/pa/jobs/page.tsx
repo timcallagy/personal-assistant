@@ -102,6 +102,20 @@ export default function JobsPage() {
     }
   }, [jobs, previousJobIds]);
 
+  // Helper to determine crawl status from log (handles stuck 'running' logs)
+  const getCrawlStatusFromLog = useCallback((log: CrawlLog | undefined): 'working' | 'error' | 'never' => {
+    if (!log) return 'never';
+    if (log.status === 'success') return 'working';
+    if (log.status === 'failed') return 'error';
+    if (log.status === 'running') {
+      // Treat stuck crawls (>5 min) as errors
+      const startedAt = new Date(log.startedAt);
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      return startedAt < fiveMinutesAgo ? 'error' : 'working';
+    }
+    return 'never';
+  }, []);
+
   // Filter jobs based on page filters
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
@@ -119,7 +133,7 @@ export default function JobsPage() {
       // Crawl status filter
       if (pageFilters.crawlStatus !== 'all') {
         const log = crawlLogs.find((l) => l.companyId === job.companyId);
-        const status = log?.status === 'success' ? 'working' : log?.status === 'failed' ? 'error' : 'never';
+        const status = getCrawlStatusFromLog(log);
         if (pageFilters.crawlStatus !== status) return false;
       }
 
@@ -135,7 +149,7 @@ export default function JobsPage() {
 
       return true;
     });
-  }, [jobs, crawlLogs, pageFilters, newJobIds]);
+  }, [jobs, crawlLogs, pageFilters, newJobIds, getCrawlStatusFromLog]);
 
   // Filter companies based on crawl status
   const filteredCompanies = useMemo(() => {
@@ -144,10 +158,10 @@ export default function JobsPage() {
     }
     return companies.filter((company) => {
       const log = crawlLogs.find((l) => l.companyId === company.id);
-      const status = log?.status === 'success' ? 'working' : log?.status === 'failed' ? 'error' : 'never';
+      const status = getCrawlStatusFromLog(log);
       return pageFilters.crawlStatus === status;
     });
-  }, [companies, crawlLogs, pageFilters.crawlStatus]);
+  }, [companies, crawlLogs, pageFilters.crawlStatus, getCrawlStatusFromLog]);
 
   // Top 10 jobs (highest match score, excluding applied)
   const topJobs = useMemo(() => {
@@ -174,20 +188,37 @@ export default function JobsPage() {
     }));
   }, [filteredCompanies, filteredJobs]);
 
+  // Error state for crawl operations
+  const [crawlError, setCrawlError] = useState<string | null>(null);
+
   // Handlers
   const handleRefreshAll = useCallback(async () => {
     // Store current job IDs before refresh
     setPreviousJobIds(new Set(jobs.map((j) => j.id)));
+    setCrawlError(null);
 
-    await crawlAll();
-    await Promise.all([refreshJobs(), refreshStats()]);
-
-    // Refresh crawl logs
     try {
-      const response = await jobsApi.getCrawlLogs(100);
-      setCrawlLogs(response.logs);
-    } catch {
-      // Silently fail
+      await crawlAll();
+      await Promise.all([refreshJobs(), refreshStats()]);
+
+      // Refresh crawl logs
+      try {
+        const response = await jobsApi.getCrawlLogs(100);
+        setCrawlLogs(response.logs);
+      } catch {
+        // Silently fail
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to refresh jobs';
+      setCrawlError(message);
+      // Still try to refresh data in case partial success
+      await Promise.all([refreshJobs(), refreshStats()]);
+      try {
+        const response = await jobsApi.getCrawlLogs(100);
+        setCrawlLogs(response.logs);
+      } catch {
+        // Silently fail
+      }
     }
   }, [jobs, crawlAll, refreshJobs, refreshStats]);
 
@@ -292,16 +323,19 @@ export default function JobsPage() {
         <JobFilters filters={pageFilters} onChange={setPageFilters} />
 
         {/* Error */}
-        {error && (
+        {(error || crawlError) && (
           <div className="p-4 bg-error/20 text-error rounded-md">
-            {error}
+            {error || crawlError}
             <Button
               variant="ghost"
               size="sm"
               className="ml-4"
-              onClick={refreshJobs}
+              onClick={() => {
+                setCrawlError(null);
+                refreshJobs();
+              }}
             >
-              Retry
+              Dismiss
             </Button>
           </div>
         )}
