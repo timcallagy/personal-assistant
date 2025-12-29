@@ -512,6 +512,7 @@ export interface JobProfile {
   keywords: string[];
   titles: string[];
   locations: string[];
+  locationExclusions: string[];
   remoteOnly: boolean;
   createdAt: Date;
   updatedAt: Date;

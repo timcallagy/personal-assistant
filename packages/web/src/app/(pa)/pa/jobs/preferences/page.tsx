@@ -13,6 +13,7 @@ export default function JobPreferencesPage() {
     keywords: [] as string[],
     titles: [] as string[],
     locations: [] as string[],
+    locationExclusions: [] as string[],
     remoteOnly: false,
   });
 
@@ -26,6 +27,7 @@ export default function JobPreferencesPage() {
         keywords: profile.keywords,
         titles: profile.titles,
         locations: profile.locations,
+        locationExclusions: profile.locationExclusions,
         remoteOnly: profile.remoteOnly,
       });
       setHasChanges(false);
@@ -39,6 +41,7 @@ export default function JobPreferencesPage() {
         JSON.stringify(formData.keywords) !== JSON.stringify(profile.keywords) ||
         JSON.stringify(formData.titles) !== JSON.stringify(profile.titles) ||
         JSON.stringify(formData.locations) !== JSON.stringify(profile.locations) ||
+        JSON.stringify(formData.locationExclusions) !== JSON.stringify(profile.locationExclusions) ||
         formData.remoteOnly !== profile.remoteOnly;
       setHasChanges(changed);
     }
@@ -108,6 +111,14 @@ export default function JobPreferencesPage() {
               values={formData.locations}
               onChange={(locations) => setFormData((prev) => ({ ...prev, locations }))}
               placeholder="Type a location and press Enter..."
+            />
+
+            <TagInput
+              label="Location Exclusions"
+              values={formData.locationExclusions}
+              onChange={(locationExclusions) => setFormData((prev) => ({ ...prev, locationExclusions }))}
+              placeholder="e.g. US, India, Washington..."
+              description="Jobs with locations matching these will be filtered out"
             />
 
             <div>

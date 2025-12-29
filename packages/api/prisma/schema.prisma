@@ -244,14 +244,15 @@ model Company {
 }
 
 model JobProfile {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @unique @map("user_id")
-  keywords   String[] @default([])
-  titles     String[] @default([])
-  locations  String[] @default([])
-  remoteOnly Boolean  @default(false) @map("remote_only")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique @map("user_id")
+  keywords           String[] @default([])
+  titles             String[] @default([])
+  locations          String[] @default([])
+  locationExclusions String[] @default([]) @map("location_exclusions")
+  remoteOnly         Boolean  @default(false) @map("remote_only")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

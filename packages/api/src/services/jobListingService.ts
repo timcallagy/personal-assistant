@@ -47,12 +47,23 @@ function transformListing(listing: {
 
 /**
  * Get job listings for a user with filtering
+ * Automatically applies the user's profile locationExclusions
  */
 export async function getJobListings(
   userId: number,
   filter: JobListingsFilter = {}
 ): Promise<{ listings: JobListing[]; total: number }> {
   const { companyId, status, minScore, limit = 50, offset = 0, locationInclude, locationExclude } = filter;
+
+  // Fetch user's profile to get their location exclusions
+  const profile = await prisma.jobProfile.findUnique({
+    where: { userId },
+    select: { locationExclusions: true },
+  });
+
+  // Merge profile exclusions with any filter exclusions
+  const profileExclusions = profile?.locationExclusions || [];
+  const mergedExclusions = [...new Set([...(locationExclude || []), ...profileExclusions])];
 
   // Build where clause
   const where: {
@@ -77,7 +88,7 @@ export async function getJobListings(
 
   // If no location filters, use efficient database pagination
   const hasLocationFilters = (locationInclude && locationInclude.length > 0) ||
-                              (locationExclude && locationExclude.length > 0);
+                              mergedExclusions.length > 0;
 
   if (!hasLocationFilters) {
     // Efficient path: let the database handle pagination
@@ -122,10 +133,10 @@ export async function getJobListings(
     });
   }
 
-  if (locationExclude && locationExclude.length > 0) {
+  if (mergedExclusions.length > 0) {
     listings = listings.filter((listing) => {
       const searchText = `${listing.title} ${listing.location || ''}`.toLowerCase();
-      return !locationExclude.some((loc) => searchText.includes(loc.toLowerCase()));
+      return !mergedExclusions.some((loc) => searchText.includes(loc.toLowerCase()));
     });
   }
 

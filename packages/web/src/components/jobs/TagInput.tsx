@@ -7,10 +7,11 @@ interface TagInputProps {
   values: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
+  description?: string;
   error?: string;
 }
 
-export function TagInput({ label, values, onChange, placeholder, error }: TagInputProps) {
+export function TagInput({ label, values, onChange, placeholder, description, error }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -39,6 +40,9 @@ export function TagInput({ label, values, onChange, placeholder, error }: TagInp
         <label className="block text-sm font-medium text-foreground mb-1.5">
           {label}
         </label>
+      )}
+      {description && (
+        <p className="text-sm text-foreground-muted mb-1.5">{description}</p>
       )}
       <div
         className={`flex flex-wrap gap-2 rounded-md border bg-background p-2 focus-within:ring-1 ${

@@ -10,6 +10,7 @@ function transformJobProfile(profile: {
   keywords: string[];
   titles: string[];
   locations: string[];
+  locationExclusions: string[];
   remoteOnly: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -19,6 +20,7 @@ function transformJobProfile(profile: {
     keywords: profile.keywords,
     titles: profile.titles,
     locations: profile.locations,
+    locationExclusions: profile.locationExclusions,
     remoteOnly: profile.remoteOnly,
     createdAt: profile.createdAt,
     updatedAt: profile.updatedAt,
@@ -47,6 +49,7 @@ export async function upsertJobProfile(
     keywords?: string[];
     titles?: string[];
     locations?: string[];
+    locationExclusions?: string[];
     remoteOnly?: boolean;
   }
 ): Promise<JobProfile> {
@@ -57,12 +60,14 @@ export async function upsertJobProfile(
       keywords: data.keywords || [],
       titles: data.titles || [],
       locations: data.locations || [],
+      locationExclusions: data.locationExclusions || [],
       remoteOnly: data.remoteOnly || false,
     },
     update: {
       ...(data.keywords !== undefined && { keywords: data.keywords }),
       ...(data.titles !== undefined && { titles: data.titles }),
       ...(data.locations !== undefined && { locations: data.locations }),
+      ...(data.locationExclusions !== undefined && { locationExclusions: data.locationExclusions }),
       ...(data.remoteOnly !== undefined && { remoteOnly: data.remoteOnly }),
     },
   });
