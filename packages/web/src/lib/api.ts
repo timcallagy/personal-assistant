@@ -561,6 +561,7 @@ export interface JobProfile {
   titles: string[];
   locations: string[];
   locationExclusions: string[];
+  titleExclusions: string[];
   remoteOnly: boolean;
   createdAt: string;
   updatedAt: string;

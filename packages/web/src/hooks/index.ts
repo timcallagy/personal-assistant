@@ -5,3 +5,4 @@ export { useActions } from './useActions';
 export { useDashboard } from './useDashboard';
 export { useBlogPosts } from './useBlogPosts';
 export { useBlogCategories } from './useBlogCategories';
+export { useJobs } from './useJobs';

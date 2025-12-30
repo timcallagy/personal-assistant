@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { Layout } from '@/components/layout';
 import { Card, CardHeader, CardTitle, CardContent, Badge, PriorityBadge, Button } from '@/components/ui';
-import { useDashboard } from '@/hooks';
+import { useDashboard, useJobs } from '@/hooks';
+import { TopJobsCard } from '@/components/jobs/TopJobsCard';
 
 export default function DashboardPage() {
   const { stats, loading, error, refresh } = useDashboard();
+  const { jobs, loading: jobsLoading } = useJobs({ initialFilters: { status: 'new' } });
 
   return (
     <Layout>
@@ -61,6 +63,11 @@ export default function DashboardPage() {
               <p className="text-foreground-muted text-sm">Tasks done</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Top Jobs */}
+        <div className="mt-8">
+          <TopJobsCard jobs={jobs} loading={jobsLoading} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2 mt-8">

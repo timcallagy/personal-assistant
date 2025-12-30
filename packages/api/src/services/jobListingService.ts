@@ -57,7 +57,7 @@ function transformListing(listing: {
 
 /**
  * Get job listings for a user with filtering
- * Automatically applies the user's profile locationExclusions
+ * Automatically applies the user's profile locationExclusions and titleExclusions
  */
 export async function getJobListings(
   userId: number,
@@ -65,15 +65,16 @@ export async function getJobListings(
 ): Promise<{ listings: JobListing[]; total: number }> {
   const { companyId, status, minScore, limit = 50, offset = 0, locationInclude, locationExclude } = filter;
 
-  // Fetch user's profile to get their location exclusions
+  // Fetch user's profile to get their exclusions
   const profile = await prisma.jobProfile.findUnique({
     where: { userId },
-    select: { locationExclusions: true },
+    select: { locationExclusions: true, titleExclusions: true },
   });
 
   // Merge profile exclusions with any filter exclusions
-  const profileExclusions = profile?.locationExclusions || [];
-  const mergedExclusions = [...new Set([...(locationExclude || []), ...profileExclusions])];
+  const profileLocationExclusions = profile?.locationExclusions || [];
+  const mergedExclusions = [...new Set([...(locationExclude || []), ...profileLocationExclusions])];
+  const titleExclusions = profile?.titleExclusions || [];
 
   // Build where clause
   const where: {
@@ -96,11 +97,12 @@ export async function getJobListings(
     where.matchScore = { gte: minScore };
   }
 
-  // If no location filters, use efficient database pagination
-  const hasLocationFilters = (locationInclude && locationInclude.length > 0) ||
-                              mergedExclusions.length > 0;
+  // If no filters requiring in-memory processing, use efficient database pagination
+  const hasInMemoryFilters = (locationInclude && locationInclude.length > 0) ||
+                              mergedExclusions.length > 0 ||
+                              titleExclusions.length > 0;
 
-  if (!hasLocationFilters) {
+  if (!hasInMemoryFilters) {
     // Efficient path: let the database handle pagination
     const [listings, total] = await Promise.all([
       prisma.jobListing.findMany({
@@ -147,6 +149,14 @@ export async function getJobListings(
     listings = listings.filter((listing) => {
       const searchText = `${listing.title} ${listing.location || ''}`;
       return !mergedExclusions.some((loc) => matchesAsWord(searchText, loc));
+    });
+  }
+
+  // Apply title exclusions (exact match, case-insensitive)
+  if (titleExclusions.length > 0) {
+    listings = listings.filter((listing) => {
+      const titleLower = listing.title.toLowerCase();
+      return !titleExclusions.some((excluded) => titleLower === excluded.toLowerCase());
     });
   }
 

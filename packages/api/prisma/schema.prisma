@@ -250,6 +250,7 @@ model JobProfile {
   titles             String[] @default([])
   locations          String[] @default([])
   locationExclusions String[] @default([]) @map("location_exclusions")
+  titleExclusions    String[] @default([]) @map("title_exclusions")
   remoteOnly         Boolean  @default(false) @map("remote_only")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")

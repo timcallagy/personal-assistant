@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/Button';
 import { useJobs } from '@/hooks/useJobs';
 import { useCompanies } from '@/hooks/useCompanies';
 import { useJobStats } from '@/hooks/useJobStats';
+import { useJobProfile } from '@/hooks/useJobProfile';
 import { jobs as jobsApi, JobListing, CrawlLog, CrawlResult } from '@/lib/api';
-import { StatsBar } from '@/components/jobs/StatsBar';
 import { JobFilters, JobsPageFilters } from '@/components/jobs/JobFilters';
 import { TopJobsSection } from '@/components/jobs/TopJobsSection';
 import { CompanyJobsSection } from '@/components/jobs/CompanyJobsSection';
-import { ConfirmDismissModal } from '@/components/jobs/ConfirmDismissModal';
+import { NotInterestedModal } from '@/components/jobs/NotInterestedModal';
 import { CrawlProgressIndicator } from '@/components/jobs/CrawlProgressIndicator';
 
 interface DismissModalState {
@@ -44,11 +44,12 @@ export default function JobsPage() {
     crawlingAll,
   } = useCompanies();
 
+  const { refresh: refreshStats } = useJobStats();
+
   const {
-    stats,
-    loading: statsLoading,
-    refresh: refreshStats,
-  } = useJobStats();
+    profile,
+    updateProfile,
+  } = useJobProfile();
 
   // Crawl logs state
   const [crawlLogs, setCrawlLogs] = useState<CrawlLog[]>([]);
@@ -324,18 +325,45 @@ export default function JobsPage() {
     });
   }, []);
 
-  const handleConfirmDismiss = useCallback(async () => {
+  const handleDismissWithOptions = useCallback(async (options: {
+    addTitleExclusion: boolean;
+    addLocationExclusion: boolean;
+  }) => {
     if (!dismissModal.job) return;
 
     setDismissModal((prev) => ({ ...prev, loading: true }));
     try {
+      // Add exclusions to profile if requested
+      if (options.addTitleExclusion || options.addLocationExclusion) {
+        const updates: { titleExclusions?: string[]; locationExclusions?: string[] } = {};
+
+        if (options.addTitleExclusion && dismissModal.job.title) {
+          const currentTitleExclusions = profile?.titleExclusions || [];
+          if (!currentTitleExclusions.some(t => t.toLowerCase() === dismissModal.job!.title.toLowerCase())) {
+            updates.titleExclusions = [...currentTitleExclusions, dismissModal.job.title];
+          }
+        }
+
+        if (options.addLocationExclusion && dismissModal.job.location) {
+          const currentLocationExclusions = profile?.locationExclusions || [];
+          if (!currentLocationExclusions.some(l => l.toLowerCase() === dismissModal.job!.location!.toLowerCase())) {
+            updates.locationExclusions = [...currentLocationExclusions, dismissModal.job.location];
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await updateProfile(updates);
+        }
+      }
+
       await markDismissed(dismissModal.job.id);
       await refreshStats();
+      await refreshJobs();
       setDismissModal({ isOpen: false, job: null, loading: false });
     } catch {
       setDismissModal((prev) => ({ ...prev, loading: false }));
     }
-  }, [dismissModal.job, markDismissed, refreshStats]);
+  }, [dismissModal.job, markDismissed, refreshStats, refreshJobs, profile, updateProfile]);
 
   const handleCloseDismissModal = useCallback(() => {
     if (!dismissModal.loading) {
@@ -379,9 +407,6 @@ export default function JobsPage() {
             </Button>
           </div>
         </div>
-
-        {/* Stats Bar */}
-        <StatsBar stats={stats} loading={statsLoading} />
 
         {/* Crawl Progress */}
         <CrawlProgressIndicator
@@ -476,15 +501,15 @@ export default function JobsPage() {
           loadingMore={loadingMore}
         />
 
-        {/* Confirm Dismiss Modal */}
-        <ConfirmDismissModal
-          isOpen={dismissModal.isOpen}
-          onClose={handleCloseDismissModal}
-          onConfirm={handleConfirmDismiss}
-          jobTitle={dismissModal.job?.title || ''}
-          companyName={dismissModal.job?.companyName || ''}
-          loading={dismissModal.loading}
-        />
+        {/* Not Interested Modal */}
+        {dismissModal.job && (
+          <NotInterestedModal
+            job={dismissModal.job}
+            isOpen={dismissModal.isOpen}
+            onClose={handleCloseDismissModal}
+            onDismiss={handleDismissWithOptions}
+          />
+        )}
       </div>
     </Layout>
   );

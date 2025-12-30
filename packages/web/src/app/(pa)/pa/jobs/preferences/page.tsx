@@ -14,6 +14,7 @@ export default function JobPreferencesPage() {
     titles: [] as string[],
     locations: [] as string[],
     locationExclusions: [] as string[],
+    titleExclusions: [] as string[],
     remoteOnly: false,
   });
 
@@ -28,6 +29,7 @@ export default function JobPreferencesPage() {
         titles: profile.titles || [],
         locations: profile.locations || [],
         locationExclusions: profile.locationExclusions || [],
+        titleExclusions: profile.titleExclusions || [],
         remoteOnly: profile.remoteOnly ?? false,
       });
       setHasChanges(false);
@@ -42,6 +44,7 @@ export default function JobPreferencesPage() {
         JSON.stringify(formData.titles) !== JSON.stringify(profile.titles || []) ||
         JSON.stringify(formData.locations) !== JSON.stringify(profile.locations || []) ||
         JSON.stringify(formData.locationExclusions) !== JSON.stringify(profile.locationExclusions || []) ||
+        JSON.stringify(formData.titleExclusions) !== JSON.stringify(profile.titleExclusions || []) ||
         formData.remoteOnly !== (profile.remoteOnly ?? false);
       setHasChanges(changed);
     }
@@ -119,6 +122,14 @@ export default function JobPreferencesPage() {
               onChange={(locationExclusions) => setFormData((prev) => ({ ...prev, locationExclusions }))}
               placeholder="e.g. US, India, Washington..."
               description="Jobs with locations matching these will be filtered out"
+            />
+
+            <TagInput
+              label="Job Title Exclusions"
+              values={formData.titleExclusions}
+              onChange={(titleExclusions) => setFormData((prev) => ({ ...prev, titleExclusions }))}
+              placeholder="e.g. Customer Success Manager, Sales Development Representative..."
+              description="Jobs with these exact titles (case-insensitive) will be filtered out"
             />
 
             <div>
