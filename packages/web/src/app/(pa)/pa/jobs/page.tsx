@@ -349,6 +349,15 @@ export default function JobsPage() {
                     {showErrorDetails ? 'Hide Details' : 'Details'}
                   </Button>
                 )}
+                {error && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => refreshJobs()}
+                  >
+                    Retry
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -356,7 +365,6 @@ export default function JobsPage() {
                     setCrawlError(null);
                     setFailedCrawls([]);
                     setShowErrorDetails(false);
-                    refreshJobs();
                   }}
                 >
                   Dismiss
