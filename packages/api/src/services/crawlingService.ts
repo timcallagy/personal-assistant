@@ -293,7 +293,8 @@ export async function crawlAllCompanies(userId: number): Promise<{
     let newJobsFound = 0;
 
     // Restart browser every N companies to prevent memory accumulation
-    const BROWSER_RESTART_INTERVAL = 10;
+    // Lower value = less memory usage but slower crawl
+    const BROWSER_RESTART_INTERVAL = 5;
 
     // Crawl sequentially to avoid overwhelming servers
     for (let i = 0; i < companies.length; i++) {
@@ -309,6 +310,10 @@ export async function crawlAllCompanies(userId: number): Promise<{
       // Restart browser periodically to free memory
       if ((i + 1) % BROWSER_RESTART_INTERVAL === 0 && i < companies.length - 1) {
         await closeBrowser();
+        // Hint to garbage collector to free memory
+        if (global.gc) {
+          global.gc();
+        }
       }
 
       // Small delay between companies
