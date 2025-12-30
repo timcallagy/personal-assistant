@@ -292,14 +292,23 @@ export async function crawlAllCompanies(userId: number): Promise<{
     let totalJobsFound = 0;
     let newJobsFound = 0;
 
+    // Restart browser every N companies to prevent memory accumulation
+    const BROWSER_RESTART_INTERVAL = 10;
+
     // Crawl sequentially to avoid overwhelming servers
-    for (const company of companies) {
+    for (let i = 0; i < companies.length; i++) {
+      const company = companies[i]!;
       const result = await crawlCompanyInternal(userId, company.id);
       results.push(result);
 
       if (result.status === 'success') {
         totalJobsFound += result.jobsFound;
         newJobsFound += result.newJobs;
+      }
+
+      // Restart browser periodically to free memory
+      if ((i + 1) % BROWSER_RESTART_INTERVAL === 0 && i < companies.length - 1) {
+        await closeBrowser();
       }
 
       // Small delay between companies
