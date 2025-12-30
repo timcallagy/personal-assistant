@@ -489,6 +489,7 @@ export const apiClient = {
     keywords?: string[];
     titles?: string[];
     locations?: string[];
+    locationExclusions?: string[];
     remoteOnly?: boolean;
   }): Promise<JobProfile> {
     const result = await request<{ profile: JobProfile }>('/jobs/profile', {

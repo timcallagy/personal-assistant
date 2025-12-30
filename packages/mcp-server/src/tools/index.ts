@@ -785,7 +785,7 @@ ${post.content}`;
   },
 
   get_job_profile: {
-    description: 'Get your job search profile (keywords, titles, locations, remote preference).',
+    description: 'Get your job search profile (keywords, titles, locations, exclusions, remote preference).',
     schema: z.object({}),
     handler: async () => {
       const profile = await apiClient.getJobProfile();
@@ -797,12 +797,14 @@ ${post.content}`;
       const keywords = profile.keywords.length > 0 ? profile.keywords.join(', ') : 'none';
       const titles = profile.titles.length > 0 ? profile.titles.join(', ') : 'none';
       const locations = profile.locations.length > 0 ? profile.locations.join(', ') : 'any';
+      const exclusions = profile.locationExclusions.length > 0 ? profile.locationExclusions.join(', ') : 'none';
       const remote = profile.remoteOnly ? 'Yes (remote only)' : 'No (open to on-site)';
 
       return `**Job Profile**
 - Keywords: ${keywords}
 - Titles: ${titles}
 - Locations: ${locations}
+- Location exclusions: ${exclusions}
 - Remote only: ${remote}
 
 Last updated: ${new Date(profile.updatedAt).toLocaleDateString()}`;
@@ -815,29 +817,34 @@ Last updated: ${new Date(profile.updatedAt).toLocaleDateString()}`;
       keywords: z.string().optional().describe('Comma-separated keywords (e.g., "operations, strategy, product")'),
       titles: z.string().optional().describe('Comma-separated job title patterns (e.g., "Head of, VP, Director")'),
       locations: z.string().optional().describe('Comma-separated locations (e.g., "London, Remote, UK")'),
+      location_exclusions: z.string().optional().describe('Comma-separated locations to exclude (e.g., "US, North America, Australia")'),
       remote_only: z.boolean().optional().describe('Only show remote jobs'),
     }),
     handler: async (args: {
       keywords?: string;
       titles?: string;
       locations?: string;
+      location_exclusions?: string;
       remote_only?: boolean;
     }) => {
       const profile = await apiClient.upsertJobProfile({
         keywords: args.keywords?.split(',').map((k) => k.trim()).filter(Boolean),
         titles: args.titles?.split(',').map((t) => t.trim()).filter(Boolean),
         locations: args.locations?.split(',').map((l) => l.trim()).filter(Boolean),
+        locationExclusions: args.location_exclusions?.split(',').map((l) => l.trim()).filter(Boolean),
         remoteOnly: args.remote_only,
       });
 
       const keywords = profile.keywords.length > 0 ? profile.keywords.join(', ') : 'none';
       const titles = profile.titles.length > 0 ? profile.titles.join(', ') : 'none';
       const locations = profile.locations.length > 0 ? profile.locations.join(', ') : 'any';
+      const exclusions = profile.locationExclusions.length > 0 ? profile.locationExclusions.join(', ') : 'none';
 
       return `Job profile updated!
 - Keywords: ${keywords}
 - Titles: ${titles}
 - Locations: ${locations}
+- Location exclusions: ${exclusions}
 - Remote only: ${profile.remoteOnly ? 'Yes' : 'No'}`;
     },
   },
