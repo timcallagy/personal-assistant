@@ -9,7 +9,7 @@ interface UseCompaniesReturn {
   error: string | null;
   refresh: () => Promise<void>;
   crawlCompany: (id: number) => Promise<CrawlResponse>;
-  crawlAll: () => Promise<CrawlResponse>;
+  crawlAll: (apiOnly?: boolean) => Promise<CrawlResponse>;
   crawlingCompanyId: number | null;
   crawlingAll: boolean;
 }
@@ -51,10 +51,10 @@ export function useCompanies(): UseCompaniesReturn {
     }
   }, [fetchCompanies]);
 
-  const crawlAll = useCallback(async (): Promise<CrawlResponse> => {
+  const crawlAll = useCallback(async (apiOnly?: boolean): Promise<CrawlResponse> => {
     setCrawlingAll(true);
     try {
-      const response = await jobsApi.crawlAll();
+      const response = await jobsApi.crawlAll(apiOnly);
       // Refresh companies list after crawl
       await fetchCompanies();
       return response;

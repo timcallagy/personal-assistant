@@ -268,11 +268,15 @@ export async function crawlCompany(
 
 /**
  * Crawl all active companies for a user
+ * @param userId The user ID
+ * @param apiOnly If true, only crawl companies with API-based ATS (greenhouse, lever, ashby)
+ *                Returns skipped company IDs that need browser-based crawling
  */
-export async function crawlAllCompanies(userId: number): Promise<{
+export async function crawlAllCompanies(userId: number, apiOnly: boolean = false): Promise<{
   results: CrawlResult[];
   totalJobsFound: number;
   newJobsFound: number;
+  skippedCompanyIds?: number[];
 }> {
   // Clean up any stuck crawl logs before starting
   await cleanupStuckCrawlLogs();
@@ -283,10 +287,20 @@ export async function crawlAllCompanies(userId: number): Promise<{
   }
 
   try {
-    const companies = await prisma.company.findMany({
+    const allCompanies = await prisma.company.findMany({
       where: { userId, active: true },
       orderBy: { name: 'asc' },
     });
+
+    // If apiOnly, filter to only companies with supported ATS parsers
+    const apiAtsTypes = ['greenhouse', 'lever', 'ashby'];
+    const companies = apiOnly
+      ? allCompanies.filter(c => c.atsType && apiAtsTypes.includes(c.atsType.toLowerCase()))
+      : allCompanies;
+
+    const skippedCompanyIds = apiOnly
+      ? allCompanies.filter(c => !c.atsType || !apiAtsTypes.includes(c.atsType.toLowerCase())).map(c => c.id)
+      : undefined;
 
     const results: CrawlResult[] = [];
     let totalJobsFound = 0;
@@ -307,8 +321,8 @@ export async function crawlAllCompanies(userId: number): Promise<{
         newJobsFound += result.newJobs;
       }
 
-      // Restart browser periodically to free memory
-      if ((i + 1) % BROWSER_RESTART_INTERVAL === 0 && i < companies.length - 1) {
+      // Restart browser periodically to free memory (only needed for non-API crawls)
+      if (!apiOnly && (i + 1) % BROWSER_RESTART_INTERVAL === 0 && i < companies.length - 1) {
         await closeBrowser();
         // Hint to garbage collector to free memory
         if (global.gc) {
@@ -320,13 +334,14 @@ export async function crawlAllCompanies(userId: number): Promise<{
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    // Close browser after batch crawl
+    // Close browser after batch crawl (in case any non-API crawls happened)
     await closeBrowser();
 
     return {
       results,
       totalJobsFound,
       newJobsFound,
+      skippedCompanyIds,
     };
   } finally {
     releaseCrawlLock();

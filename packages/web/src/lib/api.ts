@@ -655,6 +655,7 @@ export interface CrawlResponse {
   totalJobsFound: number;
   newJobsFound: number;
   results: CrawlResult[];
+  skippedCompanyIds?: number[];
 }
 
 export interface CrawlLogsResponse {
@@ -723,9 +724,10 @@ export const jobs = {
     }),
 
   // Crawling
-  crawlAll: () =>
+  crawlAll: (apiOnly?: boolean) =>
     request<CrawlResponse>('/jobs/crawl/all', {
       method: 'POST',
+      body: JSON.stringify({ apiOnly }),
     }),
 
   crawlCompany: (companyId: number) =>

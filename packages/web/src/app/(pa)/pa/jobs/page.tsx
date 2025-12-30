@@ -193,6 +193,14 @@ export default function JobsPage() {
   const [failedCrawls, setFailedCrawls] = useState<CrawlResult[]>([]);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
+  // Two-phase crawl progress
+  const [crawlProgress, setCrawlProgress] = useState<{
+    phase: 'idle' | 'api' | 'browser';
+    current: number;
+    total: number;
+    currentCompany?: string;
+  }>({ phase: 'idle', current: 0, total: 0 });
+
   // Handlers
   const handleRefreshAll = useCallback(async () => {
     // Store current job IDs before refresh
@@ -201,14 +209,59 @@ export default function JobsPage() {
     setFailedCrawls([]);
     setShowErrorDetails(false);
 
-    try {
-      const response = await crawlAll();
+    const allFailedCrawls: CrawlResult[] = [];
 
-      // Check for failed companies
-      const failed = response.results?.filter((r) => r.status === 'failed') || [];
-      if (failed.length > 0) {
-        setFailedCrawls(failed);
-        setCrawlError(`${failed.length} of ${response.companiesCrawled} companies failed to crawl`);
+    try {
+      // Phase 1: Crawl API-based companies (greenhouse, lever, ashby) in bulk
+      setCrawlProgress({ phase: 'api', current: 0, total: 0 });
+      const apiResponse = await crawlAll(true);
+
+      // Collect failed crawls from API phase
+      const apiFailed = apiResponse.results?.filter((r) => r.status === 'failed') || [];
+      allFailedCrawls.push(...apiFailed);
+
+      // Phase 2: Crawl browser-based companies one by one
+      const browserCompanyIds = apiResponse.skippedCompanyIds || [];
+      if (browserCompanyIds.length > 0) {
+        setCrawlProgress({ phase: 'browser', current: 0, total: browserCompanyIds.length });
+
+        for (let i = 0; i < browserCompanyIds.length; i++) {
+          const companyId = browserCompanyIds[i]!;
+          const company = companies.find((c) => c.id === companyId);
+          setCrawlProgress({
+            phase: 'browser',
+            current: i + 1,
+            total: browserCompanyIds.length,
+            currentCompany: company?.name,
+          });
+
+          try {
+            const result = await crawlCompany(companyId);
+            const failed = result.results?.filter((r) => r.status === 'failed') || [];
+            allFailedCrawls.push(...failed);
+          } catch {
+            // Add to failed list
+            allFailedCrawls.push({
+              companyId,
+              companyName: company?.name || `Company ${companyId}`,
+              status: 'failed',
+              jobsFound: 0,
+              newJobs: 0,
+              error: 'Failed to crawl',
+            });
+          }
+
+          // Small delay between browser crawls to let server recover
+          if (i < browserCompanyIds.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
+        }
+      }
+
+      // Show errors if any
+      if (allFailedCrawls.length > 0) {
+        setFailedCrawls(allFailedCrawls);
+        setCrawlError(`${allFailedCrawls.length} companies failed to crawl`);
       }
 
       await Promise.all([refreshJobs(), refreshStats()]);
@@ -223,6 +276,9 @@ export default function JobsPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to refresh jobs';
       setCrawlError(message);
+      if (allFailedCrawls.length > 0) {
+        setFailedCrawls(allFailedCrawls);
+      }
       // Still try to refresh data in case partial success
       await Promise.all([refreshJobs(), refreshStats()]);
       try {
@@ -231,8 +287,10 @@ export default function JobsPage() {
       } catch {
         // Silently fail
       }
+    } finally {
+      setCrawlProgress({ phase: 'idle', current: 0, total: 0 });
     }
-  }, [jobs, crawlAll, refreshJobs, refreshStats]);
+  }, [jobs, companies, crawlAll, crawlCompany, refreshJobs, refreshStats]);
 
   const handleCompanyRefresh = useCallback(
     async (companyId: number) => {
@@ -327,8 +385,11 @@ export default function JobsPage() {
 
         {/* Crawl Progress */}
         <CrawlProgressIndicator
-          isRunning={crawlingAll}
-          message="Refreshing all companies..."
+          isRunning={crawlingAll || crawlProgress.phase !== 'idle'}
+          phase={crawlProgress.phase}
+          current={crawlProgress.current}
+          total={crawlProgress.total}
+          currentCompany={crawlProgress.currentCompany}
         />
 
         {/* Filters */}

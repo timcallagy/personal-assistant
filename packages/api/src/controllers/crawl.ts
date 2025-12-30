@@ -32,11 +32,14 @@ export const crawlController = {
   /**
    * Trigger crawl for all active companies
    * POST /jobs/crawl/all
+   * Body: { apiOnly?: boolean } - If true, only crawl API-based ATS (greenhouse, lever, ashby)
    */
   crawlAll: async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
+    const apiOnly = req.body?.apiOnly === true;
 
-    const { results, totalJobsFound, newJobsFound } = await crawlingService.crawlAllCompanies(userId);
+    const { results, totalJobsFound, newJobsFound, skippedCompanyIds } =
+      await crawlingService.crawlAllCompanies(userId, apiOnly);
 
     res.json({
       success: true,
@@ -45,6 +48,7 @@ export const crawlController = {
         totalJobsFound,
         newJobsFound,
         results,
+        skippedCompanyIds,
       },
     });
   },
