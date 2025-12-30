@@ -7,6 +7,16 @@ import { prisma } from '../lib/prisma.js';
 import type { JobListing, JobStatus, JobListingsFilter } from '@pa/shared';
 
 /**
+ * Check if a term appears as a whole word in the text
+ * Uses word boundary matching to avoid "US" matching "Austin"
+ */
+function matchesAsWord(text: string, term: string): boolean {
+  const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`\\b${escapedTerm}\\b`, 'i');
+  return regex.test(text);
+}
+
+/**
  * Transform Prisma job listing to API format
  */
 function transformListing(listing: {
@@ -128,15 +138,15 @@ export async function getJobListings(
   // Apply location filters (check both location field and title)
   if (locationInclude && locationInclude.length > 0) {
     listings = listings.filter((listing) => {
-      const searchText = `${listing.title} ${listing.location || ''}`.toLowerCase();
-      return locationInclude.some((loc) => searchText.includes(loc.toLowerCase()));
+      const searchText = `${listing.title} ${listing.location || ''}`;
+      return locationInclude.some((loc) => matchesAsWord(searchText, loc));
     });
   }
 
   if (mergedExclusions.length > 0) {
     listings = listings.filter((listing) => {
-      const searchText = `${listing.title} ${listing.location || ''}`.toLowerCase();
-      return !mergedExclusions.some((loc) => searchText.includes(loc.toLowerCase()));
+      const searchText = `${listing.title} ${listing.location || ''}`;
+      return !mergedExclusions.some((loc) => matchesAsWord(searchText, loc));
     });
   }
 

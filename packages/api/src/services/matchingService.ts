@@ -7,6 +7,16 @@ import type { JobProfile } from '@pa/shared';
 import type { ParsedJob } from './atsParsers/types.js';
 
 /**
+ * Check if a term appears as a whole word in the text
+ * Uses word boundary matching to avoid "US" matching "Austin"
+ */
+function matchesAsWord(text: string, term: string): boolean {
+  const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`\\b${escapedTerm}\\b`, 'i');
+  return regex.test(text);
+}
+
+/**
  * Configuration for match scoring weights
  */
 const SCORING_WEIGHTS = {
@@ -122,12 +132,11 @@ function calculateKeywordScore(content: string, keywords: string[]): number {
 
 /**
  * Calculate location match score
+ * Uses word boundary matching to avoid "US" matching "Austin"
  */
 function calculateLocationScore(jobLocation: string, profileLocations: string[]): number {
-  const locationLower = jobLocation.toLowerCase();
-
   for (const loc of profileLocations) {
-    if (locationLower.includes(loc.toLowerCase())) {
+    if (matchesAsWord(jobLocation, loc)) {
       return SCORING_WEIGHTS.LOCATION_MATCH;
     }
   }
@@ -310,8 +319,7 @@ export function calculateMatchScoreWithBreakdown(
   // Location match
   if (hasLocations && job.location) {
     const locationScore = calculateLocationScore(job.location, profile.locations);
-    const locationLower = job.location.toLowerCase();
-    const matchedLocations = profile.locations.filter(l => locationLower.includes(l.toLowerCase()));
+    const matchedLocations = profile.locations.filter(l => matchesAsWord(job.location!, l));
 
     totalPossible += SCORING_WEIGHTS.LOCATION_MATCH;
     totalEarned += locationScore;
