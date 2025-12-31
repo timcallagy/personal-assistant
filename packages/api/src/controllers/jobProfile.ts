@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as jobProfileService from '../services/jobProfileService.js';
+import { recalculateMatchScores } from '../services/crawlingService.js';
 import { validationError } from '../lib/errors.js';
 
 export const jobProfileController = {
@@ -52,6 +53,11 @@ export const jobProfileController = {
       locationExclusions: locationExclusions?.map((l: unknown) => String(l).trim()).filter(Boolean),
       titleExclusions: titleExclusions?.map((t: unknown) => String(t).trim()).filter(Boolean),
       remoteOnly: remoteOnly !== undefined ? Boolean(remoteOnly) : undefined,
+    });
+
+    // Recalculate match scores in background (don't await to keep response fast)
+    recalculateMatchScores(userId).catch((err) => {
+      console.error('Failed to recalculate match scores:', err);
     });
 
     res.json({
