@@ -29,6 +29,19 @@ const SCORING_WEIGHTS = {
 const MAX_SCORE = 100;
 
 /**
+ * Calculate position-based score using linear decay with floor
+ * Formula: maxPoints × max(0.25, 1 - (position-1) / count)
+ * @param position 0-based position in the preference list
+ * @param count Total number of items in the preference list
+ * @param maxPoints Maximum points for this category
+ */
+function calculatePositionScore(position: number, count: number, maxPoints: number): number {
+  if (count <= 1) return maxPoints;
+  const decayFactor = Math.max(0.25, 1 - position / (count - 1 || 1));
+  return Math.round(maxPoints * decayFactor);
+}
+
+/**
  * Calculate a match score between a job and a user's profile
  * @param job The parsed job to score
  * @param profile The user's job profile preferences
@@ -91,57 +104,84 @@ export function calculateMatchScore(
 }
 
 /**
- * Calculate title match score
- * Awards full points if any profile title is found in the job title
+ * Calculate title match score using position-based weighting
+ * Earlier items in the profile list score higher
+ * Takes the best (highest position) match if multiple titles match
  */
 function calculateTitleScore(jobTitle: string, profileTitles: string[]): number {
   const titleLower = jobTitle.toLowerCase();
+  const count = profileTitles.length;
+  let bestScore = 0;
 
-  for (const title of profileTitles) {
-    if (titleLower.includes(title.toLowerCase())) {
-      return SCORING_WEIGHTS.TITLE_MATCH;
+  // Check for exact substring matches (full position-based score)
+  for (let i = 0; i < profileTitles.length; i++) {
+    const profileTitle = profileTitles[i]!;
+    if (titleLower.includes(profileTitle.toLowerCase())) {
+      const score = calculatePositionScore(i, count, SCORING_WEIGHTS.TITLE_MATCH);
+      bestScore = Math.max(bestScore, score);
     }
   }
 
-  // Partial match - check for overlapping words
+  if (bestScore > 0) return bestScore;
+
+  // Partial match - check for overlapping words (reduced score)
   const jobWords = new Set(titleLower.split(/\s+/).filter((w) => w.length > 2));
-  for (const title of profileTitles) {
-    const titleWords = title.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  for (let i = 0; i < profileTitles.length; i++) {
+    const profileTitle = profileTitles[i]!;
+    const titleWords = profileTitle.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
     const matchingWords = titleWords.filter((w) => jobWords.has(w));
     if (matchingWords.length > 0) {
-      // Award partial points based on word overlap
-      return Math.floor((matchingWords.length / titleWords.length) * SCORING_WEIGHTS.TITLE_MATCH);
+      // Position-based score multiplied by word overlap ratio
+      const positionScore = calculatePositionScore(i, count, SCORING_WEIGHTS.TITLE_MATCH);
+      const overlapRatio = matchingWords.length / titleWords.length;
+      const score = Math.floor(positionScore * overlapRatio);
+      bestScore = Math.max(bestScore, score);
     }
   }
 
-  return 0;
+  return bestScore;
 }
 
 /**
- * Calculate keyword match score
- * Awards points based on how many keywords are found (up to 30 points)
+ * Calculate keyword match score using position-based weighting
+ * Earlier keywords in the list contribute more points
+ * Sum of matched keyword scores, capped at max
  */
 function calculateKeywordScore(content: string, keywords: string[]): number {
   const contentLower = content.toLowerCase();
-  const matchedKeywords = keywords.filter((k) => contentLower.includes(k.toLowerCase()));
+  const count = keywords.length;
+  let totalScore = 0;
 
-  // Award 10 points per keyword, up to max
-  const pointsPerKeyword = 10;
-  return Math.min(SCORING_WEIGHTS.KEYWORD_MATCH, matchedKeywords.length * pointsPerKeyword);
-}
-
-/**
- * Calculate location match score
- * Uses word boundary matching to avoid "US" matching "Austin"
- */
-function calculateLocationScore(jobLocation: string, profileLocations: string[]): number {
-  for (const loc of profileLocations) {
-    if (matchesAsWord(jobLocation, loc)) {
-      return SCORING_WEIGHTS.LOCATION_MATCH;
+  for (let i = 0; i < keywords.length; i++) {
+    const keyword = keywords[i]!;
+    if (contentLower.includes(keyword.toLowerCase())) {
+      // Each keyword can contribute up to 10 points, scaled by position
+      const keywordMaxPoints = 10;
+      totalScore += calculatePositionScore(i, count, keywordMaxPoints);
     }
   }
 
-  return 0;
+  return Math.min(SCORING_WEIGHTS.KEYWORD_MATCH, totalScore);
+}
+
+/**
+ * Calculate location match score using position-based weighting
+ * Earlier locations in the list score higher
+ * Takes the best (highest position) match if multiple locations match
+ */
+function calculateLocationScore(jobLocation: string, profileLocations: string[]): number {
+  const count = profileLocations.length;
+  let bestScore = 0;
+
+  for (let i = 0; i < profileLocations.length; i++) {
+    const location = profileLocations[i]!;
+    if (matchesAsWord(jobLocation, location)) {
+      const score = calculatePositionScore(i, count, SCORING_WEIGHTS.LOCATION_MATCH);
+      bestScore = Math.max(bestScore, score);
+    }
+  }
+
+  return bestScore;
 }
 
 /**
@@ -279,19 +319,27 @@ export function calculateMatchScoreWithBreakdown(
   if (hasTitles) {
     const titleScore = calculateTitleScore(job.title, profile.titles);
     const titleLower = job.title.toLowerCase();
-    const matchedTitles = profile.titles.filter(t => titleLower.includes(t.toLowerCase()));
+    const matchedWithPositions = profile.titles
+      .map((t, i) => ({ title: t, position: i + 1 }))
+      .filter(({ title }) => titleLower.includes(title.toLowerCase()));
 
     totalPossible += SCORING_WEIGHTS.TITLE_MATCH;
     totalEarned += titleScore;
+
+    let details: string;
+    if (matchedWithPositions.length > 0) {
+      const best = matchedWithPositions[0]!;
+      details = `Matched: "${best.title}" (#${best.position} priority)`;
+    } else {
+      details = `No match for: ${profile.titles.slice(0, 3).join(', ')}${profile.titles.length > 3 ? '...' : ''}`;
+    }
 
     categories.push({
       name: 'Title Match',
       earned: titleScore,
       possible: SCORING_WEIGHTS.TITLE_MATCH,
       percentage: Math.round((titleScore / SCORING_WEIGHTS.TITLE_MATCH) * 100),
-      details: matchedTitles.length > 0
-        ? `Matched: ${matchedTitles.join(', ')}`
-        : `No match for: ${profile.titles.join(', ')}`,
+      details,
     });
   }
 
@@ -300,38 +348,54 @@ export function calculateMatchScoreWithBreakdown(
     const content = buildSearchableContent(job);
     const contentLower = content.toLowerCase();
     const keywordScore = calculateKeywordScore(content, profile.keywords);
-    const matchedKeywords = profile.keywords.filter(k => contentLower.includes(k.toLowerCase()));
+    const matchedWithPositions = profile.keywords
+      .map((k, i) => ({ keyword: k, position: i + 1 }))
+      .filter(({ keyword }) => contentLower.includes(keyword.toLowerCase()));
 
     totalPossible += SCORING_WEIGHTS.KEYWORD_MATCH;
     totalEarned += keywordScore;
+
+    let details: string;
+    if (matchedWithPositions.length > 0) {
+      const matched = matchedWithPositions.slice(0, 3).map(m => `${m.keyword} (#${m.position})`);
+      details = `Found: ${matched.join(', ')}${matchedWithPositions.length > 3 ? '...' : ''}`;
+    } else {
+      details = `None found from: ${profile.keywords.slice(0, 3).join(', ')}${profile.keywords.length > 3 ? '...' : ''}`;
+    }
 
     categories.push({
       name: 'Keywords',
       earned: keywordScore,
       possible: SCORING_WEIGHTS.KEYWORD_MATCH,
       percentage: Math.round((keywordScore / SCORING_WEIGHTS.KEYWORD_MATCH) * 100),
-      details: matchedKeywords.length > 0
-        ? `Found: ${matchedKeywords.join(', ')}`
-        : `None found from: ${profile.keywords.join(', ')}`,
+      details,
     });
   }
 
   // Location match
   if (hasLocations && job.location) {
     const locationScore = calculateLocationScore(job.location, profile.locations);
-    const matchedLocations = profile.locations.filter(l => matchesAsWord(job.location!, l));
+    const matchedWithPositions = profile.locations
+      .map((l, i) => ({ location: l, position: i + 1 }))
+      .filter(({ location }) => matchesAsWord(job.location!, location));
 
     totalPossible += SCORING_WEIGHTS.LOCATION_MATCH;
     totalEarned += locationScore;
+
+    let details: string;
+    if (matchedWithPositions.length > 0) {
+      const best = matchedWithPositions[0]!;
+      details = `Matched: "${best.location}" (#${best.position} priority)`;
+    } else {
+      details = `"${job.location}" doesn't match: ${profile.locations.slice(0, 3).join(', ')}${profile.locations.length > 3 ? '...' : ''}`;
+    }
 
     categories.push({
       name: 'Location',
       earned: locationScore,
       possible: SCORING_WEIGHTS.LOCATION_MATCH,
       percentage: Math.round((locationScore / SCORING_WEIGHTS.LOCATION_MATCH) * 100),
-      details: matchedLocations.length > 0
-        ? `Matched: ${matchedLocations.join(', ')}`
-        : `"${job.location}" doesn't match: ${profile.locations.join(', ')}`,
+      details,
     });
   }
 
