@@ -107,34 +107,17 @@ export function calculateMatchScore(
  * Calculate title match score using position-based weighting
  * Earlier items in the profile list score higher
  * Takes the best (highest position) match if multiple titles match
+ * Only exact substring matches count (e.g., "Director" in "Senior Director of Sales")
  */
 function calculateTitleScore(jobTitle: string, profileTitles: string[]): number {
   const titleLower = jobTitle.toLowerCase();
   const count = profileTitles.length;
   let bestScore = 0;
 
-  // Check for exact substring matches (full position-based score)
   for (let i = 0; i < profileTitles.length; i++) {
     const profileTitle = profileTitles[i]!;
     if (titleLower.includes(profileTitle.toLowerCase())) {
       const score = calculatePositionScore(i, count, SCORING_WEIGHTS.TITLE_MATCH);
-      bestScore = Math.max(bestScore, score);
-    }
-  }
-
-  if (bestScore > 0) return bestScore;
-
-  // Partial match - check for overlapping words (reduced score)
-  const jobWords = new Set(titleLower.split(/\s+/).filter((w) => w.length > 2));
-  for (let i = 0; i < profileTitles.length; i++) {
-    const profileTitle = profileTitles[i]!;
-    const titleWords = profileTitle.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
-    const matchingWords = titleWords.filter((w) => jobWords.has(w));
-    if (matchingWords.length > 0) {
-      // Position-based score multiplied by word overlap ratio
-      const positionScore = calculatePositionScore(i, count, SCORING_WEIGHTS.TITLE_MATCH);
-      const overlapRatio = matchingWords.length / titleWords.length;
-      const score = Math.floor(positionScore * overlapRatio);
       bestScore = Math.max(bestScore, score);
     }
   }
@@ -319,35 +302,18 @@ export function calculateMatchScoreWithBreakdown(
   if (hasTitles) {
     const titleScore = calculateTitleScore(job.title, profile.titles);
     const titleLower = job.title.toLowerCase();
-    const jobWords = new Set(titleLower.split(/\s+/).filter((w) => w.length > 2));
 
-    // Check for exact substring matches first
-    const exactMatches = profile.titles
+    const matchedWithPositions = profile.titles
       .map((t, i) => ({ title: t, position: i + 1 }))
       .filter(({ title }) => titleLower.includes(title.toLowerCase()));
-
-    // If no exact match, check for partial word overlap (same logic as calculateTitleScore)
-    let partialMatches: { title: string; position: number; matchingWords: string[] }[] = [];
-    if (exactMatches.length === 0) {
-      partialMatches = profile.titles
-        .map((t, i) => {
-          const titleWords = t.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
-          const matchingWords = titleWords.filter((w) => jobWords.has(w));
-          return { title: t, position: i + 1, matchingWords };
-        })
-        .filter((m) => m.matchingWords.length > 0);
-    }
 
     totalPossible += SCORING_WEIGHTS.TITLE_MATCH;
     totalEarned += titleScore;
 
     let details: string;
-    if (exactMatches.length > 0) {
-      const best = exactMatches[0]!;
+    if (matchedWithPositions.length > 0) {
+      const best = matchedWithPositions[0]!;
       details = `Matched: "${best.title}" (#${best.position} priority)`;
-    } else if (partialMatches.length > 0) {
-      const best = partialMatches[0]!;
-      details = `Partial match: "${best.title}" (#${best.position}) via words: ${best.matchingWords.join(', ')}`;
     } else {
       details = `No match for: ${profile.titles.slice(0, 3).join(', ')}${profile.titles.length > 3 ? '...' : ''}`;
     }
