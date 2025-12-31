@@ -330,8 +330,9 @@ export async function crawlAllCompanies(userId: number, apiOnly: boolean = false
         }
       }
 
-      // Small delay between companies
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Delay between companies - longer for browser crawls to avoid rate limiting
+      const delayMs = apiOnly ? 500 : 2000;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
     // Close browser after batch crawl (in case any non-API crawls happened)

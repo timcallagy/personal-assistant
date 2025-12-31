@@ -358,43 +358,71 @@ function extractJobsFromHtml($: cheerio.CheerioAPI, baseUrl: string): ParsedJob[
 }
 
 /**
- * Crawl a custom career page using Playwright
+ * Crawl a custom career page using Playwright with retry logic
  */
 export async function crawlCustomPage(careerUrl: string): Promise<ParsedJob[]> {
-  const browserInstance = await getBrowser();
-  const page = await browserInstance.newPage();
+  const MAX_RETRIES = 2;
+  const BASE_TIMEOUT = 30000;
+  let lastError: Error | null = null;
 
-  try {
-    // Navigate to the page
-    await page.goto(careerUrl, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const browserInstance = await getBrowser();
+    const page = await browserInstance.newPage();
 
-    // Wait a bit for any lazy-loaded content
-    await page.waitForTimeout(2000);
+    try {
+      // Increase timeout on retry attempts
+      const timeout = BASE_TIMEOUT + (attempt * 15000); // 30s, 45s
 
-    // Try to expand any "Load More" or infinite scroll
-    await tryExpandContent(page);
+      // Navigate to the page
+      await page.goto(careerUrl, {
+        waitUntil: 'networkidle',
+        timeout,
+      });
 
-    // Get page content
-    const content = await page.content();
-    const $ = cheerio.load(content);
+      // Wait a bit for any lazy-loaded content
+      await page.waitForTimeout(2000);
 
-    // First try structured data (most reliable)
-    let jobs = extractStructuredData($, careerUrl);
+      // Try to expand any "Load More" or infinite scroll
+      await tryExpandContent(page);
 
-    // Fall back to HTML scraping
-    if (jobs.length === 0) {
-      jobs = extractJobsFromHtml($, careerUrl);
+      // Get page content
+      const content = await page.content();
+      const $ = cheerio.load(content);
+
+      // First try structured data (most reliable)
+      let jobs = extractStructuredData($, careerUrl);
+
+      // Fall back to HTML scraping
+      if (jobs.length === 0) {
+        jobs = extractJobsFromHtml($, careerUrl);
+      }
+
+      return jobs;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Close page before retry
+      await page.close();
+
+      // If not the last attempt, wait before retrying
+      if (attempt < MAX_RETRIES - 1) {
+        // Restart browser for a fresh context on retry
+        await closeBrowser();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } finally {
+      try {
+        await page.close();
+      } catch {
+        // Page may already be closed
+      }
+      // Schedule browser close after idle period to free memory
+      scheduleBrowserClose();
     }
-
-    return jobs;
-  } finally {
-    await page.close();
-    // Schedule browser close after idle period to free memory
-    scheduleBrowserClose();
   }
+
+  // All retries failed
+  throw lastError || new Error('Crawl failed after retries');
 }
 
 /**
