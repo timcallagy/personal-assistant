@@ -16,7 +16,7 @@ export function JobCardCompact({ job, onMarkApplied, onMarkNotInterested, isNew 
 
   return (
     <div
-      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 border-b border-background-tertiary hover:bg-background-secondary/50 transition-colors"
+      className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 p-3 border-b border-background-tertiary hover:bg-background-secondary/50 transition-colors"
       data-testid="job-card-compact"
     >
       {/* Score, Title, Location */}
@@ -29,8 +29,8 @@ export function JobCardCompact({ job, onMarkApplied, onMarkNotInterested, isNew 
 
         {locationText && (
           <>
-            <span className="text-foreground-muted hidden sm:inline">•</span>
-            <span className="text-sm text-foreground-secondary whitespace-nowrap hidden sm:inline">
+            <span className="text-foreground-muted hidden md:inline">•</span>
+            <span className="text-sm text-foreground-secondary whitespace-nowrap hidden md:inline">
               {locationText}
             </span>
           </>
@@ -41,11 +41,11 @@ export function JobCardCompact({ job, onMarkApplied, onMarkNotInterested, isNew 
         )}
       </div>
 
-      {/* Mobile location + Actions row */}
-      <div className="flex items-center justify-between sm:justify-end gap-2">
-        {/* Location on mobile */}
+      {/* Mobile/tablet location + Actions row */}
+      <div className="flex items-center justify-between md:justify-end gap-2">
+        {/* Location on mobile/tablet */}
         {locationText && (
-          <span className="text-sm text-foreground-secondary sm:hidden truncate max-w-[120px]">
+          <span className="text-sm text-foreground-secondary md:hidden truncate max-w-[150px]">
             {locationText}
           </span>
         )}
@@ -60,14 +60,14 @@ export function JobCardCompact({ job, onMarkApplied, onMarkNotInterested, isNew 
             title="Apply"
             data-testid="apply-link"
           >
-            <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </a>
 
           {isApplied ? (
             <span className="p-2 text-success" title="Applied">
-              <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </span>
@@ -78,7 +78,7 @@ export function JobCardCompact({ job, onMarkApplied, onMarkNotInterested, isNew 
               title="Mark as Applied"
               data-testid="applied-button"
             >
-              <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
@@ -90,7 +90,7 @@ export function JobCardCompact({ job, onMarkApplied, onMarkNotInterested, isNew 
             title="Not Interested"
             data-testid="dismiss-button"
           >
-            <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
