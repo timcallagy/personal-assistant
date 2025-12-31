@@ -45,7 +45,7 @@ export function useJobProfile(): UseJobProfileReturn {
     setSaveError(null);
     try {
       const response = await jobsApi.updateProfile(data);
-      setProfile(response);
+      setProfile(response.profile);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to save job profile';
       setSaveError(message);

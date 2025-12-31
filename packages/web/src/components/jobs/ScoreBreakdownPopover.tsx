@@ -7,9 +7,10 @@ import { MatchScoreBadge } from './MatchScoreBadge';
 interface ScoreBreakdownPopoverProps {
   jobId: number;
   score: number | null;
+  size?: 'sm' | 'md';
 }
 
-export function ScoreBreakdownPopover({ jobId, score }: ScoreBreakdownPopoverProps) {
+export function ScoreBreakdownPopover({ jobId, score, size = 'md' }: ScoreBreakdownPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,15 +63,17 @@ export function ScoreBreakdownPopover({ jobId, score }: ScoreBreakdownPopoverPro
 
   return (
     <div className="relative inline-flex items-center gap-1">
-      <MatchScoreBadge score={score} />
+      <MatchScoreBadge score={score} size={size} />
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors"
+        className={`inline-flex items-center justify-center rounded-full text-foreground-muted hover:text-foreground hover:bg-background-tertiary transition-colors ${
+          size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
+        }`}
         title="View score breakdown"
         aria-label="View score breakdown"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

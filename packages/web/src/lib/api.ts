@@ -719,7 +719,7 @@ export const jobs = {
   getProfile: () => request<JobProfileResponse>('/jobs/profile'),
 
   updateProfile: (data: Partial<Omit<JobProfile, 'id' | 'createdAt' | 'updatedAt'>>) =>
-    request<JobProfile>('/jobs/profile', {
+    request<{ profile: JobProfile }>('/jobs/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
