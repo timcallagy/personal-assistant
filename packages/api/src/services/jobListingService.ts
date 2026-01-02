@@ -152,11 +152,10 @@ export async function getJobListings(
     });
   }
 
-  // Apply title exclusions (exact match, case-insensitive)
+  // Apply title exclusions (word boundary match, case-insensitive)
   if (titleExclusions.length > 0) {
     listings = listings.filter((listing) => {
-      const titleLower = listing.title.toLowerCase();
-      return !titleExclusions.some((excluded) => titleLower === excluded.toLowerCase());
+      return !titleExclusions.some((excluded) => matchesAsWord(listing.title, excluded));
     });
   }
 

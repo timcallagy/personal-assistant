@@ -152,17 +152,27 @@ export default function JobsPage() {
     });
   }, [jobs, crawlLogs, pageFilters, newJobIds, getCrawlStatusFromLog]);
 
-  // Filter companies based on crawl status
+  // Filter companies based on search and crawl status
   const filteredCompanies = useMemo(() => {
-    if (pageFilters.crawlStatus === 'all') {
-      return companies;
-    }
     return companies.filter((company) => {
-      const log = crawlLogs.find((l) => l.companyId === company.id);
-      const status = getCrawlStatusFromLog(log);
-      return pageFilters.crawlStatus === status;
+      // Search filter - match company name
+      if (pageFilters.search) {
+        const searchLower = pageFilters.search.toLowerCase();
+        if (!company.name.toLowerCase().includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Crawl status filter
+      if (pageFilters.crawlStatus !== 'all') {
+        const log = crawlLogs.find((l) => l.companyId === company.id);
+        const status = getCrawlStatusFromLog(log);
+        if (pageFilters.crawlStatus !== status) return false;
+      }
+
+      return true;
     });
-  }, [companies, crawlLogs, pageFilters.crawlStatus, getCrawlStatusFromLog]);
+  }, [companies, crawlLogs, pageFilters.search, pageFilters.crawlStatus, getCrawlStatusFromLog]);
 
   // Top 10 jobs (highest match score, excluding applied)
   const topJobs = useMemo(() => {
@@ -221,6 +231,14 @@ export default function JobsPage() {
       const apiFailed = apiResponse.results?.filter((r) => r.status === 'failed') || [];
       allFailedCrawls.push(...apiFailed);
 
+      // Refresh crawl logs after API phase so those companies show updated status
+      try {
+        const logsResponse = await jobsApi.getCrawlLogs(100);
+        setCrawlLogs(logsResponse.logs);
+      } catch {
+        // Silently fail
+      }
+
       // Phase 2: Crawl browser-based companies one by one
       const browserCompanyIds = apiResponse.skippedCompanyIds || [];
       if (browserCompanyIds.length > 0) {
@@ -250,6 +268,14 @@ export default function JobsPage() {
               newJobs: 0,
               error: 'Failed to crawl',
             });
+          }
+
+          // Refresh crawl logs after each company so UI updates
+          try {
+            const logsResponse = await jobsApi.getCrawlLogs(100);
+            setCrawlLogs(logsResponse.logs);
+          } catch {
+            // Silently fail
           }
 
           // Small delay between browser crawls to let server recover
