@@ -3,9 +3,15 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import sharp from 'sharp';
 import { config } from '../../../config.js';
 import { asyncHandler } from '../../../middleware/index.js';
 import { validationError } from '../../../lib/errors.js';
+
+// Image optimization settings
+const MAX_WIDTH = 1600;
+const MAX_HEIGHT = 1200;
+const WEBP_QUALITY = 82;
 
 // Helper to build full public URL for images
 function getImageUrl(filename: string): string {
@@ -20,18 +26,8 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    // Generate unique filename with original extension
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
-    cb(null, uniqueName);
-  },
-});
+// Configure multer to use memory storage for processing
+const storage = multer.memoryStorage();
 
 // File filter - only allow images
 const fileFilter = (
@@ -57,7 +53,7 @@ const upload = multer({
 
 /**
  * POST /api/v1/blog/admin/images
- * Upload an image
+ * Upload an image (automatically optimized to WebP)
  */
 router.post(
   '/',
@@ -67,16 +63,36 @@ router.post(
       throw validationError('No image file provided');
     }
 
+    // Generate unique filename with .webp extension
+    const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.webp`;
+    const outputPath = path.join(uploadDir, uniqueName);
+
+    // Process image: resize if needed and convert to WebP
+    const originalSize = req.file.size;
+    await sharp(req.file.buffer)
+      .resize(MAX_WIDTH, MAX_HEIGHT, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality: WEBP_QUALITY })
+      .toFile(outputPath);
+
+    // Get the optimized file size
+    const stats = fs.statSync(outputPath);
+    const optimizedSize = stats.size;
+
     // Build the full public URL for the image
-    const imageUrl = getImageUrl(req.file.filename);
+    const imageUrl = getImageUrl(uniqueName);
 
     res.status(201).json({
       success: true,
       data: {
-        filename: req.file.filename,
+        filename: uniqueName,
         url: imageUrl,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
+        size: optimizedSize,
+        originalSize,
+        mimetype: 'image/webp',
+        savings: `${Math.round((1 - optimizedSize / originalSize) * 100)}%`,
       },
     });
   })
