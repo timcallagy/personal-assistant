@@ -79,7 +79,7 @@ export default function JobsPage() {
     const fetchCrawlLogs = async () => {
       setCrawlLogsLoading(true);
       try {
-        const response = await jobsApi.getCrawlLogs(100);
+        const response = await jobsApi.getCrawlLogs(500);
         setCrawlLogs(response.logs);
       } catch {
         // Silently fail - crawl logs are not critical
@@ -233,7 +233,7 @@ export default function JobsPage() {
 
       // Refresh crawl logs after API phase so those companies show updated status
       try {
-        const logsResponse = await jobsApi.getCrawlLogs(100);
+        const logsResponse = await jobsApi.getCrawlLogs(500);
         setCrawlLogs(logsResponse.logs);
       } catch {
         // Silently fail
@@ -272,7 +272,7 @@ export default function JobsPage() {
 
           // Refresh crawl logs after each company so UI updates
           try {
-            const logsResponse = await jobsApi.getCrawlLogs(100);
+            const logsResponse = await jobsApi.getCrawlLogs(500);
             setCrawlLogs(logsResponse.logs);
           } catch {
             // Silently fail
@@ -295,7 +295,7 @@ export default function JobsPage() {
 
       // Refresh crawl logs
       try {
-        const logsResponse = await jobsApi.getCrawlLogs(100);
+        const logsResponse = await jobsApi.getCrawlLogs(500);
         setCrawlLogs(logsResponse.logs);
       } catch {
         // Silently fail
@@ -309,7 +309,7 @@ export default function JobsPage() {
       // Still try to refresh data in case partial success
       await Promise.all([refreshJobs(), refreshStats()]);
       try {
-        const logsResponse = await jobsApi.getCrawlLogs(100);
+        const logsResponse = await jobsApi.getCrawlLogs(500);
         setCrawlLogs(logsResponse.logs);
       } catch {
         // Silently fail
@@ -326,7 +326,7 @@ export default function JobsPage() {
 
       // Refresh crawl logs
       try {
-        const response = await jobsApi.getCrawlLogs(100);
+        const response = await jobsApi.getCrawlLogs(500);
         setCrawlLogs(response.logs);
       } catch {
         // Silently fail
