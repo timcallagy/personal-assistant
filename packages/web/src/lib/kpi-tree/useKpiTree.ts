@@ -11,7 +11,9 @@ import {
   savePeriodId,
   saveBaselinePeriodId,
   saveLayout,
+  saveTheme,
   clearAspirationalChanges,
+  type Theme,
 } from './storage';
 
 interface UseKpiTreeState {
@@ -41,6 +43,9 @@ interface UseKpiTreeState {
 
   // Layout
   layout: TreeLayout;
+
+  // Theme
+  theme: Theme;
 }
 
 interface UseKpiTreeReturn extends UseKpiTreeState {
@@ -49,6 +54,7 @@ interface UseKpiTreeReturn extends UseKpiTreeState {
   setBaselinePeriodId: (id: number | null) => void;
   setPercentChange: (metricKey: string, value: number | null) => void;
   setLayout: (layout: TreeLayout) => void;
+  setTheme: (theme: Theme) => void;
   resetAll: () => void;
   refetch: () => Promise<void>;
 }
@@ -59,7 +65,7 @@ export function useKpiTree(): UseKpiTreeReturn {
   const [storedState] = useState(() => {
     // Only run on client side
     if (typeof window === 'undefined') {
-      return { periodId: null, baselinePeriodId: null, aspirationalChanges: {}, layout: 'vertical' as TreeLayout };
+      return { periodId: null, baselinePeriodId: null, aspirationalChanges: {}, layout: 'horizontal-rtl' as TreeLayout, theme: 'dark' as Theme };
     }
     return loadState();
   });
@@ -89,6 +95,9 @@ export function useKpiTree(): UseKpiTreeReturn {
 
   // Layout (initialized from localStorage)
   const [layout, setLayoutState] = useState<TreeLayout>(storedState.layout);
+
+  // Theme (initialized from localStorage)
+  const [theme, setThemeState] = useState<Theme>(storedState.theme);
 
   // Fetch periods on mount
   useEffect(() => {
@@ -230,6 +239,12 @@ export function useKpiTree(): UseKpiTreeReturn {
     saveLayout(newLayout);
   }, []);
 
+  // Set theme (and save to localStorage)
+  const setTheme = useCallback((newTheme: Theme) => {
+    setThemeState(newTheme);
+    saveTheme(newTheme);
+  }, []);
+
   // Reset all aspirational changes (and clear from localStorage)
   const resetAll = useCallback(() => {
     setAspirationalChanges({});
@@ -292,11 +307,15 @@ export function useKpiTree(): UseKpiTreeReturn {
     // Layout
     layout,
 
+    // Theme
+    theme,
+
     // Actions
     setPeriodId,
     setBaselinePeriodId,
     setPercentChange,
     setLayout,
+    setTheme,
     resetAll,
     refetch,
   };

@@ -7,6 +7,7 @@ import { VerticalTree } from './VerticalTree';
 import { HorizontalTree } from './HorizontalTree';
 import { PeriodSelector } from './PeriodSelector';
 import { LayoutToggle } from './LayoutToggle';
+import { ThemeToggle } from './ThemeToggle';
 import { useKpiTree } from '@/lib/kpi-tree/useKpiTree';
 
 const MIN_WIDTH = 1024;
@@ -28,10 +29,12 @@ export function KpiTreeDashboard() {
     metricsError,
     aspirationalChanges,
     layout,
+    theme,
     setPercentChange,
     setPeriodId,
     setBaselinePeriodId,
     setLayout,
+    setTheme,
     resetAll,
   } = useKpiTree();
 
@@ -87,6 +90,7 @@ export function KpiTreeDashboard() {
       tree: displayTree,
       aspirationalChanges,
       onPercentChange: setPercentChange,
+      theme,
     };
 
     switch (layout) {
@@ -107,22 +111,35 @@ export function KpiTreeDashboard() {
     'horizontal-rtl': 'Right-Left',
   }[layout] || 'Top-Down';
 
+  // Theme-specific styles
+  const bgColor = theme === 'dark' ? 'bg-[#0f172a]' : 'bg-gray-100';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-gray-900';
+  const mutedTextColor = theme === 'dark' ? 'text-[#94a3b8]' : 'text-gray-600';
+  const containerBg = theme === 'dark' ? 'bg-[#16213e]' : 'bg-white';
+  const containerBorder = theme === 'dark' ? 'border-[#0f3460]' : 'border-gray-200';
+  const buttonBg = theme === 'dark' ? 'bg-[#16213e]' : 'bg-white';
+  const buttonBorder = theme === 'dark' ? 'border-[#0f3460]' : 'border-gray-300';
+  const footerTextColor = theme === 'dark' ? 'text-[#64748b]' : 'text-gray-500';
+
   return (
-    <div className="p-6">
+    <div className={`p-6 min-h-screen ${bgColor}`}>
       {/* Header */}
       <header className="mb-8">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className={`text-3xl font-bold ${textColor} mb-2`}>
               KPI Driver Tree
             </h1>
-            <p className="text-[#94a3b8]">
+            <p className={mutedTextColor}>
               Professional Services Gross Margin Analysis
             </p>
           </div>
 
           {/* Controls */}
           <div className="flex items-end gap-4">
+            {/* Theme Toggle */}
+            <ThemeToggle theme={theme} onThemeChange={setTheme} />
+
             {/* Layout Toggle */}
             <LayoutToggle layout={layout} onLayoutChange={setLayout} />
 
@@ -152,7 +169,7 @@ export function KpiTreeDashboard() {
             {hasChanges && (
               <button
                 onClick={resetAll}
-                className="flex items-center gap-2 px-3 py-2 bg-[#16213e] border border-[#0f3460] rounded-lg text-[#94a3b8] hover:text-white hover:border-red-400/50 transition-colors text-sm"
+                className={`flex items-center gap-2 px-3 py-2 ${buttonBg} border ${buttonBorder} rounded-lg ${mutedTextColor} hover:${textColor} hover:border-red-400/50 transition-colors text-sm`}
                 title="Reset all changes"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -164,13 +181,13 @@ export function KpiTreeDashboard() {
       </header>
 
       {/* Tree Container */}
-      <div className="bg-[#16213e] rounded-xl p-8 border border-[#0f3460] min-h-[600px]">
+      <div className={`${containerBg} rounded-xl p-8 border ${containerBorder} min-h-[600px]`}>
         {/* Error State */}
         {error && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <p className="text-red-400 text-lg mb-2">Error loading data</p>
-              <p className="text-[#94a3b8] text-sm">{error}</p>
+              <p className={`${mutedTextColor} text-sm`}>{error}</p>
             </div>
           </div>
         )}
@@ -179,8 +196,8 @@ export function KpiTreeDashboard() {
         {isLoading && !error && (
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <div className="text-center">
-              <div className="w-8 h-8 border-2 border-[#94a3b8] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-[#94a3b8]">Loading KPI data...</p>
+              <div className={`w-8 h-8 border-2 ${theme === 'dark' ? 'border-[#94a3b8]' : 'border-gray-400'} border-t-transparent rounded-full animate-spin mx-auto mb-4`} />
+              <p className={mutedTextColor}>Loading KPI data...</p>
             </div>
           </div>
         )}
@@ -191,7 +208,7 @@ export function KpiTreeDashboard() {
         {/* No Data State */}
         {!isLoading && !error && !displayTree && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-[#94a3b8] text-lg">
+            <p className={`${mutedTextColor} text-lg`}>
               No KPI data available. Please run the seed script.
             </p>
           </div>
@@ -199,7 +216,7 @@ export function KpiTreeDashboard() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-8 text-center text-[#64748b] text-sm">
+      <footer className={`mt-8 text-center ${footerTextColor} text-sm`}>
         <p>
           Viewing period: {periodLabel} | Layout: {layoutLabel}
         </p>

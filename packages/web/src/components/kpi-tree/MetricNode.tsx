@@ -10,12 +10,14 @@ interface MetricNodeProps {
   node: KpiTreeNode;
   isDisabled?: boolean;
   onPercentChange?: (metricKey: string, value: number | null) => void;
+  onHover?: (metricKey: string | null) => void;
+  theme?: 'dark' | 'light';
 }
 
 /**
- * Layer color mapping (pastel colors on dark background)
+ * Layer color mapping for dark theme
  */
-const LAYER_COLORS: Record<number, { bg: string; border: string; text: string }> = {
+const DARK_LAYER_COLORS: Record<number, { bg: string; border: string; text: string }> = {
   1: {
     bg: 'bg-[#2d3a5c]',
     border: 'border-blue-400/50',
@@ -43,7 +45,44 @@ const LAYER_COLORS: Record<number, { bg: string; border: string; text: string }>
   },
 };
 
-export function MetricNode({ node, isDisabled = false, onPercentChange }: MetricNodeProps) {
+/**
+ * Layer color mapping for light theme
+ */
+const LIGHT_LAYER_COLORS: Record<number, { bg: string; border: string; text: string }> = {
+  1: {
+    bg: 'bg-blue-100',
+    border: 'border-blue-400',
+    text: 'text-blue-800',
+  },
+  2: {
+    bg: 'bg-purple-100',
+    border: 'border-purple-400',
+    text: 'text-purple-800',
+  },
+  3: {
+    bg: 'bg-teal-100',
+    border: 'border-teal-400',
+    text: 'text-teal-800',
+  },
+  4: {
+    bg: 'bg-amber-100',
+    border: 'border-amber-400',
+    text: 'text-amber-800',
+  },
+  5: {
+    bg: 'bg-rose-100',
+    border: 'border-rose-400',
+    text: 'text-rose-800',
+  },
+};
+
+export function MetricNode({
+  node,
+  isDisabled = false,
+  onPercentChange,
+  onHover,
+  theme = 'dark',
+}: MetricNodeProps) {
   const [inputValue, setInputValue] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,9 +156,32 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
       setIsEditing(true);
     }
   };
-  const defaultColors = { bg: 'bg-[#5c2d3a]', border: 'border-rose-400/50', text: 'text-rose-200' };
+
+  const handleMouseEnter = () => {
+    if (onHover) {
+      onHover(node.key);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (onHover) {
+      onHover(null);
+    }
+  };
+
+  const LAYER_COLORS = theme === 'dark' ? DARK_LAYER_COLORS : LIGHT_LAYER_COLORS;
+  const defaultColors = theme === 'dark'
+    ? { bg: 'bg-[#5c2d3a]', border: 'border-rose-400/50', text: 'text-rose-200' }
+    : { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800' };
   const colors = LAYER_COLORS[node.layer] ?? defaultColors;
   const formattedValue = formatValue(node.value, node.unit);
+
+  // Theme-specific text colors
+  const valueTextColor = theme === 'dark' ? 'text-white' : 'text-gray-900';
+  const mutedTextColor = theme === 'dark' ? 'text-[#94a3b8]' : 'text-gray-500';
+  const inputBgColor = theme === 'dark' ? 'bg-[#1a1a2e]' : 'bg-white';
+  const inputBorderColor = theme === 'dark' ? 'border-[#374151]' : 'border-gray-300';
+  const badgeBgColor = theme === 'dark' ? 'bg-[#1a1a2e]' : 'bg-white';
 
   // Aspirational value display
   const hasAspirations =
@@ -147,15 +209,17 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
         ${colors.border}
         p-3
         w-[160px]
-        h-[100px]
+        h-[120px]
         overflow-hidden
         transition-all
         duration-200
-        ${isDisabled ? 'opacity-50' : 'hover:scale-105'}
+        ${isDisabled ? 'opacity-50' : 'hover:scale-105 hover:z-10'}
       `}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Metric Name */}
-      <div className={`text-xs font-medium ${colors.text} mb-1 leading-tight`}>
+      <div className={`text-xs font-medium ${colors.text} mb-1 leading-tight line-clamp-2`}>
         {node.name}
       </div>
 
@@ -164,8 +228,8 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
         {/* Actual Value */}
         <div
           className={`
-            text-lg font-bold text-white
-            ${hasAspirations ? 'line-through opacity-60 text-sm' : ''}
+            font-bold ${valueTextColor}
+            ${hasAspirations ? 'line-through opacity-60 text-sm' : 'text-lg'}
           `}
         >
           {formattedValue}
@@ -173,13 +237,13 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
 
         {/* Aspirational Value (if different) */}
         {hasAspirations && (
-          <div className="text-lg font-bold text-white">{aspirationalFormatted}</div>
+          <div className={`text-lg font-bold ${valueTextColor}`}>{aspirationalFormatted}</div>
         )}
       </div>
 
       {/* Percent Change Input (hidden for Layer 1) */}
       {node.layer !== 1 && !isDisabled && onPercentChange && (
-        <div className="mt-2 flex items-center gap-1">
+        <div className="mt-1 flex items-center gap-1">
           {isEditing ? (
             <div className="flex items-center gap-1">
               <input
@@ -189,15 +253,15 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
                 onChange={handleInputChange}
                 onBlur={handleInputBlur}
                 onKeyDown={handleInputKeyDown}
-                className="w-12 px-1 py-0.5 text-xs bg-[#1a1a2e] border border-[#374151] rounded text-white text-center focus:outline-none focus:border-blue-400"
+                className={`w-12 px-1 py-0.5 text-xs ${inputBgColor} border ${inputBorderColor} rounded ${valueTextColor} text-center focus:outline-none focus:border-blue-400`}
                 placeholder="0"
               />
-              <span className="text-xs text-[#94a3b8]">%</span>
+              <span className={`text-xs ${mutedTextColor}`}>%</span>
             </div>
           ) : (
             <button
               onClick={startEditing}
-              className="text-xs text-[#94a3b8] hover:text-white transition-colors flex items-center gap-1"
+              className={`text-xs ${mutedTextColor} hover:${valueTextColor} transition-colors flex items-center gap-1`}
             >
               {inputValue ? (
                 <>
@@ -232,8 +296,9 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
             rounded-full
             text-xs
             font-medium
-            bg-[#1a1a2e]
+            ${badgeBgColor}
             ${changeColorClass}
+            border ${inputBorderColor}
           `}
         >
           {node.percentChange > 0 ? '+' : ''}
@@ -255,7 +320,7 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
 
       {/* Disabled Lock Icon */}
       {isDisabled && (
-        <div className="absolute top-1 right-1 text-[#94a3b8]" title="Calculated from parent">
+        <div className={`absolute top-1 right-1 ${mutedTextColor}`} title="Calculated from parent">
           <Lock className="w-3 h-3" />
         </div>
       )}

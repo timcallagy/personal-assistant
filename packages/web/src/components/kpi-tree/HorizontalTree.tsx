@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { MetricNode } from './MetricNode';
-import { getLayers, findNode, getDescendants } from '@/lib/kpi-tree/treeUtils';
+import { getLayers, findNode, getDescendants, getAncestors } from '@/lib/kpi-tree/treeUtils';
 import type { KpiTreeNode, AspirationalChanges } from '@/lib/kpi-tree/types';
 
 interface HorizontalTreeProps {
@@ -10,11 +10,11 @@ interface HorizontalTreeProps {
   aspirationalChanges: AspirationalChanges;
   onPercentChange?: (metricKey: string, value: number | null) => void;
   direction?: 'ltr' | 'rtl';
+  theme?: 'dark' | 'light';
 }
 
 /**
- * Horizontal connection lines - draws elbow connectors from parent to children
- * Uses a "bus" style: parent -> horizontal line -> vertical bus -> horizontal lines -> children
+ * Horizontal connection lines with hover highlighting
  */
 function ConnectionLines({
   parentKey,
@@ -23,7 +23,9 @@ function ConnectionLines({
   nodeWidth,
   nodeHeight,
   isHighlighted,
+  isHoverHighlighted,
   direction,
+  theme,
 }: {
   parentKey: string;
   childKeys: string[];
@@ -31,12 +33,13 @@ function ConnectionLines({
   nodeWidth: number;
   nodeHeight: number;
   isHighlighted: boolean;
+  isHoverHighlighted: boolean;
   direction: 'ltr' | 'rtl';
+  theme: 'dark' | 'light';
 }) {
   const parentPos = nodePositions.get(parentKey);
   if (!parentPos || childKeys.length === 0) return null;
 
-  // Get child positions
   const childPositions = childKeys
     .map((key) => nodePositions.get(key))
     .filter((pos): pos is { x: number; y: number; layer: number } => pos !== undefined);
@@ -46,27 +49,37 @@ function ConnectionLines({
   const firstChild = childPositions[0];
   if (!firstChild) return null;
 
-  const strokeColor = isHighlighted ? '#60a5fa' : '#4b5563';
-  const strokeWidth = isHighlighted ? 2.5 : 1.5;
-  const opacity = isHighlighted ? 1 : 0.7;
+  // Determine colors based on state and theme
+  let strokeColor: string;
+  let strokeWidth: number;
+  let opacity: number;
 
-  // For LTR: parent on left, children on right
-  // For RTL: parent on right, children on left
+  if (isHoverHighlighted) {
+    strokeColor = '#ffffff';
+    strokeWidth = 3;
+    opacity = 1;
+  } else if (isHighlighted) {
+    strokeColor = '#60a5fa';
+    strokeWidth = 2.5;
+    opacity = 1;
+  } else {
+    strokeColor = theme === 'dark' ? '#4b5563' : '#9ca3af';
+    strokeWidth = 1.5;
+    opacity = 0.7;
+  }
+
   const parentConnectX = direction === 'ltr' ? parentPos.x + nodeWidth : parentPos.x;
   const parentConnectY = parentPos.y + nodeHeight / 2;
   const childConnectX = direction === 'ltr' ? firstChild.x : firstChild.x + nodeWidth;
 
-  // Bus line X position (midpoint between parent edge and child edge)
   const busX = (parentConnectX + childConnectX) / 2;
 
-  // Calculate the extent of the vertical bus line
   const childCenters = childPositions.map((pos) => pos.y + nodeHeight / 2);
   const minChildY = Math.min(...childCenters);
   const maxChildY = Math.max(...childCenters);
 
   return (
     <g>
-      {/* Horizontal line from parent to bus */}
       <line
         x1={parentConnectX}
         y1={parentConnectY}
@@ -77,7 +90,6 @@ function ConnectionLines({
         opacity={opacity}
       />
 
-      {/* Vertical bus line */}
       <line
         x1={busX}
         y1={minChildY}
@@ -88,7 +100,6 @@ function ConnectionLines({
         opacity={opacity}
       />
 
-      {/* Connection from bus to parent horizontal line (if parent not centered on bus) */}
       {(parentConnectY < minChildY || parentConnectY > maxChildY) && (
         <line
           x1={busX}
@@ -101,7 +112,6 @@ function ConnectionLines({
         />
       )}
 
-      {/* Horizontal lines from bus to each child */}
       {childPositions.map((childPos, index) => {
         const childCenterY = childPos.y + nodeHeight / 2;
         const childEdgeX = direction === 'ltr' ? childPos.x : childPos.x + nodeWidth;
@@ -119,11 +129,10 @@ function ConnectionLines({
         );
       })}
 
-      {/* Small circles at connection points for visual clarity */}
       <circle
         cx={parentConnectX}
         cy={parentConnectY}
-        r={3}
+        r={isHoverHighlighted ? 4 : 3}
         fill={strokeColor}
         opacity={opacity}
       />
@@ -134,7 +143,7 @@ function ConnectionLines({
             key={`dot-${childKeys[index]}`}
             cx={childEdgeX}
             cy={childPos.y + nodeHeight / 2}
-            r={3}
+            r={isHoverHighlighted ? 4 : 3}
             fill={strokeColor}
             opacity={opacity}
           />
@@ -149,58 +158,81 @@ export function HorizontalTree({
   aspirationalChanges,
   onPercentChange,
   direction = 'ltr',
+  theme = 'dark',
 }: HorizontalTreeProps) {
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+
   // Get layers for horizontal layout
   const layers = useMemo(() => {
     const baseLayers = getLayers(tree);
-    // For RTL, reverse the layer order so Layer 1 is on the right
     return direction === 'rtl' ? [...baseLayers].reverse() : baseLayers;
   }, [tree, direction]);
 
   // Calculate dimensions
   const nodeWidth = 160;
-  const nodeHeight = 100;
-  const horizontalGap = 60; // Gap between layers (columns)
-  const verticalGap = 16; // Gap between nodes in same layer
+  const nodeHeight = 120;
+  const horizontalGap = 60;
+  const verticalGap = 12;
+  const groupGap = 40; // Extra gap between different parent groups
   const padding = 40;
 
-  // Calculate column width
   const columnWidth = nodeWidth + horizontalGap;
 
-  // Calculate height needed for each layer (tallest column determines total height)
-  const layerHeights = useMemo(() => {
-    return layers.map((layer) => {
-      return layer.length * nodeHeight + (layer.length - 1) * verticalGap;
-    });
-  }, [layers]);
-
-  const maxHeight = Math.max(...layerHeights, 400) + padding * 2;
-  const totalWidth = layers.length * columnWidth + padding * 2 - horizontalGap;
-
-  // Calculate node positions (x is based on layer, y is based on position within layer)
-  const nodePositions = useMemo(() => {
+  // Calculate positions with group spacing
+  const { nodePositions, maxHeight, totalWidth } = useMemo(() => {
     const positions: Map<string, { x: number; y: number; layer: number }> = new Map();
+    let maxH = 0;
 
     layers.forEach((layer, layerIndex) => {
-      const layerHeight = layer.length * nodeHeight + (layer.length - 1) * verticalGap;
-      const startY = (maxHeight - layerHeight) / 2;
+      // Group nodes by parent
+      const groups: Map<string | null, KpiTreeNode[]> = new Map();
+      layer.forEach((node) => {
+        const parentKey = node.parentKey;
+        if (!groups.has(parentKey)) {
+          groups.set(parentKey, []);
+        }
+        groups.get(parentKey)!.push(node);
+      });
 
-      layer.forEach((node, nodeIndex) => {
-        positions.set(node.key, {
-          x: padding + layerIndex * columnWidth,
-          y: startY + nodeIndex * (nodeHeight + verticalGap),
-          layer: node.layer,
+      // Calculate total height for this layer including group gaps
+      let totalLayerHeight = 0;
+      const groupArray = Array.from(groups.values());
+      groupArray.forEach((group, groupIndex) => {
+        totalLayerHeight += group.length * nodeHeight + (group.length - 1) * verticalGap;
+        if (groupIndex < groupArray.length - 1) {
+          totalLayerHeight += groupGap;
+        }
+      });
+
+      maxH = Math.max(maxH, totalLayerHeight);
+
+      // Position nodes with group spacing
+      let currentY = padding;
+      groupArray.forEach((group, groupIndex) => {
+        group.forEach((node, nodeIndex) => {
+          positions.set(node.key, {
+            x: padding + layerIndex * columnWidth,
+            y: currentY + nodeIndex * (nodeHeight + verticalGap),
+            layer: node.layer,
+          });
         });
+        currentY += group.length * nodeHeight + (group.length - 1) * verticalGap;
+        if (groupIndex < groupArray.length - 1) {
+          currentY += groupGap;
+        }
       });
     });
 
-    return positions;
-  }, [layers, maxHeight, columnWidth, padding]);
+    return {
+      nodePositions: positions,
+      maxHeight: maxH + padding * 2,
+      totalWidth: layers.length * columnWidth + padding * 2 - horizontalGap,
+    };
+  }, [layers, columnWidth, padding, nodeHeight, verticalGap, groupGap]);
 
-  // Determine which metrics are disabled (have parent with % change)
+  // Determine which metrics are disabled
   const disabledMetrics = useMemo(() => {
     const disabled = new Set<string>();
-
     Object.keys(aspirationalChanges).forEach((key) => {
       const node = findNode(tree, key);
       if (node) {
@@ -208,11 +240,29 @@ export function HorizontalTree({
         descendants.forEach((d) => disabled.add(d.key));
       }
     });
-
     return disabled;
   }, [tree, aspirationalChanges]);
 
-  // Group connections by parent for bus-style rendering
+  // Get all connected nodes for hover highlighting
+  const hoveredConnections = useMemo(() => {
+    if (!hoveredNode) return new Set<string>();
+    const connections = new Set<string>([hoveredNode]);
+
+    const node = findNode(tree, hoveredNode);
+    if (node) {
+      // Add all ancestors
+      const ancestors = getAncestors(tree, hoveredNode);
+      ancestors.forEach((a) => connections.add(a.key));
+
+      // Add all descendants
+      const descendants = getDescendants(node);
+      descendants.forEach((d) => connections.add(d.key));
+    }
+
+    return connections;
+  }, [tree, hoveredNode]);
+
+  // Group connections by parent
   const parentChildGroups = useMemo(() => {
     const groups: Map<string, { parentKey: string; childKeys: string[]; isHighlighted: boolean }> = new Map();
 
@@ -257,18 +307,28 @@ export function HorizontalTree({
           width={totalWidth}
           height={maxHeight}
         >
-          {parentChildGroups.map((group) => (
-            <ConnectionLines
-              key={group.parentKey}
-              parentKey={group.parentKey}
-              childKeys={group.childKeys}
-              nodePositions={nodePositions}
-              nodeWidth={nodeWidth}
-              nodeHeight={nodeHeight}
-              isHighlighted={group.isHighlighted}
-              direction={direction}
-            />
-          ))}
+          {parentChildGroups.map((group) => {
+            // Check if this connection should be hover-highlighted
+            const isHoverHighlighted = hoveredNode !== null && (
+              hoveredConnections.has(group.parentKey) &&
+              group.childKeys.some((k) => hoveredConnections.has(k))
+            );
+
+            return (
+              <ConnectionLines
+                key={group.parentKey}
+                parentKey={group.parentKey}
+                childKeys={group.childKeys}
+                nodePositions={nodePositions}
+                nodeWidth={nodeWidth}
+                nodeHeight={nodeHeight}
+                isHighlighted={group.isHighlighted}
+                isHoverHighlighted={isHoverHighlighted}
+                direction={direction}
+                theme={theme}
+              />
+            );
+          })}
         </svg>
 
         {/* Nodes */}
@@ -278,7 +338,6 @@ export function HorizontalTree({
               const position = nodePositions.get(node.key);
               if (!position) return null;
 
-              // Merge aspirational data into node
               const nodeWithAspirations = {
                 ...node,
                 percentChange: aspirationalChanges[node.key],
@@ -298,6 +357,8 @@ export function HorizontalTree({
                     node={nodeWithAspirations}
                     isDisabled={disabledMetrics.has(node.key)}
                     onPercentChange={onPercentChange}
+                    onHover={setHoveredNode}
+                    theme={theme}
                   />
                 </div>
               );
@@ -307,13 +368,12 @@ export function HorizontalTree({
 
         {/* Layer labels */}
         {layers.map((layer, layerIndex) => {
-          // Get the actual layer number from the first node in this column
           const firstNode = layer[0];
           const layerNum = firstNode ? firstNode.layer : layerIndex + 1;
           return (
             <div
               key={`label-${layerIndex}`}
-              className="absolute text-xs text-[#64748b] font-medium"
+              className={`absolute text-xs font-medium ${theme === 'dark' ? 'text-[#64748b]' : 'text-gray-500'}`}
               style={{
                 left: padding + layerIndex * columnWidth + nodeWidth / 2,
                 top: 10,

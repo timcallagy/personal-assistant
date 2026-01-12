@@ -8,13 +8,19 @@ import type { AspirationalChanges, TreeLayout, StoredState } from './types';
 const STORAGE_KEY = 'kpi-driver-tree-state';
 
 /**
+ * Theme type
+ */
+export type Theme = 'dark' | 'light';
+
+/**
  * Default state when nothing is stored
  */
-const DEFAULT_STATE: StoredState = {
+const DEFAULT_STATE: StoredState & { theme: Theme } = {
   periodId: null,
   baselinePeriodId: null,
   aspirationalChanges: {},
-  layout: 'vertical',
+  layout: 'horizontal-rtl',
+  theme: 'dark',
 };
 
 /**
@@ -35,7 +41,7 @@ export function saveState(state: Partial<StoredState>): void {
  * Load state from localStorage
  * @returns The stored state or default values
  */
-export function loadState(): StoredState {
+export function loadState(): StoredState & { theme: Theme } {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
@@ -53,6 +59,7 @@ export function loadState(): StoredState {
         ? parsed.aspirationalChanges
         : {},
       layout: migrateLayout(parsed.layout),
+      theme: isValidTheme(parsed.theme) ? parsed.theme : 'dark',
     };
   } catch (error) {
     console.warn('Failed to load state from localStorage:', error);
@@ -107,6 +114,13 @@ export function saveLayout(layout: TreeLayout): void {
 }
 
 /**
+ * Save theme preference
+ */
+export function saveTheme(theme: Theme): void {
+  saveState({ theme });
+}
+
+/**
  * Validate that a value is a valid AspirationalChanges object
  */
 function isValidAspirationalChanges(value: unknown): value is AspirationalChanges {
@@ -145,5 +159,12 @@ function migrateLayout(value: unknown): TreeLayout {
   if (isValidLayout(value)) {
     return value;
   }
-  return 'vertical';
+  return 'horizontal-rtl'; // New default
+}
+
+/**
+ * Validate that a value is a valid Theme
+ */
+function isValidTheme(value: unknown): value is Theme {
+  return value === 'dark' || value === 'light';
 }
