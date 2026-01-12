@@ -45,7 +45,9 @@ function ConnectionLines({
   if (childPositions.length === 0) return null;
 
   // Child left center X (all children in same column)
-  const childLeftX = childPositions[0].x;
+  const firstChild = childPositions[0];
+  if (!firstChild) return null;
+  const childLeftX = firstChild.x;
 
   // Bus line X position (midpoint between parent right and child left)
   const busX = parentRightX + (childLeftX - parentRightX) / 2;
