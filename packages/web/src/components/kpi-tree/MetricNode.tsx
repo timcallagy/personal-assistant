@@ -208,9 +208,11 @@ export function MetricNode({
         ${colors.bg}
         ${colors.border}
         p-3
+        pt-4
         w-[160px]
         h-[175px]
-        overflow-hidden
+        flex
+        flex-col
         transition-all
         duration-200
         ${isDisabled ? 'opacity-50' : 'hover:scale-105 hover:z-10'}
@@ -219,68 +221,77 @@ export function MetricNode({
       onMouseLeave={handleMouseLeave}
     >
       {/* Metric Name */}
-      <div className={`text-xs font-medium ${colors.text} mb-1 leading-tight line-clamp-2`}>
+      <div className={`text-xs font-medium ${colors.text} mb-1 leading-tight`}>
         {node.name}
       </div>
 
       {/* Value Display */}
-      <div className="flex flex-col">
-        {/* Actual Value */}
-        <div
-          className={`
-            font-bold ${valueTextColor}
-            ${hasAspirations ? 'line-through opacity-60 text-sm' : 'text-lg'}
-          `}
-        >
-          {formattedValue}
+      <div className="flex flex-col flex-1">
+        {/* Baseline Value (strikethrough when aspirational) */}
+        {hasAspirations && (
+          <div className={`text-sm font-bold ${valueTextColor} line-through opacity-60`}>
+            {formattedValue}
+          </div>
+        )}
+
+        {/* Current/Aspirational Value */}
+        <div className={`text-xl font-bold ${valueTextColor}`}>
+          {hasAspirations ? aspirationalFormatted : formattedValue}
         </div>
 
-        {/* Aspirational Value (if different) */}
-        {hasAspirations && (
-          <div className={`text-lg font-bold ${valueTextColor}`}>{aspirationalFormatted}</div>
+        {/* Percent Change Input (hidden for Layer 1) */}
+        {node.layer !== 1 && !isDisabled && onPercentChange && (
+          <div className="mt-1 flex items-center gap-1">
+            {isEditing ? (
+              <div className="flex items-center gap-1">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onBlur={handleInputBlur}
+                  onKeyDown={handleInputKeyDown}
+                  className={`w-12 px-1 py-0.5 text-xs ${inputBgColor} border ${inputBorderColor} rounded ${valueTextColor} text-center focus:outline-none focus:border-blue-400`}
+                  placeholder="0"
+                />
+                <span className={`text-xs ${mutedTextColor}`}>%</span>
+              </div>
+            ) : (
+              <button
+                onClick={startEditing}
+                className={`text-xs ${mutedTextColor} hover:${valueTextColor} transition-colors flex items-center gap-1`}
+              >
+                {inputValue ? (
+                  <>
+                    <span className={changeColorClass}>
+                      {parseFloat(inputValue) > 0 ? '+' : ''}
+                      {inputValue}%
+                    </span>
+                    <button
+                      onClick={handleClear}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                ) : (
+                  <span className="opacity-50 hover:opacity-100">Set % change</span>
+                )}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Percent Change Input (hidden for Layer 1) */}
-      {node.layer !== 1 && !isDisabled && onPercentChange && (
-        <div className="mt-1 flex items-center gap-1">
-          {isEditing ? (
-            <div className="flex items-center gap-1">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={handleInputChange}
-                onBlur={handleInputBlur}
-                onKeyDown={handleInputKeyDown}
-                className={`w-12 px-1 py-0.5 text-xs ${inputBgColor} border ${inputBorderColor} rounded ${valueTextColor} text-center focus:outline-none focus:border-blue-400`}
-                placeholder="0"
-              />
-              <span className={`text-xs ${mutedTextColor}`}>%</span>
-            </div>
-          ) : (
-            <button
-              onClick={startEditing}
-              className={`text-xs ${mutedTextColor} hover:${valueTextColor} transition-colors flex items-center gap-1`}
-            >
-              {inputValue ? (
-                <>
-                  <span className={changeColorClass}>
-                    {parseFloat(inputValue) > 0 ? '+' : ''}
-                    {inputValue}%
-                  </span>
-                  <button
-                    onClick={handleClear}
-                    className="hover:text-red-400 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </>
-              ) : (
-                <span className="opacity-50 hover:opacity-100">Set % change</span>
-              )}
-            </button>
-          )}
+      {/* Trend Indicator (bottom of flex container) */}
+      {node.trendDirection && (
+        <div className="flex justify-end">
+          <TrendIndicator
+            direction={node.trendDirection}
+            percent={node.trendPercent ?? null}
+            favorable={node.favorable}
+            size="sm"
+          />
         </div>
       )}
 
@@ -303,18 +314,6 @@ export function MetricNode({
         >
           {node.percentChange > 0 ? '+' : ''}
           {node.percentChange.toFixed(1)}%
-        </div>
-      )}
-
-      {/* Trend Indicator (bottom-right) */}
-      {node.trendDirection && (
-        <div className="absolute bottom-1 right-1">
-          <TrendIndicator
-            direction={node.trendDirection}
-            percent={node.trendPercent ?? null}
-            favorable={node.favorable}
-            size="sm"
-          />
         </div>
       )}
 
