@@ -117,7 +117,8 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
       setIsEditing(true);
     }
   };
-  const colors = LAYER_COLORS[node.layer] || LAYER_COLORS[5];
+  const defaultColors = { bg: 'bg-[#5c2d3a]', border: 'border-rose-400/50', text: 'text-rose-200' };
+  const colors = LAYER_COLORS[node.layer] ?? defaultColors;
   const formattedValue = formatValue(node.value, node.unit);
 
   // Aspirational value display
