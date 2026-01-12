@@ -304,3 +304,67 @@ model CrawlLog {
   @@index([startedAt(sort: Desc)])
   @@map("crawl_logs")
 }
+
+// ==========================================
+// KPI Driver Tree Models
+// ==========================================
+
+model KpiPeriod {
+  id        Int       @id @default(autoincrement())
+  type      String    // 'monthly' | 'quarterly'
+  year      Int
+  month     Int?      // 1-12 for monthly, null for quarterly
+  quarter   Int?      // 1-4 for quarterly, null for monthly
+  label     String    // e.g., "Jan 2026", "Q1 2026"
+  startDate DateTime  @map("start_date")
+  endDate   DateTime  @map("end_date")
+  isCurrent Boolean   @default(false) @map("is_current")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  metricValues KpiMetricValue[]
+
+  @@unique([type, year, month])
+  @@unique([type, year, quarter])
+  @@index([isCurrent])
+  @@map("kpi_periods")
+}
+
+model KpiMetric {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique // e.g., "gross_margin", "revenue"
+  name      String   // Display name
+  layer     Int      // 1-5
+  parentKey String?  @map("parent_key") // Key of parent metric, null for layer 1
+  unit      String   // 'percent', 'currency', 'ratio', 'count', 'hours'
+  favorable String   // 'up' or 'down'
+  formula   String?  // Optional formula description
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  values KpiMetricValue[]
+
+  @@index([layer])
+  @@index([parentKey])
+  @@map("kpi_metrics")
+}
+
+model KpiMetricValue {
+  id        Int      @id @default(autoincrement())
+  metricId  Int      @map("metric_id")
+  periodId  Int      @map("period_id")
+  value     Float
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  metric KpiMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  period KpiPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([metricId, periodId])
+  @@index([metricId])
+  @@index([periodId])
+  @@map("kpi_metric_values")
+}
