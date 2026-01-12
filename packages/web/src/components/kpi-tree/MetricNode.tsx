@@ -146,8 +146,9 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
         ${colors.bg}
         ${colors.border}
         p-3
-        min-w-[140px]
-        max-w-[180px]
+        w-[160px]
+        h-[100px]
+        overflow-hidden
         transition-all
         duration-200
         ${isDisabled ? 'opacity-50' : 'hover:scale-105'}
@@ -212,7 +213,7 @@ export function MetricNode({ node, isDisabled = false, onPercentChange }: Metric
                   </button>
                 </>
               ) : (
-                <span className="opacity-50 hover:opacity-100">Set %</span>
+                <span className="opacity-50 hover:opacity-100">Set % change</span>
               )}
             </button>
           )}

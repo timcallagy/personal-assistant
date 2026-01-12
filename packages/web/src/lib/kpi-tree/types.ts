@@ -65,7 +65,7 @@ export interface AspirationalChanges {
 }
 
 // Layout type for the tree visualization
-export type TreeLayout = 'vertical' | 'horizontal' | 'radial';
+export type TreeLayout = 'vertical' | 'horizontal-ltr' | 'horizontal-rtl';
 
 // Stored state for localStorage persistence
 export interface StoredState {

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDown, ArrowRight } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowLeft } from 'lucide-react';
 import type { TreeLayout } from '@/lib/kpi-tree/types';
 
 interface LayoutToggleProps {
@@ -10,7 +10,8 @@ interface LayoutToggleProps {
 
 const LAYOUTS: { value: TreeLayout; label: string; icon: typeof ArrowDown }[] = [
   { value: 'vertical', label: 'Top-Down', icon: ArrowDown },
-  { value: 'horizontal', label: 'Left-Right', icon: ArrowRight },
+  { value: 'horizontal-ltr', label: 'Left-Right', icon: ArrowRight },
+  { value: 'horizontal-rtl', label: 'Right-Left', icon: ArrowLeft },
 ];
 
 export function LayoutToggle({ layout, onLayoutChange }: LayoutToggleProps) {

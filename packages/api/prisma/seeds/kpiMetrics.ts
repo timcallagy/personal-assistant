@@ -61,7 +61,7 @@ const METRICS: MetricDefinition[] = [
   },
   {
     key: 'avg_realised_price',
-    name: 'Avg Realised Price/Hour',
+    name: 'Avg Realised Price/Day',
     layer: 3,
     parentKey: 'revenue',
     unit: 'currency',

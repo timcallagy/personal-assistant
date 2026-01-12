@@ -90,13 +90,22 @@ export function KpiTreeDashboard() {
     };
 
     switch (layout) {
-      case 'horizontal':
-        return <HorizontalTree {...treeProps} />;
+      case 'horizontal-ltr':
+        return <HorizontalTree {...treeProps} direction="ltr" />;
+      case 'horizontal-rtl':
+        return <HorizontalTree {...treeProps} direction="rtl" />;
       case 'vertical':
       default:
         return <VerticalTree {...treeProps} />;
     }
   };
+
+  // Get layout label for footer
+  const layoutLabel = {
+    'vertical': 'Top-Down',
+    'horizontal-ltr': 'Left-Right',
+    'horizontal-rtl': 'Right-Left',
+  }[layout] || 'Top-Down';
 
   return (
     <div className="p-6">
@@ -192,7 +201,7 @@ export function KpiTreeDashboard() {
       {/* Footer */}
       <footer className="mt-8 text-center text-[#64748b] text-sm">
         <p>
-          Viewing period: {periodLabel} | Layout: {layout === 'horizontal' ? 'Left-Right' : 'Top-Down'}
+          Viewing period: {periodLabel} | Layout: {layoutLabel}
         </p>
       </footer>
     </div>

@@ -52,7 +52,7 @@ export function loadState(): StoredState {
       aspirationalChanges: isValidAspirationalChanges(parsed.aspirationalChanges)
         ? parsed.aspirationalChanges
         : {},
-      layout: isValidLayout(parsed.layout) ? parsed.layout : 'vertical',
+      layout: migrateLayout(parsed.layout),
     };
   } catch (error) {
     console.warn('Failed to load state from localStorage:', error);
@@ -127,5 +127,23 @@ function isValidAspirationalChanges(value: unknown): value is AspirationalChange
  * Validate that a value is a valid TreeLayout
  */
 function isValidLayout(value: unknown): value is TreeLayout {
-  return value === 'vertical' || value === 'horizontal' || value === 'radial';
+  return value === 'vertical' || value === 'horizontal-ltr' || value === 'horizontal-rtl';
+}
+
+/**
+ * Migrate old layout values to new format
+ */
+function migrateLayout(value: unknown): TreeLayout {
+  // Migrate old 'horizontal' to 'horizontal-ltr'
+  if (value === 'horizontal') {
+    return 'horizontal-ltr';
+  }
+  // Migrate old 'radial' to 'vertical'
+  if (value === 'radial') {
+    return 'vertical';
+  }
+  if (isValidLayout(value)) {
+    return value;
+  }
+  return 'vertical';
 }
