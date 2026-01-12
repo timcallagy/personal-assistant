@@ -170,7 +170,7 @@ export function HorizontalTree({
 
   // Calculate dimensions
   const nodeWidth = 160;
-  const nodeHeight = 150; // Increased to fit all content
+  const nodeHeight = 175; // Increased to fit all content
   const horizontalGap = 60;
   const verticalGap = 20;
   const siblingGap = 40; // Extra gap between sibling groups

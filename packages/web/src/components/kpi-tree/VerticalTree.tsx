@@ -158,7 +158,7 @@ export function VerticalTree({
 
   // Calculate dimensions
   const nodeWidth = 160;
-  const nodeHeight = 150; // Increased to fit all content
+  const nodeHeight = 175; // Increased to fit all content
   const horizontalGap = 24;
   const verticalGap = 80;
   const siblingGap = 40; // Extra gap between sibling groups

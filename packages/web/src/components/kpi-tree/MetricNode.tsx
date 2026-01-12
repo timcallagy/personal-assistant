@@ -209,7 +209,7 @@ export function MetricNode({
         ${colors.border}
         p-3
         w-[160px]
-        h-[150px]
+        h-[175px]
         overflow-hidden
         transition-all
         duration-200
