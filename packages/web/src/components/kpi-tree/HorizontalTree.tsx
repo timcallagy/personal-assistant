@@ -170,62 +170,124 @@ export function HorizontalTree({
 
   // Calculate dimensions
   const nodeWidth = 160;
-  const nodeHeight = 120;
+  const nodeHeight = 150; // Increased to fit all content
   const horizontalGap = 60;
-  const verticalGap = 12;
+  const verticalGap = 16;
   const groupGap = 40; // Extra gap between different parent groups
   const padding = 40;
 
   const columnWidth = nodeWidth + horizontalGap;
 
-  // Calculate positions with group spacing
+  // Calculate positions with proper parent-child centering
   const { nodePositions, maxHeight, totalWidth } = useMemo(() => {
     const positions: Map<string, { x: number; y: number; layer: number }> = new Map();
-    let maxH = 0;
 
-    layers.forEach((layer, layerIndex) => {
-      // Group nodes by parent
-      const groups: Map<string | null, KpiTreeNode[]> = new Map();
+    // Build a map of parent -> children for quick lookup
+    const childrenMap: Map<string, string[]> = new Map();
+    layers.forEach((layer) => {
       layer.forEach((node) => {
-        const parentKey = node.parentKey;
-        if (!groups.has(parentKey)) {
-          groups.set(parentKey, []);
-        }
-        groups.get(parentKey)!.push(node);
-      });
-
-      // Calculate total height for this layer including group gaps
-      let totalLayerHeight = 0;
-      const groupArray = Array.from(groups.values());
-      groupArray.forEach((group, groupIndex) => {
-        totalLayerHeight += group.length * nodeHeight + (group.length - 1) * verticalGap;
-        if (groupIndex < groupArray.length - 1) {
-          totalLayerHeight += groupGap;
-        }
-      });
-
-      maxH = Math.max(maxH, totalLayerHeight);
-
-      // Position nodes with group spacing
-      let currentY = padding;
-      groupArray.forEach((group, groupIndex) => {
-        group.forEach((node, nodeIndex) => {
-          positions.set(node.key, {
-            x: padding + layerIndex * columnWidth,
-            y: currentY + nodeIndex * (nodeHeight + verticalGap),
-            layer: node.layer,
-          });
-        });
-        currentY += group.length * nodeHeight + (group.length - 1) * verticalGap;
-        if (groupIndex < groupArray.length - 1) {
-          currentY += groupGap;
+        if (node.parentKey) {
+          const existing = childrenMap.get(node.parentKey) || [];
+          existing.push(node.key);
+          childrenMap.set(node.parentKey, existing);
         }
       });
     });
 
+    // Process layers from leaves to root (reverse order for proper centering)
+    // In RTL mode, layers are already reversed, so the last layer contains leaves
+    // In LTR mode, the last layer contains leaves
+    const layersToProcess = [...layers].reverse();
+
+    let maxH = 0;
+
+    layersToProcess.forEach((layer, reverseIndex) => {
+      const layerIndex = layers.length - 1 - reverseIndex;
+
+      // Separate nodes into those with positioned children and those without
+      const nodesWithChildren: KpiTreeNode[] = [];
+      const nodesWithoutChildren: KpiTreeNode[] = [];
+
+      layer.forEach((node) => {
+        const children = childrenMap.get(node.key) || [];
+        const hasPositionedChildren = children.some((childKey) => positions.has(childKey));
+        if (hasPositionedChildren) {
+          nodesWithChildren.push(node);
+        } else {
+          nodesWithoutChildren.push(node);
+        }
+      });
+
+      // Position nodes without children (leaves) sequentially with group spacing
+      if (nodesWithoutChildren.length > 0) {
+        // Group by parent for spacing
+        const groups: Map<string | null, KpiTreeNode[]> = new Map();
+        nodesWithoutChildren.forEach((node) => {
+          const parentKey = node.parentKey;
+          if (!groups.has(parentKey)) {
+            groups.set(parentKey, []);
+          }
+          groups.get(parentKey)!.push(node);
+        });
+
+        let currentY = padding;
+        // Check if we need to offset based on already-positioned nodes in other layers
+        const existingYs = Array.from(positions.values()).map((p) => p.y);
+        if (existingYs.length > 0) {
+          // Find max Y used so far to avoid overlaps with nodes from other branches
+          const maxExistingY = Math.max(...existingYs) + nodeHeight + groupGap;
+          currentY = Math.max(padding, maxExistingY);
+        }
+
+        const startY = currentY;
+        const groupArray = Array.from(groups.values());
+        groupArray.forEach((group, groupIndex) => {
+          group.forEach((node, nodeIndex) => {
+            positions.set(node.key, {
+              x: padding + layerIndex * columnWidth,
+              y: currentY + nodeIndex * (nodeHeight + verticalGap),
+              layer: node.layer,
+            });
+          });
+          currentY += group.length * nodeHeight + (group.length - 1) * verticalGap;
+          if (groupIndex < groupArray.length - 1) {
+            currentY += groupGap;
+          }
+        });
+
+        maxH = Math.max(maxH, currentY - startY + padding);
+      }
+
+      // Position nodes with children - center them relative to their children
+      nodesWithChildren.forEach((node) => {
+        const children = childrenMap.get(node.key) || [];
+        const childPositions = children
+          .map((childKey) => positions.get(childKey))
+          .filter((pos): pos is { x: number; y: number; layer: number } => pos !== undefined);
+
+        if (childPositions.length > 0) {
+          // Calculate center Y of all children
+          const childYs = childPositions.map((p) => p.y + nodeHeight / 2);
+          const minChildY = Math.min(...childYs);
+          const maxChildY = Math.max(...childYs);
+          const centerY = (minChildY + maxChildY) / 2;
+
+          positions.set(node.key, {
+            x: padding + layerIndex * columnWidth,
+            y: centerY - nodeHeight / 2,
+            layer: node.layer,
+          });
+        }
+      });
+    });
+
+    // Calculate final dimensions
+    const allPositions = Array.from(positions.values());
+    const maxY = allPositions.length > 0 ? Math.max(...allPositions.map((p) => p.y)) : 0;
+
     return {
       nodePositions: positions,
-      maxHeight: maxH + padding * 2,
+      maxHeight: maxY + nodeHeight + padding * 2,
       totalWidth: layers.length * columnWidth + padding * 2 - horizontalGap,
     };
   }, [layers, columnWidth, padding, nodeHeight, verticalGap, groupGap]);
