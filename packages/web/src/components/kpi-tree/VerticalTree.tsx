@@ -159,116 +159,75 @@ export function VerticalTree({
   // Calculate dimensions
   const nodeWidth = 160;
   const nodeHeight = 150; // Increased to fit all content
-  const horizontalGap = 20;
+  const horizontalGap = 24;
   const verticalGap = 80;
-  const groupGap = 40;
+  const siblingGap = 40; // Extra gap between sibling groups
   const layerHeight = nodeHeight + verticalGap;
   const padding = 40;
 
-  // Calculate positions with proper parent-child centering
+  // Calculate positions using post-order tree traversal (children before parents)
   const { nodePositions, maxWidth } = useMemo(() => {
     const positions: Map<string, { x: number; y: number; layer: number }> = new Map();
+    let nextX = padding; // Track the next available X position for leaf nodes
 
-    // Build a map of parent -> children for quick lookup
-    const childrenMap: Map<string, string[]> = new Map();
-    layers.forEach((layer) => {
-      layer.forEach((node) => {
-        if (node.parentKey) {
-          const existing = childrenMap.get(node.parentKey) || [];
-          existing.push(node.key);
-          childrenMap.set(node.parentKey, existing);
-        }
-      });
-    });
+    // Post-order traversal: position children first, then parent
+    function positionNode(node: KpiTreeNode): { minX: number; maxX: number } {
+      // Calculate Y based on layer (Layer 1 at top)
+      const y = padding + (node.layer - 1) * layerHeight;
 
-    // Process layers from bottom to top (leaves first)
-    const layersToProcess = [...layers].reverse();
-
-    layersToProcess.forEach((layer, reverseIndex) => {
-      const layerIndex = layers.length - 1 - reverseIndex;
-
-      // Separate nodes into those with positioned children and those without
-      const nodesWithChildren: KpiTreeNode[] = [];
-      const nodesWithoutChildren: KpiTreeNode[] = [];
-
-      layer.forEach((node) => {
-        const children = childrenMap.get(node.key) || [];
-        const hasPositionedChildren = children.some((childKey) => positions.has(childKey));
-        if (hasPositionedChildren) {
-          nodesWithChildren.push(node);
-        } else {
-          nodesWithoutChildren.push(node);
-        }
-      });
-
-      // Position nodes without children (leaves) sequentially with group spacing
-      if (nodesWithoutChildren.length > 0) {
-        // Group by parent for spacing
-        const groups: Map<string | null, KpiTreeNode[]> = new Map();
-        nodesWithoutChildren.forEach((node) => {
-          const parentKey = node.parentKey;
-          if (!groups.has(parentKey)) {
-            groups.set(parentKey, []);
-          }
-          groups.get(parentKey)!.push(node);
-        });
-
-        let currentX = padding;
-        // Check if we need to offset based on already-positioned nodes
-        const existingXs = Array.from(positions.values()).map((p) => p.x);
-        if (existingXs.length > 0) {
-          const maxExistingX = Math.max(...existingXs) + nodeWidth + groupGap;
-          currentX = Math.max(padding, maxExistingX);
-        }
-
-        const groupArray = Array.from(groups.values());
-        groupArray.forEach((group, groupIndex) => {
-          group.forEach((node, nodeIndex) => {
-            positions.set(node.key, {
-              x: currentX + nodeIndex * (nodeWidth + horizontalGap),
-              y: padding + layerIndex * layerHeight,
-              layer: node.layer,
-            });
-          });
-          currentX += group.length * nodeWidth + (group.length - 1) * horizontalGap;
-          if (groupIndex < groupArray.length - 1) {
-            currentX += groupGap;
-          }
-        });
+      if (node.children.length === 0) {
+        // Leaf node: position at next available X
+        const x = nextX;
+        positions.set(node.key, { x, y, layer: node.layer });
+        nextX = x + nodeWidth + horizontalGap;
+        return { minX: x, maxX: x + nodeWidth };
       }
 
-      // Position nodes with children - center them relative to their children
-      nodesWithChildren.forEach((node) => {
-        const children = childrenMap.get(node.key) || [];
-        const childPositions = children
-          .map((childKey) => positions.get(childKey))
-          .filter((pos): pos is { x: number; y: number; layer: number } => pos !== undefined);
+      // Non-leaf: position children first
+      let childMinX = Infinity;
+      let childMaxX = -Infinity;
 
-        if (childPositions.length > 0) {
-          // Calculate center X of all children
-          const childXs = childPositions.map((p) => p.x + nodeWidth / 2);
-          const minChildX = Math.min(...childXs);
-          const maxChildX = Math.max(...childXs);
-          const centerX = (minChildX + maxChildX) / 2;
+      node.children.forEach((child, index) => {
+        const childBounds = positionNode(child);
+        childMinX = Math.min(childMinX, childBounds.minX);
+        childMaxX = Math.max(childMaxX, childBounds.maxX);
 
-          positions.set(node.key, {
-            x: centerX - nodeWidth / 2,
-            y: padding + layerIndex * layerHeight,
-            layer: node.layer,
-          });
+        // Add sibling gap after each child group (except the last)
+        if (index < node.children.length - 1) {
+          nextX += siblingGap - horizontalGap; // siblingGap replaces horizontalGap
         }
       });
-    });
 
-    // Calculate max width
+      // Position parent centered relative to its children
+      const centerX = (childMinX + childMaxX) / 2 - nodeWidth / 2;
+      positions.set(node.key, { x: centerX, y, layer: node.layer });
+
+      return { minX: Math.min(centerX, childMinX), maxX: Math.max(centerX + nodeWidth, childMaxX) };
+    }
+
+    // Start traversal from root
+    positionNode(tree);
+
+    // Calculate final dimensions
     const allPositions = Array.from(positions.values());
+    const minX = allPositions.length > 0 ? Math.min(...allPositions.map((p) => p.x)) : 0;
     const maxX = allPositions.length > 0 ? Math.max(...allPositions.map((p) => p.x)) : 0;
+
+    // Adjust all positions if minX is less than padding
+    if (minX < padding) {
+      const offset = padding - minX;
+      allPositions.forEach((pos) => {
+        pos.x += offset;
+      });
+    }
+
+    const finalMaxX = allPositions.length > 0 ? Math.max(...allPositions.map((p) => p.x)) : 0;
 
     return {
       nodePositions: positions,
-      maxWidth: maxX + nodeWidth + padding * 2,
+      maxWidth: finalMaxX + nodeWidth + padding,
     };
-  }, [layers, layerHeight, padding, nodeWidth, horizontalGap, groupGap]);
+  }, [tree, layerHeight, padding, nodeWidth, horizontalGap, siblingGap]);
 
   const totalHeight = layers.length * layerHeight + padding;
 
