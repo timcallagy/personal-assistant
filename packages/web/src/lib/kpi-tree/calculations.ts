@@ -10,21 +10,29 @@ import { cloneTree, flattenTree, findNode, getDescendants } from './treeUtils';
  * Formula definitions for calculated metrics
  * Each formula takes a values object and returns the calculated value
  */
-type FormulaFn = (values: Record<string, number>) => number;
+type ValuesMap = { [key: string]: number };
+type FormulaFn = (values: ValuesMap) => number;
+
+// Helper to safely get a value with default of 0
+const get = (v: ValuesMap, key: string): number => v[key] ?? 0;
 
 const FORMULAS: Record<string, FormulaFn> = {
   // Layer 1
-  gross_margin: (v) => ((v.revenue - v.costs) / v.revenue) * 100,
+  gross_margin: (v) => {
+    const revenue = get(v, 'revenue');
+    const costs = get(v, 'costs');
+    return revenue > 0 ? ((revenue - costs) / revenue) * 100 : 0;
+  },
 
   // Layer 2
-  revenue: (v) => v.billable_hours * v.avg_realised_price,
-  costs: (v) => v.delivery_costs + v.non_delivery_costs,
+  revenue: (v) => get(v, 'billable_hours') * get(v, 'avg_realised_price'),
+  costs: (v) => get(v, 'delivery_costs') + get(v, 'non_delivery_costs'),
 
   // Layer 3
-  billable_hours: (v) => v.total_capacity_hours * (v.utilisation_rate / 100),
-  avg_realised_price: (v) => v.list_rate - v.price_leakage,
-  delivery_costs: (v) => v.delivery_headcount * v.cost_per_fte,
-  non_delivery_costs: (v) => v.mgmt_ops_costs + v.tools_facilities + v.shared_corporate,
+  billable_hours: (v) => get(v, 'total_capacity_hours') * (get(v, 'utilisation_rate') / 100),
+  avg_realised_price: (v) => get(v, 'list_rate') - get(v, 'price_leakage'),
+  delivery_costs: (v) => get(v, 'delivery_headcount') * get(v, 'cost_per_fte'),
+  non_delivery_costs: (v) => get(v, 'mgmt_ops_costs') + get(v, 'tools_facilities') + get(v, 'shared_corporate'),
 };
 
 /**
