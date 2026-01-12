@@ -67,12 +67,16 @@ export interface AspirationalChanges {
 // Layout type for the tree visualization
 export type TreeLayout = 'vertical' | 'horizontal-ltr' | 'horizontal-rtl';
 
+// Theme type
+export type Theme = 'dark' | 'light';
+
 // Stored state for localStorage persistence
 export interface StoredState {
   periodId: number | null;
   baselinePeriodId: number | null;
   aspirationalChanges: AspirationalChanges;
   layout: TreeLayout;
+  theme: Theme;
 }
 
 // API response types

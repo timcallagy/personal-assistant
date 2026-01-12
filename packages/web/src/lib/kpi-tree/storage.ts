@@ -3,19 +3,17 @@
  * Functions for saving and loading user state
  */
 
-import type { AspirationalChanges, TreeLayout, StoredState } from './types';
+import type { AspirationalChanges, TreeLayout, StoredState, Theme } from './types';
+
+// Re-export Theme for backwards compatibility
+export type { Theme };
 
 const STORAGE_KEY = 'kpi-driver-tree-state';
 
 /**
- * Theme type
- */
-export type Theme = 'dark' | 'light';
-
-/**
  * Default state when nothing is stored
  */
-const DEFAULT_STATE: StoredState & { theme: Theme } = {
+const DEFAULT_STATE: StoredState = {
   periodId: null,
   baselinePeriodId: null,
   aspirationalChanges: {},
@@ -41,7 +39,7 @@ export function saveState(state: Partial<StoredState>): void {
  * Load state from localStorage
  * @returns The stored state or default values
  */
-export function loadState(): StoredState & { theme: Theme } {
+export function loadState(): StoredState {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
