@@ -5,15 +5,15 @@ import { MetricNode } from './MetricNode';
 import { getLayers, findNode, getDescendants } from '@/lib/kpi-tree/treeUtils';
 import type { KpiTreeNode, AspirationalChanges } from '@/lib/kpi-tree/types';
 
-interface VerticalTreeProps {
+interface HorizontalTreeProps {
   tree: KpiTreeNode;
   aspirationalChanges: AspirationalChanges;
   onPercentChange?: (metricKey: string, value: number | null) => void;
 }
 
 /**
- * Orthogonal connection lines - draws elbow connectors from parent to children
- * Uses a "bus" style: parent -> vertical line -> horizontal bus -> vertical lines -> children
+ * Horizontal connection lines - draws elbow connectors from parent to children
+ * Uses a "bus" style: parent -> horizontal line -> vertical bus -> horizontal lines -> children
  */
 function ConnectionLines({
   parentKey,
@@ -33,9 +33,9 @@ function ConnectionLines({
   const parentPos = nodePositions.get(parentKey);
   if (!parentPos || childKeys.length === 0) return null;
 
-  // Parent bottom center
-  const parentBottomX = parentPos.x + nodeWidth / 2;
-  const parentBottomY = parentPos.y + nodeHeight;
+  // Parent right center
+  const parentRightX = parentPos.x + nodeWidth;
+  const parentRightY = parentPos.y + nodeHeight / 2;
 
   // Get child positions
   const childPositions = childKeys
@@ -44,16 +44,16 @@ function ConnectionLines({
 
   if (childPositions.length === 0) return null;
 
-  // Child top centers
-  const childTopY = childPositions[0].y;
+  // Child left center X (all children in same column)
+  const childLeftX = childPositions[0].x;
 
-  // Bus line Y position (midpoint between parent bottom and child top)
-  const busY = parentBottomY + (childTopY - parentBottomY) / 2;
+  // Bus line X position (midpoint between parent right and child left)
+  const busX = parentRightX + (childLeftX - parentRightX) / 2;
 
-  // Calculate the extent of the bus line
-  const childCenters = childPositions.map((pos) => pos.x + nodeWidth / 2);
-  const minChildX = Math.min(...childCenters);
-  const maxChildX = Math.max(...childCenters);
+  // Calculate the extent of the vertical bus line
+  const childCenters = childPositions.map((pos) => pos.y + nodeHeight / 2);
+  const minChildY = Math.min(...childCenters);
+  const maxChildY = Math.max(...childCenters);
 
   const strokeColor = isHighlighted ? '#60a5fa' : '#4b5563';
   const strokeWidth = isHighlighted ? 2.5 : 1.5;
@@ -61,51 +61,51 @@ function ConnectionLines({
 
   return (
     <g>
-      {/* Vertical line from parent to bus */}
+      {/* Horizontal line from parent to bus */}
       <line
-        x1={parentBottomX}
-        y1={parentBottomY}
-        x2={parentBottomX}
-        y2={busY}
+        x1={parentRightX}
+        y1={parentRightY}
+        x2={busX}
+        y2={parentRightY}
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         opacity={opacity}
       />
 
-      {/* Horizontal bus line */}
+      {/* Vertical bus line */}
       <line
-        x1={minChildX}
-        y1={busY}
-        x2={maxChildX}
-        y2={busY}
+        x1={busX}
+        y1={minChildY}
+        x2={busX}
+        y2={maxChildY}
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         opacity={opacity}
       />
 
-      {/* Connection from bus to parent vertical line (if parent not centered on bus) */}
-      {(parentBottomX < minChildX || parentBottomX > maxChildX) && (
+      {/* Connection from bus to parent horizontal line (if parent not centered on bus) */}
+      {(parentRightY < minChildY || parentRightY > maxChildY) && (
         <line
-          x1={parentBottomX}
-          y1={busY}
-          x2={parentBottomX < minChildX ? minChildX : maxChildX}
-          y2={busY}
+          x1={busX}
+          y1={parentRightY}
+          x2={busX}
+          y2={parentRightY < minChildY ? minChildY : maxChildY}
           stroke={strokeColor}
           strokeWidth={strokeWidth}
           opacity={opacity}
         />
       )}
 
-      {/* Vertical lines from bus to each child */}
+      {/* Horizontal lines from bus to each child */}
       {childPositions.map((childPos, index) => {
-        const childCenterX = childPos.x + nodeWidth / 2;
+        const childCenterY = childPos.y + nodeHeight / 2;
         return (
           <line
             key={childKeys[index]}
-            x1={childCenterX}
-            y1={busY}
-            x2={childCenterX}
-            y2={childPos.y}
+            x1={busX}
+            y1={childCenterY}
+            x2={childPos.x}
+            y2={childCenterY}
             stroke={strokeColor}
             strokeWidth={strokeWidth}
             opacity={opacity}
@@ -115,8 +115,8 @@ function ConnectionLines({
 
       {/* Small circles at connection points for visual clarity */}
       <circle
-        cx={parentBottomX}
-        cy={parentBottomY}
+        cx={parentRightX}
+        cy={parentRightY}
         r={3}
         fill={strokeColor}
         opacity={opacity}
@@ -124,8 +124,8 @@ function ConnectionLines({
       {childPositions.map((childPos, index) => (
         <circle
           key={`dot-${childKeys[index]}`}
-          cx={childPos.x + nodeWidth / 2}
-          cy={childPos.y}
+          cx={childPos.x}
+          cy={childPos.y + nodeHeight / 2}
           r={3}
           fill={strokeColor}
           opacity={opacity}
@@ -135,51 +135,53 @@ function ConnectionLines({
   );
 }
 
-export function VerticalTree({
+export function HorizontalTree({
   tree,
   aspirationalChanges,
   onPercentChange,
-}: VerticalTreeProps) {
-  // Get layers for vertical layout
+}: HorizontalTreeProps) {
+  // Get layers for horizontal layout (Layer 1 on left, Layer 5 on right)
   const layers = useMemo(() => getLayers(tree), [tree]);
 
   // Calculate dimensions
   const nodeWidth = 160;
   const nodeHeight = 100;
-  const horizontalGap = 20;
-  const verticalGap = 80;
-  const layerHeight = nodeHeight + verticalGap;
+  const horizontalGap = 60; // Gap between layers (columns)
+  const verticalGap = 16; // Gap between nodes in same layer
   const padding = 40;
 
-  // Calculate width needed for each layer
-  const layerWidths = useMemo(() => {
+  // Calculate column width
+  const columnWidth = nodeWidth + horizontalGap;
+
+  // Calculate height needed for each layer (tallest column determines total height)
+  const layerHeights = useMemo(() => {
     return layers.map((layer) => {
-      return layer.length * nodeWidth + (layer.length - 1) * horizontalGap;
+      return layer.length * nodeHeight + (layer.length - 1) * verticalGap;
     });
   }, [layers]);
 
-  const maxWidth = Math.max(...layerWidths, 800) + padding * 2;
-  const totalHeight = layers.length * layerHeight + padding;
+  const maxHeight = Math.max(...layerHeights, 400) + padding * 2;
+  const totalWidth = layers.length * columnWidth + padding * 2 - horizontalGap;
 
-  // Calculate node positions
+  // Calculate node positions (x is based on layer, y is based on position within layer)
   const nodePositions = useMemo(() => {
     const positions: Map<string, { x: number; y: number; layer: number }> = new Map();
 
     layers.forEach((layer, layerIndex) => {
-      const layerWidth = layer.length * nodeWidth + (layer.length - 1) * horizontalGap;
-      const startX = (maxWidth - layerWidth) / 2;
+      const layerHeight = layer.length * nodeHeight + (layer.length - 1) * verticalGap;
+      const startY = (maxHeight - layerHeight) / 2;
 
       layer.forEach((node, nodeIndex) => {
         positions.set(node.key, {
-          x: startX + nodeIndex * (nodeWidth + horizontalGap),
-          y: padding + layerIndex * layerHeight,
+          x: padding + layerIndex * columnWidth,
+          y: startY + nodeIndex * (nodeHeight + verticalGap),
           layer: node.layer,
         });
       });
     });
 
     return positions;
-  }, [layers, maxWidth, layerHeight, padding]);
+  }, [layers, maxHeight, columnWidth, padding]);
 
   // Determine which metrics are disabled (have parent with % change)
   const disabledMetrics = useMemo(() => {
@@ -226,19 +228,20 @@ export function VerticalTree({
   }, [layers, aspirationalChanges]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto overflow-y-auto">
       <div
-        className="relative mx-auto"
+        className="relative"
         style={{
-          width: maxWidth,
-          height: totalHeight,
+          width: totalWidth,
+          height: maxHeight,
+          minWidth: '100%',
         }}
       >
         {/* Connection lines (SVG layer) */}
         <svg
           className="absolute inset-0 pointer-events-none"
-          width={maxWidth}
-          height={totalHeight}
+          width={totalWidth}
+          height={maxHeight}
         >
           {parentChildGroups.map((group) => (
             <ConnectionLines
@@ -284,6 +287,21 @@ export function VerticalTree({
                 </div>
               );
             })}
+          </div>
+        ))}
+
+        {/* Layer labels */}
+        {layers.map((layer, layerIndex) => (
+          <div
+            key={`label-${layerIndex}`}
+            className="absolute text-xs text-[#64748b] font-medium"
+            style={{
+              left: padding + layerIndex * columnWidth + nodeWidth / 2,
+              top: 10,
+              transform: 'translateX(-50%)',
+            }}
+          >
+            Layer {layerIndex + 1}
           </div>
         ))}
       </div>

@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { MobileMessage } from './MobileMessage';
 import { VerticalTree } from './VerticalTree';
+import { HorizontalTree } from './HorizontalTree';
 import { PeriodSelector } from './PeriodSelector';
+import { LayoutToggle } from './LayoutToggle';
 import { useKpiTree } from '@/lib/kpi-tree/useKpiTree';
 
 const MIN_WIDTH = 1024;
@@ -25,9 +27,11 @@ export function KpiTreeDashboard() {
     periodsError,
     metricsError,
     aspirationalChanges,
+    layout,
     setPercentChange,
     setPeriodId,
     setBaselinePeriodId,
+    setLayout,
     resetAll,
   } = useKpiTree();
 
@@ -75,6 +79,25 @@ export function KpiTreeDashboard() {
   // Combined error state
   const error = periodsError || metricsError;
 
+  // Render the appropriate tree layout
+  const renderTree = () => {
+    if (!displayTree) return null;
+
+    const treeProps = {
+      tree: displayTree,
+      aspirationalChanges,
+      onPercentChange: setPercentChange,
+    };
+
+    switch (layout) {
+      case 'horizontal':
+        return <HorizontalTree {...treeProps} />;
+      case 'vertical':
+      default:
+        return <VerticalTree {...treeProps} />;
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -91,6 +114,9 @@ export function KpiTreeDashboard() {
 
           {/* Controls */}
           <div className="flex items-end gap-4">
+            {/* Layout Toggle */}
+            <LayoutToggle layout={layout} onLayoutChange={setLayout} />
+
             {/* Period Selector */}
             <div className="w-40">
               <PeriodSelector
@@ -151,13 +177,7 @@ export function KpiTreeDashboard() {
         )}
 
         {/* Tree Visualization */}
-        {!isLoading && !error && displayTree && (
-          <VerticalTree
-            tree={displayTree}
-            aspirationalChanges={aspirationalChanges}
-            onPercentChange={setPercentChange}
-          />
-        )}
+        {!isLoading && !error && displayTree && renderTree()}
 
         {/* No Data State */}
         {!isLoading && !error && !displayTree && (
@@ -171,7 +191,9 @@ export function KpiTreeDashboard() {
 
       {/* Footer */}
       <footer className="mt-8 text-center text-[#64748b] text-sm">
-        <p>Viewing period: {periodLabel}</p>
+        <p>
+          Viewing period: {periodLabel} | Layout: {layout === 'horizontal' ? 'Left-Right' : 'Top-Down'}
+        </p>
       </footer>
     </div>
   );

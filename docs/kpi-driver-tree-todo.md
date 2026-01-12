@@ -174,23 +174,23 @@
 - [x] Handle loading state for comparison fetch
 
 ## Prompt 16: Alternative Layouts and Final Polish
-- [ ] Create HorizontalTree.tsx component
-- [ ] Render layers as vertical columns
-- [ ] Draw horizontal connection lines
-- [ ] Make scrollable if needed
-- [ ] Create RadialTree.tsx component
+- [x] Create HorizontalTree.tsx component
+- [x] Render layers as vertical columns
+- [x] Draw horizontal connection lines (orthogonal bus-style)
+- [x] Make scrollable if needed
+- [ ] Create RadialTree.tsx component (optional)
 - [ ] Position Layer 1 in center
 - [ ] Arrange layers in concentric rings
 - [ ] Draw radial connection lines
-- [ ] Create LayoutToggle.tsx component
-- [ ] Three toggle buttons (Vertical/Horizontal/Radial)
-- [ ] Save layout preference to localStorage
-- [ ] Update KpiTreeDashboard with layout toggle
-- [ ] Conditionally render selected layout
-- [ ] Add layout transition animations
-- [ ] Verify all loading states
+- [x] Create LayoutToggle.tsx component
+- [x] Two toggle buttons (Vertical/Horizontal) - Radial optional
+- [x] Save layout preference to localStorage
+- [x] Update KpiTreeDashboard with layout toggle
+- [x] Conditionally render selected layout
+- [ ] Add layout transition animations (optional)
+- [x] Verify all loading states
 - [ ] Add error boundary
-- [ ] Add footer with period label
+- [x] Add footer with period label
 - [ ] Final testing of all features
 - [ ] Verify mobile message works
 - [ ] No console errors/warnings
