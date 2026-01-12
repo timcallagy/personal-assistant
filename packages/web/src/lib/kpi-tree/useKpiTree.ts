@@ -144,12 +144,13 @@ export function useKpiTree(): UseKpiTreeReturn {
       try {
         let metricsData: KpiMetric[];
 
+        // periodId is guaranteed non-null here due to early return check above
         if (baselinePeriodId && baselinePeriodId !== periodId) {
           // Fetch with comparison
-          metricsData = await fetchMetricsCompare(periodId, baselinePeriodId);
+          metricsData = await fetchMetricsCompare(periodId!, baselinePeriodId);
         } else {
           // Fetch without comparison
-          metricsData = await fetchMetrics(periodId);
+          metricsData = await fetchMetrics(periodId!);
         }
 
         setMetrics(metricsData);
@@ -245,10 +246,11 @@ export function useKpiTree(): UseKpiTreeReturn {
     try {
       let metricsData: KpiMetric[];
 
+      // periodId is guaranteed non-null here due to early return check above
       if (baselinePeriodId && baselinePeriodId !== periodId) {
-        metricsData = await fetchMetricsCompare(periodId, baselinePeriodId);
+        metricsData = await fetchMetricsCompare(periodId!, baselinePeriodId);
       } else {
-        metricsData = await fetchMetrics(periodId);
+        metricsData = await fetchMetrics(periodId!);
       }
 
       setMetrics(metricsData);
