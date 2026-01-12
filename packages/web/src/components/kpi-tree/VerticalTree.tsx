@@ -45,7 +45,9 @@ function ConnectionLines({
   if (childPositions.length === 0) return null;
 
   // Child top centers
-  const childTopY = childPositions[0].y;
+  const firstChild = childPositions[0];
+  if (!firstChild) return null;
+  const childTopY = firstChild.y;
 
   // Bus line Y position (midpoint between parent bottom and child top)
   const busY = parentBottomY + (childTopY - parentBottomY) / 2;
