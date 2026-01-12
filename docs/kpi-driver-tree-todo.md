@@ -1,177 +1,177 @@
 # KPI Driver Tree - Implementation Checklist
 
 ## Prompt 1: Database Schema
-- [ ] Add KpiPeriod model to Prisma schema
-- [ ] Add KpiMetric model to Prisma schema
-- [ ] Add KpiMetricValue model to Prisma schema
-- [ ] Add unique constraints and relations
-- [ ] Generate Prisma migration "add_kpi_tree_models"
-- [ ] Verify migration runs successfully
+- [x] Add KpiPeriod model to Prisma schema
+- [x] Add KpiMetric model to Prisma schema
+- [x] Add KpiMetricValue model to Prisma schema
+- [x] Add unique constraints and relations
+- [x] Generate Prisma migration "add_kpi_tree_models"
+- [ ] Verify migration runs successfully (waiting for user to run on Render)
 
 ## Prompt 2: Seed Metric Definitions
-- [ ] Create seeds directory if not exists
-- [ ] Create kpiMetrics.ts seed file
-- [ ] Define Layer 1 metric (gross_margin)
-- [ ] Define Layer 2 metrics (revenue, costs)
-- [ ] Define Layer 3 metrics (4 metrics)
-- [ ] Define Layer 4 metrics (9 metrics)
-- [ ] Define Layer 5 metrics (18 metrics)
-- [ ] Export seedKpiMetrics() function
-- [ ] Verify all 34 metrics are defined
+- [x] Create seeds directory if not exists
+- [x] Create kpiMetrics.ts seed file
+- [x] Define Layer 1 metric (gross_margin)
+- [x] Define Layer 2 metrics (revenue, costs)
+- [x] Define Layer 3 metrics (4 metrics)
+- [x] Define Layer 4 metrics (9 metrics)
+- [x] Define Layer 5 metrics (18 metrics)
+- [x] Export seedKpiMetrics() function
+- [x] Verify all 34 metrics are defined
 
 ## Prompt 3: Seed Periods and Values
-- [ ] Create kpiPeriodValues.ts seed file
-- [ ] Create monthly periods (Oct-Dec 2025, Jan 2026)
-- [ ] Create quarterly periods (Q3-Q4 2025)
-- [ ] Set Jan 2026 as current period
-- [ ] Create base values for Jan 2026
-- [ ] Generate historical values with variance
-- [ ] Export seedKpiPeriodValues() function
-- [ ] Update main seed.ts to call both seed functions
-- [ ] Run seed and verify data in database
+- [x] Create kpiPeriodValues.ts seed file
+- [x] Create monthly periods (Oct-Dec 2025, Jan 2026)
+- [x] Create quarterly periods (Q3-Q4 2025)
+- [x] Set Jan 2026 as current period
+- [x] Create base values for Jan 2026
+- [x] Generate historical values with variance
+- [x] Export seedKpiPeriodValues() function
+- [x] Update main seed.ts to call both seed functions (created seed-kpi.ts)
+- [ ] Run seed and verify data in database (pending migration)
 
 ## Prompt 4: API Endpoints
-- [ ] Create kpi-tree routes directory
-- [ ] Create kpiTreeService.ts service file
-- [ ] Implement GET /api/kpi-tree/periods endpoint
-- [ ] Implement GET /api/kpi-tree/metrics endpoint
-- [ ] Implement GET /api/kpi-tree/metrics/compare endpoint
-- [ ] Handle missing/invalid periodId errors
-- [ ] Calculate trend direction and percentage
-- [ ] Register routes in main API router
-- [ ] Test endpoints manually or with curl
+- [x] Create kpi-tree routes directory
+- [x] Create kpiTreeService.ts service file
+- [x] Implement GET /api/kpi-tree/periods endpoint
+- [x] Implement GET /api/kpi-tree/metrics endpoint
+- [x] Implement GET /api/kpi-tree/metrics/compare endpoint
+- [x] Handle missing/invalid periodId errors
+- [x] Calculate trend direction and percentage
+- [x] Register routes in main API router
+- [ ] Test endpoints manually or with curl (pending deployment)
 
 ## Prompt 5: Page Setup and Mobile Message
-- [ ] Create /kpi-driver-tree page route
-- [ ] Add page metadata (title)
-- [ ] Create KpiTreeDashboard container component
-- [ ] Apply dark theme styling
-- [ ] Create MobileMessage component
-- [ ] Implement viewport detection (<1024px)
-- [ ] Style mobile message appropriately
-- [ ] Verify page loads on desktop and mobile
+- [x] Create /kpi-driver-tree page route
+- [x] Add page metadata (title)
+- [x] Create KpiTreeDashboard container component
+- [x] Apply dark theme styling
+- [x] Create MobileMessage component
+- [x] Implement viewport detection (<1024px)
+- [x] Style mobile message appropriately
+- [ ] Verify page loads on desktop and mobile (pending deployment)
 
 ## Prompt 6: Types and Formatting Utilities
-- [ ] Create lib/kpi-tree directory
-- [ ] Create types.ts with all interfaces
-- [ ] Define KpiPeriod interface
-- [ ] Define KpiMetric interface
-- [ ] Define KpiTreeNode interface
-- [ ] Define AspirationalChanges interface
-- [ ] Create formatting.ts
-- [ ] Implement formatValue() function
-- [ ] Implement formatAbbreviatedNumber() function
-- [ ] Implement formatPercentChange() function
-- [ ] Handle all unit types (currency, percent, ratio, count, hours)
+- [x] Create lib/kpi-tree directory
+- [x] Create types.ts with all interfaces
+- [x] Define KpiPeriod interface
+- [x] Define KpiMetric interface
+- [x] Define KpiTreeNode interface
+- [x] Define AspirationalChanges interface
+- [x] Create formatting.ts
+- [x] Implement formatValue() function
+- [x] Implement formatAbbreviatedNumber() function
+- [x] Implement formatPercentChange() function
+- [x] Handle all unit types (currency, percent, ratio, count, hours)
 
 ## Prompt 7: Tree Structure Utilities
-- [ ] Create treeUtils.ts
-- [ ] Implement buildTree() function
-- [ ] Implement flattenTree() function
-- [ ] Implement findNode() function
-- [ ] Implement getAncestors() function
-- [ ] Implement getDescendants() function
-- [ ] Add JSDoc comments
-- [ ] Test tree building with sample data
+- [x] Create treeUtils.ts
+- [x] Implement buildTree() function
+- [x] Implement flattenTree() function
+- [x] Implement findNode() function
+- [x] Implement getAncestors() function
+- [x] Implement getDescendants() function
+- [x] Add JSDoc comments
+- [ ] Test tree building with sample data (pending integration)
 
 ## Prompt 8: MetricNode Component (Display Only)
-- [ ] Create MetricNode.tsx component
-- [ ] Define props interface
-- [ ] Render metric name
-- [ ] Render actual value (formatted)
-- [ ] Render aspirational value (if different)
-- [ ] Render trend indicator placeholder
-- [ ] Apply dark theme card styling
-- [ ] Implement disabled state (50% opacity)
-- [ ] Apply favorable/unfavorable colors
+- [x] Create MetricNode.tsx component
+- [x] Define props interface
+- [x] Render metric name
+- [x] Render actual value (formatted)
+- [x] Render aspirational value (if different)
+- [x] Render trend indicator placeholder
+- [x] Apply dark theme card styling
+- [x] Implement disabled state (50% opacity)
+- [x] Apply favorable/unfavorable colors
 
 ## Prompt 9: VerticalTree Component and Data Hook
-- [ ] Create useKpiTree.ts hook
-- [ ] Add state for periods, metrics, loading, error
-- [ ] Fetch periods on mount
-- [ ] Fetch metrics for selected period
-- [ ] Build tree from metrics
-- [ ] Create VerticalTree.tsx component
-- [ ] Render layers as horizontal rows
-- [ ] Position nodes with spacing
-- [ ] Draw connection lines between nodes
-- [ ] Render MetricNode for each node
-- [ ] Update KpiTreeDashboard to use hook
-- [ ] Show loading spinner
-- [ ] Show error message
-- [ ] Verify tree displays with actual values
+- [x] Create useKpiTree.ts hook
+- [x] Add state for periods, metrics, loading, error
+- [x] Fetch periods on mount
+- [x] Fetch metrics for selected period
+- [x] Build tree from metrics
+- [x] Create VerticalTree.tsx component
+- [x] Render layers as horizontal rows
+- [x] Position nodes with spacing
+- [x] Draw connection lines between nodes
+- [x] Render MetricNode for each node
+- [x] Update KpiTreeDashboard to use hook
+- [x] Show loading spinner
+- [x] Show error message
+- [ ] Verify tree displays with actual values (pending deployment)
 
 ## Prompt 10: Calculation Module
-- [ ] Create calculations.ts
-- [ ] Define FORMULAS object for all calculated metrics
-- [ ] Implement applyPercentChange() function
-- [ ] Implement calculateAspirationalValues() function
-- [ ] Implement getDisabledMetrics() function
-- [ ] Handle calculation order (Layer 5 to Layer 1)
-- [ ] Add inline test comments
+- [x] Create calculations.ts
+- [x] Define FORMULAS object for all calculated metrics
+- [x] Implement applyPercentChange() function
+- [x] Implement calculateAspirationalValues() function
+- [x] Implement getDisabledMetrics() function
+- [x] Handle calculation order (Layer 5 to Layer 1)
+- [x] Add inline test comments
 
 ## Prompt 11: Percent Change Inputs and State
-- [ ] Update MetricNode with input props
-- [ ] Add % change input field
-- [ ] Style input (dark theme)
-- [ ] Handle input blur/Enter events
-- [ ] Add clear button
-- [ ] Hide input for Layer 1
-- [ ] Update useKpiTree with aspirationalChanges state
-- [ ] Implement setPercentChange() function
-- [ ] Calculate aspirationalValues using calculation module
-- [ ] Calculate disabledMetrics
-- [ ] Update VerticalTree to pass new props
-- [ ] Verify inputs work and cascade calculations
+- [x] Update MetricNode with input props
+- [x] Add % change input field
+- [x] Style input (dark theme)
+- [x] Handle input blur/Enter events
+- [x] Add clear button
+- [x] Hide input for Layer 1
+- [x] Update useKpiTree with aspirationalChanges state
+- [x] Implement setPercentChange() function
+- [x] Calculate aspirationalValues using calculation module
+- [x] Calculate disabledMetrics
+- [x] Update VerticalTree to pass new props
+- [ ] Verify inputs work and cascade calculations (pending deployment)
 
 ## Prompt 12: Grey-out Logic and Aspirational Display
-- [ ] Improve disabled state visual (opacity, lock icon)
-- [ ] Add tooltip for disabled metrics
-- [ ] Show actual with strikethrough when overridden
-- [ ] Show aspirational value prominently
-- [ ] Add % change badge with color coding
-- [ ] Implement isChangeFavorable() helper
-- [ ] Auto-clear descendant % changes when parent is set
-- [ ] Highlight connection lines for changed metrics
+- [x] Improve disabled state visual (opacity, lock icon)
+- [x] Add tooltip for disabled metrics
+- [x] Show actual with strikethrough when overridden
+- [x] Show aspirational value prominently
+- [x] Add % change badge with color coding
+- [x] Implement isChangeFavorable() helper
+- [x] Auto-clear descendant % changes when parent is set
+- [x] Highlight connection lines for changed metrics
 
 ## Prompt 13: LocalStorage Persistence
-- [ ] Create storage.ts
-- [ ] Define StoredState interface
-- [ ] Implement saveState() function
-- [ ] Implement loadState() function
-- [ ] Implement clearState() function
-- [ ] Handle localStorage errors gracefully
-- [ ] Update useKpiTree to load state on mount
-- [ ] Save aspirationalChanges on change
-- [ ] Save periodId on change
-- [ ] Implement resetAll() function
-- [ ] Handle invalid saved periodId
+- [x] Create storage.ts
+- [x] Define StoredState interface
+- [x] Implement saveState() function
+- [x] Implement loadState() function
+- [x] Implement clearState() function
+- [x] Handle localStorage errors gracefully
+- [x] Update useKpiTree to load state on mount
+- [x] Save aspirationalChanges on change
+- [x] Save periodId on change
+- [x] Implement resetAll() function
+- [x] Handle invalid saved periodId
 
 ## Prompt 14: Period Selectors
-- [ ] Create PeriodSelector.tsx component
-- [ ] Define props interface
-- [ ] Style dropdown (dark theme)
-- [ ] Group options by type (Monthly/Quarterly)
-- [ ] Sort by date descending
-- [ ] Mark current period
-- [ ] Support null option for baseline
-- [ ] Update KpiTreeDashboard header
-- [ ] Add viewing period selector
-- [ ] Add baseline period selector
-- [ ] Add reset button
-- [ ] Update useKpiTree with baselinePeriodId state
-- [ ] Save baseline to localStorage
+- [x] Create PeriodSelector.tsx component
+- [x] Define props interface
+- [x] Style dropdown (dark theme)
+- [x] Group options by type (Monthly/Quarterly)
+- [x] Sort by date descending
+- [x] Mark current period
+- [x] Support null option for baseline
+- [x] Update KpiTreeDashboard header
+- [x] Add viewing period selector
+- [x] Add baseline period selector
+- [x] Add reset button
+- [x] Update useKpiTree with baselinePeriodId state
+- [x] Save baseline to localStorage
 
 ## Prompt 15: Trend Indicators
-- [ ] Create TrendIndicator.tsx component
-- [ ] Render arrow icon (up/down/flat)
-- [ ] Render percentage change
-- [ ] Apply favorable/unfavorable colors
-- [ ] Update useKpiTree to fetch comparison data
-- [ ] Merge trend data into metrics
-- [ ] Update MetricNode to render TrendIndicator
-- [ ] Position indicator in bottom-right
-- [ ] Handle loading state for comparison fetch
+- [x] Create TrendIndicator.tsx component
+- [x] Render arrow icon (up/down/flat)
+- [x] Render percentage change
+- [x] Apply favorable/unfavorable colors
+- [x] Update useKpiTree to fetch comparison data
+- [x] Merge trend data into metrics
+- [x] Update MetricNode to render TrendIndicator
+- [x] Position indicator in bottom-right
+- [x] Handle loading state for comparison fetch
 
 ## Prompt 16: Alternative Layouts and Final Polish
 - [ ] Create HorizontalTree.tsx component

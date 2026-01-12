@@ -8,6 +8,7 @@ import { actionsRouter } from './actions.js';
 import { searchRouter } from './search.js';
 import { blogRouter } from './blog/index.js';
 import { jobsRouter } from './jobs/index.js';
+import { kpiTreeRouter } from './kpi-tree/index.js';
 
 const router = Router();
 
@@ -37,5 +38,8 @@ router.use('/blog', blogRouter);
 
 // Job tracker routes
 router.use('/jobs', jobsRouter);
+
+// KPI tree routes
+router.use('/kpi-tree', kpiTreeRouter);
 
 export { router };
