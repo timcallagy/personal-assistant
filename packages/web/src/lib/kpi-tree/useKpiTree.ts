@@ -164,8 +164,11 @@ export function useKpiTree(): UseKpiTreeReturn {
 
         setMetrics(metricsData);
 
+        // TEMPORARY: Filter out Layer 5 for legibility experiment
+        const filteredMetrics = metricsData.filter((m) => m.layer !== 5);
+
         // Build tree from metrics
-        const treeData = buildTree(metricsData);
+        const treeData = buildTree(filteredMetrics);
         setTree(treeData);
       } catch (error) {
         console.error('Failed to fetch metrics:', error);
