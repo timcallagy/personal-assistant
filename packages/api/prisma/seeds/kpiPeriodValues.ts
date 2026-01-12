@@ -23,16 +23,16 @@ const BASE_VALUES: Record<string, number> = {
   costs: 6610800, // ~€6.6M monthly (yields ~35% margin)
 
   // Layer 3 - Structural Drivers
-  billable_hours: 8160, // hours
-  avg_realised_price: 1250, // €/hour
+  billable_hours: 1020, // man days (was 8160 hours / 8)
+  avg_realised_price: 10000, // €/day (was 1250/hour * 8)
   delivery_costs: 4500000, // €4.5M
   non_delivery_costs: 2110800, // €2.1M
 
   // Layer 4 - Operational Drivers
-  total_capacity_hours: 10200, // hours
+  total_capacity_hours: 1275, // scheduled man days (was 10200 hours / 8)
   utilisation_rate: 80, // percent
-  list_rate: 1500, // €/hour
-  price_leakage: 250, // €/hour
+  list_rate: 12000, // €/day (was 1500/hour * 8)
+  price_leakage: 16.7, // percent discount (was €250/hour, now 250/1500 * 100)
   delivery_headcount: 50, // count
   cost_per_fte: 90000, // €/year fully loaded
   mgmt_ops_costs: 850000, // €850K
@@ -232,6 +232,8 @@ export async function seedKpiPeriodValues(): Promise<void> {
         value = Math.round(value); // Whole numbers
       } else if (metric.unit === 'hours') {
         value = Math.round(value); // Whole numbers
+      } else if (metric.unit === 'days') {
+        value = Math.round(value); // Whole numbers for days
       }
 
       await prisma.kpiMetricValue.create({

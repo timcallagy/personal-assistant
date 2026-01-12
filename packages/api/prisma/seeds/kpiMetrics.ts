@@ -7,7 +7,7 @@ interface MetricDefinition {
   name: string;
   layer: number;
   parentKey: string | null;
-  unit: 'percent' | 'currency' | 'ratio' | 'count' | 'hours';
+  unit: 'percent' | 'currency' | 'ratio' | 'count' | 'hours' | 'days';
   favorable: 'up' | 'down';
   formula?: string;
   sortOrder: number;
@@ -51,12 +51,12 @@ const METRICS: MetricDefinition[] = [
   // Layer 3 - Structural Drivers (Revenue)
   {
     key: 'billable_hours',
-    name: 'Billable Hours Delivered',
+    name: 'Billable Man Days Delivered',
     layer: 3,
     parentKey: 'revenue',
-    unit: 'hours',
+    unit: 'days',
     favorable: 'up',
-    formula: 'total_capacity_hours * (utilisation_rate / 100)',
+    formula: 'scheduled_man_days * (utilisation_rate / 100)',
     sortOrder: 20,
   },
   {
@@ -92,13 +92,13 @@ const METRICS: MetricDefinition[] = [
     sortOrder: 23,
   },
 
-  // Layer 4 - Operational Drivers (under Billable Hours)
+  // Layer 4 - Operational Drivers (under Billable Man Days)
   {
     key: 'total_capacity_hours',
-    name: 'Total Capacity Hours',
+    name: 'Scheduled Man Days',
     layer: 4,
     parentKey: 'billable_hours',
-    unit: 'hours',
+    unit: 'days',
     favorable: 'up',
     sortOrder: 30,
   },
@@ -115,7 +115,7 @@ const METRICS: MetricDefinition[] = [
   // Layer 4 - Operational Drivers (under Avg Realised Price)
   {
     key: 'list_rate',
-    name: 'List/Contract Rate',
+    name: 'Day Rate',
     layer: 4,
     parentKey: 'avg_realised_price',
     unit: 'currency',
@@ -124,10 +124,10 @@ const METRICS: MetricDefinition[] = [
   },
   {
     key: 'price_leakage',
-    name: 'Price Leakage',
+    name: 'Average Discount',
     layer: 4,
     parentKey: 'avg_realised_price',
-    unit: 'currency',
+    unit: 'percent',
     favorable: 'down',
     sortOrder: 33,
   },

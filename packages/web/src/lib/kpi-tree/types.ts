@@ -17,7 +17,7 @@ export interface KpiPeriod {
 }
 
 // Metric unit types
-export type MetricUnit = 'percent' | 'currency' | 'ratio' | 'count' | 'hours';
+export type MetricUnit = 'percent' | 'currency' | 'ratio' | 'count' | 'hours' | 'days';
 
 // Favorable direction
 export type FavorableDirection = 'up' | 'down';

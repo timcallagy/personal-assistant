@@ -337,7 +337,7 @@ model KpiMetric {
   name      String   // Display name
   layer     Int      // 1-5
   parentKey String?  @map("parent_key") // Key of parent metric, null for layer 1
-  unit      String   // 'percent', 'currency', 'ratio', 'count', 'hours'
+  unit      String   // 'percent', 'currency', 'ratio', 'count', 'hours', 'days'
   favorable String   // 'up' or 'down'
   formula   String?  // Optional formula description
   sortOrder Int      @default(0) @map("sort_order")

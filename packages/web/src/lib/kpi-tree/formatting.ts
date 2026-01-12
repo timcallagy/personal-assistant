@@ -32,6 +32,9 @@ export function formatValue(value: number | null, unit: MetricUnit): string {
     case 'hours':
       return `${Math.round(value).toLocaleString()}h`;
 
+    case 'days':
+      return `${Math.round(value).toLocaleString()}d`;
+
     default:
       return value.toString();
   }
