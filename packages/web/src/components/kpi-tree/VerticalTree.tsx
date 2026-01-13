@@ -62,7 +62,7 @@ function ConnectionLines({
   let opacity: number;
 
   if (isHoverHighlighted) {
-    strokeColor = '#ffffff';
+    strokeColor = theme === 'dark' ? '#ffffff' : '#1f2937'; // White in dark, dark gray in light
     strokeWidth = 3;
     opacity = 1;
   } else if (isHighlighted) {
