@@ -183,10 +183,34 @@ export async function seedKpiPeriodValues(): Promise<void> {
   const metrics = await prisma.kpiMetric.findMany();
   const metricMap = new Map(metrics.map((m) => [m.key, m]));
 
+  // Metrics that should scale with period length (monthly base values × 3 for quarterly)
+  const SCALABLE_METRICS = new Set([
+    'revenue',
+    'costs',
+    'billable_hours',
+    'delivery_costs',
+    'non_delivery_costs',
+    'total_capacity_hours',
+    'cost_per_fte',
+    'mgmt_ops_costs',
+    'tools_facilities',
+    'shared_corporate',
+    'write_offs',
+    'tool_sprawl',
+  ]);
+
+  // Metrics that should remain constant (no historical variance)
+  const CONSTANT_METRICS = new Set([
+    'list_rate', // Day Rate always €1,500
+  ]);
+
   // Create values for each period
   for (const period of PERIODS) {
     const periodId = createdPeriods[period.label];
     if (!periodId) continue;
+
+    // Period multiplier: 1 for monthly, 3 for quarterly
+    const periodMultiplier = period.type === 'quarterly' ? 3 : 1;
 
     // Calculate months back from Jan 2026
     let monthsBack = 0;
@@ -210,13 +234,22 @@ export async function seedKpiPeriodValues(): Promise<void> {
       }
 
       let value: number;
-      if (period.isCurrent) {
-        // Current period uses base values
+
+      // Apply period scaling for scalable metrics
+      const scaledBaseValue = SCALABLE_METRICS.has(metricKey)
+        ? baseValue * periodMultiplier
+        : baseValue;
+
+      if (CONSTANT_METRICS.has(metricKey)) {
+        // Constant metrics: no variance, no scaling
         value = baseValue;
+      } else if (period.isCurrent) {
+        // Current period uses base values (with scaling)
+        value = scaledBaseValue;
       } else {
-        // Historical periods get variance
+        // Historical periods get variance (with scaling)
         value = generateHistoricalValue(
-          baseValue,
+          scaledBaseValue,
           12, // +/-12% variance
           metric.favorable,
           monthsBack
