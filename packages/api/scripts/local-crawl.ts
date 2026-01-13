@@ -41,7 +41,7 @@ const BROWSER_ATS_TYPES = new Set(['custom', 'workday', 'smartrecruiters']);
 interface Company {
   id: number;
   name: string;
-  careerUrl: string;
+  careerPageUrl: string;
   atsType: string;
   active: boolean;
 }
@@ -388,12 +388,12 @@ async function main() {
     for (let i = 0; i < companies.length; i++) {
       const company = companies[i];
       console.log(`[${i + 1}/${companies.length}] ${company.name} (${company.atsType})`);
-      console.log(`  URL: ${company.careerUrl}`);
+      console.log(`  URL: ${company.careerPageUrl}`);
 
       const startTime = Date.now();
 
       try {
-        const jobs = await crawlCareerPage(company.careerUrl);
+        const jobs = await crawlCareerPage(company.careerPageUrl);
         const duration = Date.now() - startTime;
 
         console.log(`  Found ${jobs.length} jobs in ${(duration / 1000).toFixed(1)}s`);
