@@ -13,32 +13,33 @@ interface PeriodDefinition {
   isCurrent: boolean;
 }
 
-// Base values for Jan 2026 (professional services firm)
+// Base values for Jan 2026 (professional services firm - MONTHLY period)
 // All parent values are calculated from their children using formulas
+// Annual costs are divided by 12 for monthly view
 const BASE_VALUES: Record<string, number> = {
   // Layer 1 - North Star (calculated: (revenue - costs) / revenue * 100)
-  gross_margin: -418.5, // percent - negative due to costs > revenue
+  gross_margin: 47.5, // percent = (1050000 - 550900) / 1050000 * 100
 
   // Layer 2 - Primary Financial Drivers
-  revenue: 1275000, // calculated: billable_hours * avg_realised_price = 1020 * 1250
-  costs: 6610800, // calculated: delivery_costs + non_delivery_costs
+  revenue: 1050000, // calculated: billable_hours * avg_realised_price = 840 * 1250
+  costs: 550900, // calculated: delivery_costs + non_delivery_costs = 375000 + 175900
 
   // Layer 3 - Structural Drivers
-  billable_hours: 1020, // calculated: total_capacity_hours * utilisation_rate = 1275 * 0.8
+  billable_hours: 840, // calculated: total_capacity_hours * utilisation_rate = 1050 * 0.8
   avg_realised_price: 1250, // calculated: list_rate * (1 - price_leakage/100) = 1500 * 0.833
-  delivery_costs: 4500000, // calculated: delivery_headcount * cost_per_fte = 50 * 90000
-  non_delivery_costs: 2110800, // calculated: sum of mgmt + tools + shared
+  delivery_costs: 375000, // calculated: delivery_headcount * cost_per_fte = 50 * 7500
+  non_delivery_costs: 175900, // calculated: sum of mgmt + tools + shared = 70833 + 50900 + 54167
 
   // Layer 4 - Operational Drivers (input values)
-  total_capacity_hours: 1275, // scheduled man days
+  total_capacity_hours: 1050, // Available Man Days = delivery_headcount * 21 working days = 50 * 21
   utilisation_rate: 80, // percent
   list_rate: 1500, // €/day (Day Rate)
   price_leakage: 16.7, // percent (Average Discount)
   delivery_headcount: 50, // count
-  cost_per_fte: 90000, // €/year fully loaded
-  mgmt_ops_costs: 850000, // €850K
-  tools_facilities: 610800, // €610K
-  shared_corporate: 650000, // €650K
+  cost_per_fte: 7500, // €/month (annual 90000 / 12)
+  mgmt_ops_costs: 70833, // €/month (annual 850000 / 12)
+  tools_facilities: 50900, // €/month (annual 610800 / 12)
+  shared_corporate: 54167, // €/month (annual 650000 / 12)
 
   // Layer 5 - Behavioural Levers (under Utilisation Rate)
   bench_time: 5.2, // percent

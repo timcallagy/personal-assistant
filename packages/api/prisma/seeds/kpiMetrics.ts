@@ -95,7 +95,7 @@ const METRICS: MetricDefinition[] = [
   // Layer 4 - Operational Drivers (under Billable Man Days)
   {
     key: 'total_capacity_hours',
-    name: 'Scheduled Man Days',
+    name: 'Available Man Days',
     layer: 4,
     parentKey: 'billable_hours',
     unit: 'days',
