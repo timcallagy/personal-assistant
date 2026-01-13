@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { RotateCcw } from 'lucide-react';
-import { MobileMessage } from './MobileMessage';
+import { MobileOverlay } from './MobileMessage';
 import { VerticalTree } from './VerticalTree';
 import { HorizontalTree } from './HorizontalTree';
 import { PeriodSelector } from './PeriodSelector';
@@ -15,6 +15,7 @@ const MIN_WIDTH = 1024;
 export function KpiTreeDashboard() {
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
   const [isViewportLoading, setIsViewportLoading] = useState(true);
+  const [mobileOverlayDismissed, setMobileOverlayDismissed] = useState(false);
 
   const {
     tree,
@@ -67,10 +68,8 @@ export function KpiTreeDashboard() {
     );
   }
 
-  // Show mobile message for small viewports
-  if (isMobile) {
-    return <MobileMessage />;
-  }
+  // Show mobile overlay (dismissible) for small viewports
+  const showMobileOverlay = isMobile && !mobileOverlayDismissed;
 
   // Get current period label
   const selectedPeriod = periods.find((p) => p.id === periodId);
@@ -123,6 +122,11 @@ export function KpiTreeDashboard() {
 
   return (
     <div className={`p-6 min-h-screen ${bgColor}`}>
+      {/* Mobile Overlay */}
+      {showMobileOverlay && (
+        <MobileOverlay onDismiss={() => setMobileOverlayDismissed(true)} />
+      )}
+
       {/* Header */}
       <header className="mb-8">
         <div className="flex items-start justify-between">
