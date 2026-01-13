@@ -90,4 +90,59 @@ export const crawlController = {
       message: `Recalculated match scores for ${updated} jobs`,
     });
   },
+
+  /**
+   * Submit crawl results from external/local crawler
+   * POST /jobs/crawl/:companyId/results
+   * Body: { jobs: ParsedJob[], duration?: number }
+   */
+  submitCrawlResults: async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user!.id;
+    const companyIdParam = req.params['companyId'] ?? '';
+    const companyId = parseInt(companyIdParam, 10);
+
+    if (isNaN(companyId)) {
+      throw notFoundError('Company', companyIdParam || 'unknown');
+    }
+
+    const { jobs, duration } = req.body as {
+      jobs: Array<{
+        externalId: string;
+        title: string;
+        url: string;
+        location: string | null;
+        remote: boolean;
+        department: string | null;
+        description: string | null;
+        postedAt: string | null;
+      }>;
+      duration?: number;
+    };
+
+    if (!jobs || !Array.isArray(jobs)) {
+      res.status(400).json({
+        success: false,
+        error: 'Missing or invalid jobs array',
+      });
+      return;
+    }
+
+    // Convert date strings to Date objects
+    const parsedJobs = jobs.map((job) => ({
+      ...job,
+      postedAt: job.postedAt ? new Date(job.postedAt) : null,
+    }));
+
+    const result = await crawlingService.saveExternalCrawlResults(
+      userId,
+      companyId,
+      parsedJobs,
+      duration
+    );
+
+    res.json({
+      success: true,
+      data: { result },
+    });
+  },
 };

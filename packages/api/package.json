@@ -13,7 +13,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-blog": "tsx prisma/seed-blog.ts",
     "db:seed-kpi": "tsx prisma/seed-kpi.ts",
-    "db:deploy": "prisma migrate deploy"
+    "db:deploy": "prisma migrate deploy",
+    "crawl:local": "tsx scripts/local-crawl.ts"
   },
   "dependencies": {
     "@pa/shared": "workspace:*",

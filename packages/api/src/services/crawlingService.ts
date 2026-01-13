@@ -380,6 +380,61 @@ export async function getCrawlLogs(
 }
 
 /**
+ * Save externally crawled jobs (from local crawler)
+ * Calculates match scores server-side and saves to database
+ */
+export async function saveExternalCrawlResults(
+  userId: number,
+  companyId: number,
+  jobs: ParsedJob[],
+  duration?: number
+): Promise<CrawlResult> {
+  // Get company
+  const company = await prisma.company.findFirst({
+    where: { id: companyId, userId },
+  });
+
+  if (!company) {
+    throw new Error(`Company not found: ${companyId}`);
+  }
+
+  const logId = await startCrawlLog(companyId);
+
+  try {
+    // Get user's job profile for match scoring
+    const profile = await getJobProfile(userId);
+
+    // Save jobs to database (scores calculated here)
+    const { found, new: newJobs } = await saveJobs(companyId, jobs, profile);
+
+    // Complete log
+    await completeCrawlLog(logId, 'success', found, newJobs);
+
+    return {
+      companyId,
+      companyName: company.name,
+      status: 'success',
+      jobsFound: found,
+      newJobs,
+      duration,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    await completeCrawlLog(logId, 'failed', 0, 0, errorMessage);
+
+    return {
+      companyId,
+      companyName: company.name,
+      status: 'failed',
+      jobsFound: 0,
+      newJobs: 0,
+      error: errorMessage,
+      duration,
+    };
+  }
+}
+
+/**
  * Recalculate match scores for all jobs when profile changes
  * Processes in batches to avoid memory issues with large job counts
  */

@@ -18,6 +18,9 @@ router.post('/all', asyncHandler(crawlController.crawlAll));
 // POST /jobs/crawl/:companyId - Crawl a specific company
 router.post('/:companyId', asyncHandler(crawlController.crawlCompany));
 
+// POST /jobs/crawl/:companyId/results - Submit crawl results from external crawler
+router.post('/:companyId/results', asyncHandler(crawlController.submitCrawlResults));
+
 // POST /jobs/recalculate-scores - Recalculate match scores
 router.post('/recalculate-scores', asyncHandler(crawlController.recalculateScores));
 
