@@ -31,7 +31,7 @@ const BASE_VALUES: Record<string, number> = {
   // Layer 4 - Operational Drivers
   total_capacity_hours: 1275, // scheduled man days (was 10200 hours / 8)
   utilisation_rate: 80, // percent
-  list_rate: 12000, // €/day (was 1500/hour * 8)
+  list_rate: 1500, // €/day
   price_leakage: 16.7, // percent discount (was €250/hour, now 250/1500 * 100)
   delivery_headcount: 50, // count
   cost_per_fte: 90000, // €/year fully loaded

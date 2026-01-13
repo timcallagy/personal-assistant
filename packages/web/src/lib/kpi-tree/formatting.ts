@@ -57,7 +57,7 @@ export function formatAbbreviatedCurrency(value: number): string {
     return `${sign}€${(absValue / 1_000_000).toFixed(1)}M`;
   }
   if (absValue >= 1_000) {
-    return `${sign}€${(absValue / 1_000).toFixed(1)}K`;
+    return `${sign}€${(absValue / 1_000).toFixed(0)}K`;
   }
   return `${sign}€${absValue.toFixed(0)}`;
 }
