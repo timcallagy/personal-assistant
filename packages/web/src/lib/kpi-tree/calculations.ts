@@ -30,7 +30,7 @@ const FORMULAS: Record<string, FormulaFn> = {
 
   // Layer 3
   billable_hours: (v) => get(v, 'total_capacity_hours') * (get(v, 'utilisation_rate') / 100),
-  avg_realised_price: (v) => get(v, 'list_rate') - get(v, 'price_leakage'),
+  avg_realised_price: (v) => get(v, 'list_rate') * (1 - get(v, 'price_leakage') / 100),
   delivery_costs: (v) => get(v, 'delivery_headcount') * get(v, 'cost_per_fte'),
   non_delivery_costs: (v) => get(v, 'mgmt_ops_costs') + get(v, 'tools_facilities') + get(v, 'shared_corporate'),
 };

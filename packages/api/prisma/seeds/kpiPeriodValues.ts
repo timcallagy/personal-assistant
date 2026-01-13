@@ -13,26 +13,27 @@ interface PeriodDefinition {
   isCurrent: boolean;
 }
 
-// Base values for Jan 2026 (realistic professional services firm)
+// Base values for Jan 2026 (professional services firm)
+// All parent values are calculated from their children using formulas
 const BASE_VALUES: Record<string, number> = {
-  // Layer 1 - North Star
-  gross_margin: 35.2, // percent
+  // Layer 1 - North Star (calculated: (revenue - costs) / revenue * 100)
+  gross_margin: -418.5, // percent - negative due to costs > revenue
 
   // Layer 2 - Primary Financial Drivers
-  revenue: 10200000, // €10.2M monthly
-  costs: 6610800, // ~€6.6M monthly (yields ~35% margin)
+  revenue: 1275000, // calculated: billable_hours * avg_realised_price = 1020 * 1250
+  costs: 6610800, // calculated: delivery_costs + non_delivery_costs
 
   // Layer 3 - Structural Drivers
-  billable_hours: 1020, // man days (was 8160 hours / 8)
-  avg_realised_price: 10000, // €/day (was 1250/hour * 8)
-  delivery_costs: 4500000, // €4.5M
-  non_delivery_costs: 2110800, // €2.1M
+  billable_hours: 1020, // calculated: total_capacity_hours * utilisation_rate = 1275 * 0.8
+  avg_realised_price: 1250, // calculated: list_rate * (1 - price_leakage/100) = 1500 * 0.833
+  delivery_costs: 4500000, // calculated: delivery_headcount * cost_per_fte = 50 * 90000
+  non_delivery_costs: 2110800, // calculated: sum of mgmt + tools + shared
 
-  // Layer 4 - Operational Drivers
-  total_capacity_hours: 1275, // scheduled man days (was 10200 hours / 8)
+  // Layer 4 - Operational Drivers (input values)
+  total_capacity_hours: 1275, // scheduled man days
   utilisation_rate: 80, // percent
-  list_rate: 1500, // €/day
-  price_leakage: 16.7, // percent discount (was €250/hour, now 250/1500 * 100)
+  list_rate: 1500, // €/day (Day Rate)
+  price_leakage: 16.7, // percent (Average Discount)
   delivery_headcount: 50, // count
   cost_per_fte: 90000, // €/year fully loaded
   mgmt_ops_costs: 850000, // €850K
