@@ -212,6 +212,9 @@ export default function JobsPage() {
     currentCompany?: string;
   }>({ phase: 'idle', current: 0, total: 0 });
 
+  // API-only crawl state
+  const [crawlingApiOnly, setCrawlingApiOnly] = useState(false);
+
   // Handlers
   const handleRefreshAll = useCallback(async () => {
     // Store current job IDs before refresh
@@ -319,6 +322,44 @@ export default function JobsPage() {
     }
   }, [jobs, companies, crawlAll, crawlCompany, refreshJobs, refreshStats]);
 
+  // API-only refresh (greenhouse, lever, ashby - no browser needed)
+  const handleRefreshApiOnly = useCallback(async () => {
+    setPreviousJobIds(new Set(jobs.map((j) => j.id)));
+    setCrawlError(null);
+    setFailedCrawls([]);
+    setShowErrorDetails(false);
+    setCrawlingApiOnly(true);
+
+    try {
+      setCrawlProgress({ phase: 'api', current: 0, total: 0 });
+      const apiResponse = await crawlAll(true);
+
+      // Collect failed crawls
+      const apiFailed = apiResponse.results?.filter((r) => r.status === 'failed') || [];
+      if (apiFailed.length > 0) {
+        setFailedCrawls(apiFailed);
+        setCrawlError(`${apiFailed.length} companies failed to crawl`);
+      }
+
+      await Promise.all([refreshJobs(), refreshStats()]);
+
+      // Refresh crawl logs
+      try {
+        const logsResponse = await jobsApi.getCrawlLogs(500);
+        setCrawlLogs(logsResponse.logs);
+      } catch {
+        // Silently fail
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to refresh API jobs';
+      setCrawlError(message);
+      await Promise.all([refreshJobs(), refreshStats()]);
+    } finally {
+      setCrawlingApiOnly(false);
+      setCrawlProgress({ phase: 'idle', current: 0, total: 0 });
+    }
+  }, [jobs, crawlAll, refreshJobs, refreshStats]);
+
   const handleCompanyRefresh = useCallback(
     async (companyId: number) => {
       await crawlCompany(companyId);
@@ -424,10 +465,19 @@ export default function JobsPage() {
               Preferences
             </a>
             <Button
+              variant="secondary"
+              onClick={handleRefreshApiOnly}
+              loading={crawlingApiOnly}
+              disabled={crawlingAll || crawlingApiOnly}
+              title="Refresh only API-based jobs (Greenhouse, Lever, Ashby) - fast & lightweight"
+            >
+              API Only
+            </Button>
+            <Button
               variant="primary"
               onClick={handleRefreshAll}
               loading={crawlingAll}
-              disabled={crawlingAll}
+              disabled={crawlingAll || crawlingApiOnly}
             >
               Refresh All
             </Button>
@@ -436,7 +486,7 @@ export default function JobsPage() {
 
         {/* Crawl Progress */}
         <CrawlProgressIndicator
-          isRunning={crawlingAll || crawlProgress.phase !== 'idle'}
+          isRunning={crawlingAll || crawlingApiOnly || crawlProgress.phase !== 'idle'}
           phase={crawlProgress.phase}
           current={crawlProgress.current}
           total={crawlProgress.total}
