@@ -5,11 +5,19 @@
 
 import { prisma } from '../lib/prisma.js';
 import { getParser, hasParser } from './atsParsers/index.js';
-import { crawlCustomPage, closeBrowser } from './customCrawler.js';
 import { calculateMatchScore } from './matchingService.js';
 import { getJobProfile } from './jobProfileService.js';
 import type { ParsedJob, CrawlResult } from './atsParsers/types.js';
 import type { CrawlLog, JobProfile } from '@pa/shared';
+
+// Lazy-load custom crawler (Playwright) only when needed to avoid ~120MB baseline memory
+let _customCrawler: typeof import('./customCrawler.js') | null = null;
+async function getCustomCrawler() {
+  if (!_customCrawler) {
+    _customCrawler = await import('./customCrawler.js');
+  }
+  return _customCrawler;
+}
 
 // Simple mutex to prevent concurrent crawl operations (memory protection)
 let isCrawling = false;
@@ -210,8 +218,9 @@ async function crawlCompanyInternal(
       const parser = getParser(company.atsType)!;
       jobs = await parser.parse(company.careerPageUrl);
     } else {
-      // Use custom page crawler
-      jobs = await crawlCustomPage(company.careerPageUrl);
+      // Use custom page crawler (lazy-loads Playwright on first use)
+      const crawler = await getCustomCrawler();
+      jobs = await crawler.crawlCustomPage(company.careerPageUrl);
     }
 
     // Save jobs to database
@@ -323,11 +332,13 @@ export async function crawlAllCompanies(userId: number, apiOnly: boolean = false
 
       // Restart browser periodically to free memory (only needed for non-API crawls)
       if (!apiOnly && (i + 1) % BROWSER_RESTART_INTERVAL === 0 && i < companies.length - 1) {
-        await closeBrowser();
-        // Hint to garbage collector to free memory
-        if (global.gc) {
-          global.gc();
-        }
+        const crawler = await getCustomCrawler();
+        await crawler.closeBrowser();
+      }
+
+      // Hint to garbage collector to free memory between companies
+      if (global.gc) {
+        global.gc();
       }
 
       // Delay between companies - longer for browser crawls to avoid rate limiting
@@ -335,8 +346,10 @@ export async function crawlAllCompanies(userId: number, apiOnly: boolean = false
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    // Close browser after batch crawl (in case any non-API crawls happened)
-    await closeBrowser();
+    // Close browser after batch crawl (only if custom crawler was loaded)
+    if (_customCrawler) {
+      await _customCrawler.closeBrowser();
+    }
 
     return {
       results,
