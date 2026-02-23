@@ -224,48 +224,80 @@ export default function JobsPage() {
     setShowErrorDetails(false);
 
     const allFailedCrawls: CrawlResult[] = [];
+    const apiAtsTypes = ['greenhouse', 'lever', 'ashby'];
+    const apiCompanies = companies.filter(
+      (c) => c.active && c.atsType && apiAtsTypes.includes(c.atsType.toLowerCase())
+    );
+    const browserCompanies = companies.filter(
+      (c) => c.active && (!c.atsType || !apiAtsTypes.includes(c.atsType.toLowerCase()))
+    );
 
     try {
-      // Phase 1: Crawl API-based companies (greenhouse, lever, ashby) in bulk
-      setCrawlProgress({ phase: 'api', current: 0, total: 0 });
-      const apiResponse = await crawlAll(true);
+      // Phase 1: Crawl API-based companies one by one (memory-safe)
+      if (apiCompanies.length > 0) {
+        setCrawlProgress({ phase: 'api', current: 0, total: apiCompanies.length });
 
-      // Collect failed crawls from API phase
-      const apiFailed = apiResponse.results?.filter((r) => r.status === 'failed') || [];
-      allFailedCrawls.push(...apiFailed);
-
-      // Refresh crawl logs after API phase so those companies show updated status
-      try {
-        const logsResponse = await jobsApi.getCrawlLogs(500);
-        setCrawlLogs(logsResponse.logs);
-      } catch {
-        // Silently fail
-      }
-
-      // Phase 2: Crawl browser-based companies one by one
-      const browserCompanyIds = apiResponse.skippedCompanyIds || [];
-      if (browserCompanyIds.length > 0) {
-        setCrawlProgress({ phase: 'browser', current: 0, total: browserCompanyIds.length });
-
-        for (let i = 0; i < browserCompanyIds.length; i++) {
-          const companyId = browserCompanyIds[i]!;
-          const company = companies.find((c) => c.id === companyId);
+        for (let i = 0; i < apiCompanies.length; i++) {
+          const company = apiCompanies[i]!;
           setCrawlProgress({
-            phase: 'browser',
+            phase: 'api',
             current: i + 1,
-            total: browserCompanyIds.length,
-            currentCompany: company?.name,
+            total: apiCompanies.length,
+            currentCompany: company.name,
           });
 
           try {
-            const result = await crawlCompany(companyId);
+            const response = await jobsApi.crawlCompany(company.id);
+            const result = (response as unknown as { result: CrawlResult }).result;
+            if (result?.status === 'failed') {
+              allFailedCrawls.push(result);
+            }
+          } catch {
+            allFailedCrawls.push({
+              companyId: company.id,
+              companyName: company.name,
+              status: 'failed',
+              jobsFound: 0,
+              newJobs: 0,
+              error: 'Failed to crawl',
+            });
+          }
+
+          if (i < apiCompanies.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+        }
+
+        // Refresh crawl logs after API phase
+        try {
+          const logsResponse = await jobsApi.getCrawlLogs(500);
+          setCrawlLogs(logsResponse.logs);
+        } catch {
+          // Silently fail
+        }
+      }
+
+      // Phase 2: Crawl browser-based companies one by one
+      if (browserCompanies.length > 0) {
+        setCrawlProgress({ phase: 'browser', current: 0, total: browserCompanies.length });
+
+        for (let i = 0; i < browserCompanies.length; i++) {
+          const company = browserCompanies[i]!;
+          setCrawlProgress({
+            phase: 'browser',
+            current: i + 1,
+            total: browserCompanies.length,
+            currentCompany: company.name,
+          });
+
+          try {
+            const result = await crawlCompany(company.id);
             const failed = result.results?.filter((r) => r.status === 'failed') || [];
             allFailedCrawls.push(...failed);
           } catch {
-            // Add to failed list
             allFailedCrawls.push({
-              companyId,
-              companyName: company?.name || `Company ${companyId}`,
+              companyId: company.id,
+              companyName: company.name,
               status: 'failed',
               jobsFound: 0,
               newJobs: 0,
@@ -282,7 +314,7 @@ export default function JobsPage() {
           }
 
           // Small delay between browser crawls to let server recover
-          if (i < browserCompanyIds.length - 1) {
+          if (i < browserCompanies.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 2000));
           }
         }
@@ -323,6 +355,7 @@ export default function JobsPage() {
   }, [jobs, companies, crawlAll, crawlCompany, refreshJobs, refreshStats]);
 
   // API-only refresh (greenhouse, lever, ashby - no browser needed)
+  // Crawls companies one at a time to avoid server memory exhaustion
   const handleRefreshApiOnly = useCallback(async () => {
     setPreviousJobIds(new Set(jobs.map((j) => j.id)));
     setCrawlError(null);
@@ -330,15 +363,51 @@ export default function JobsPage() {
     setShowErrorDetails(false);
     setCrawlingApiOnly(true);
 
-    try {
-      setCrawlProgress({ phase: 'api', current: 0, total: 0 });
-      const apiResponse = await crawlAll(true);
+    const apiAtsTypes = ['greenhouse', 'lever', 'ashby'];
+    const apiCompanies = companies.filter(
+      (c) => c.active && c.atsType && apiAtsTypes.includes(c.atsType.toLowerCase())
+    );
+    const failedResults: CrawlResult[] = [];
 
-      // Collect failed crawls
-      const apiFailed = apiResponse.results?.filter((r) => r.status === 'failed') || [];
-      if (apiFailed.length > 0) {
-        setFailedCrawls(apiFailed);
-        setCrawlError(`${apiFailed.length} companies failed to crawl`);
+    try {
+      setCrawlProgress({ phase: 'api', current: 0, total: apiCompanies.length });
+
+      for (let i = 0; i < apiCompanies.length; i++) {
+        const company = apiCompanies[i]!;
+        setCrawlProgress({
+          phase: 'api',
+          current: i + 1,
+          total: apiCompanies.length,
+          currentCompany: company.name,
+        });
+
+        try {
+          const response = await jobsApi.crawlCompany(company.id);
+          // Single-company endpoint returns { result: CrawlResult }
+          const result = (response as unknown as { result: CrawlResult }).result;
+          if (result?.status === 'failed') {
+            failedResults.push(result);
+          }
+        } catch {
+          failedResults.push({
+            companyId: company.id,
+            companyName: company.name,
+            status: 'failed',
+            jobsFound: 0,
+            newJobs: 0,
+            error: 'Failed to crawl',
+          });
+        }
+
+        // Small delay between companies
+        if (i < apiCompanies.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+
+      if (failedResults.length > 0) {
+        setFailedCrawls(failedResults);
+        setCrawlError(`${failedResults.length} companies failed to crawl`);
       }
 
       await Promise.all([refreshJobs(), refreshStats()]);
@@ -358,7 +427,7 @@ export default function JobsPage() {
       setCrawlingApiOnly(false);
       setCrawlProgress({ phase: 'idle', current: 0, total: 0 });
     }
-  }, [jobs, crawlAll, refreshJobs, refreshStats]);
+  }, [jobs, companies, refreshJobs, refreshStats]);
 
   const handleCompanyRefresh = useCallback(
     async (companyId: number) => {
