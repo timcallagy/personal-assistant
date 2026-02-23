@@ -322,6 +322,13 @@ export async function crawlAllCompanies(userId: number, apiOnly: boolean = false
     // Lower value = less memory usage but slower crawl
     const BROWSER_RESTART_INTERVAL = 5;
 
+    const logMem = (label: string) => {
+      const mem = process.memoryUsage();
+      console.log(`[crawl-mem] ${label}: heap=${Math.round(mem.heapUsed / 1024 / 1024)}MB/${Math.round(mem.heapTotal / 1024 / 1024)}MB rss=${Math.round(mem.rss / 1024 / 1024)}MB`);
+    };
+
+    logMem('before crawl');
+
     // Crawl sequentially to avoid overwhelming servers
     for (let i = 0; i < companies.length; i++) {
       const company = companies[i]!;
@@ -343,6 +350,8 @@ export async function crawlAllCompanies(userId: number, apiOnly: boolean = false
       if (global.gc) {
         global.gc();
       }
+
+      logMem(`after company ${i + 1}/${companies.length} (${company.name})`);
 
       // Delay between companies - longer for browser crawls to avoid rate limiting
       const delayMs = apiOnly ? 500 : 2000;
