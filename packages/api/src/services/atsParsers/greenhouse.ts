@@ -52,7 +52,9 @@ export const greenhouseParser: AtsParser = {
       throw new Error(`Could not extract Greenhouse board token from URL: ${careerUrl}`);
     }
 
-    const apiUrl = `${GREENHOUSE_API_BASE}/${token}/jobs?content=true`;
+    // Fetch without content=true to avoid huge responses (~40-80MB for large boards)
+    // Job descriptions are available on the individual job pages
+    const apiUrl = `${GREENHOUSE_API_BASE}/${token}/jobs`;
 
     const response = await fetch(apiUrl, {
       headers: {

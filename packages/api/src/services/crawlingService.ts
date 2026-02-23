@@ -226,6 +226,9 @@ async function crawlCompanyInternal(
     // Save jobs to database
     const { found, new: newJobs } = await saveJobs(companyId, jobs, profile);
 
+    // Release job data to free memory before returning
+    jobs.length = 0;
+
     // Complete log
     await completeCrawlLog(logId, 'success', found, newJobs);
 

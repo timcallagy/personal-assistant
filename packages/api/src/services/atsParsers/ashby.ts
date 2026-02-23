@@ -14,6 +14,11 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function truncate(text: string | null, max = 2000): string | null {
+  if (!text || text.length <= max) return text;
+  return text.substring(0, max);
+}
+
 /**
  * Detects if a job is remote based on location string or isRemote flag
  */
@@ -78,7 +83,7 @@ export const ashbyParser: AtsParser = {
       location: job.location ?? null,
       remote: isRemoteJob(job.location ?? null, job.isRemote),
       department: job.department ?? job.team ?? null,
-      description: job.descriptionPlain ?? (job.description ? stripHtml(job.description) : null),
+      description: truncate(job.descriptionPlain ?? (job.description ? stripHtml(job.description) : null)),
       postedAt: job.publishedDate ? new Date(job.publishedDate) : null,
     }));
   },

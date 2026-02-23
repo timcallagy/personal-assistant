@@ -14,6 +14,11 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function truncate(text: string | null, max = 2000): string | null {
+  if (!text || text.length <= max) return text;
+  return text.substring(0, max);
+}
+
 export const leverParser: AtsParser = {
   extractToken(careerUrl: string): string | null {
     // Patterns:
@@ -72,7 +77,7 @@ export const leverParser: AtsParser = {
         location: job.categories.location ?? null,
         remote: isRemote,
         department: job.categories.department ?? job.categories.team ?? null,
-        description: job.descriptionPlain ?? (job.description ? stripHtml(job.description) : null),
+        description: truncate(job.descriptionPlain ?? (job.description ? stripHtml(job.description) : null)),
         postedAt: job.createdAt ? new Date(job.createdAt) : null,
       };
     });
