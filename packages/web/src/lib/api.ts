@@ -752,6 +752,7 @@ export type BabbloLifecycleStage =
 export interface BabbloUser {
   userId: string;
   createdAt: string;
+  displayName: string | null;
   lifecycleStage: BabbloLifecycleStage;
   bonusRequested: boolean;
   callsMade: number;

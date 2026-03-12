@@ -11,6 +11,7 @@ export type LifecycleStage =
 export interface BabbloUserRow {
   userId: string;
   createdAt: string;
+  displayName: string | null;
   lifecycleStage: LifecycleStage;
   bonusRequested: boolean;
   callsMade: number;
@@ -108,6 +109,7 @@ export async function getBabbloUserList(
     SELECT
       p.user_id                                                 AS "userId",
       p.created_at                                              AS "createdAt",
+      p.info->>'display_name'                                   AS "displayName",
       ${LIFECYCLE_CASE}                                         AS "lifecycleStage",
       (
         ub.app_review_bonus_used = true

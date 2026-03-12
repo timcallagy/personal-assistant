@@ -52,8 +52,8 @@ export const babbloController = {
   getUserProfile: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
 
-    if (!id || !UUID_REGEX.test(id)) {
-      res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'id must be a valid UUID' } });
+    if (!id || id.length > 256) {
+      res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'id is required' } });
       return;
     }
 

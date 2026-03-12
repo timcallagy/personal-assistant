@@ -88,7 +88,7 @@ function CallRow({ call }: { call: BabbloCall }) {
 
 export default function BabbloUserPage() {
   const params = useParams();
-  const userId = params['userId'] as string;
+  const userId = decodeURIComponent(params['userId'] as string);
 
   const [data, setData] = useState<BabbloUserProfile | null>(null);
   const [loading, setLoading] = useState(true);

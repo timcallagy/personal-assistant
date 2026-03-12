@@ -62,12 +62,12 @@ function StatsCard({
 }
 
 function UserRow({ user }: { user: BabbloUser }) {
-  const shortId = user.userId.split('-')[0];
+  const displayName = user.displayName ?? user.userId;
   return (
     <tr className="border-b border-background-tertiary hover:bg-background-secondary/50">
-      <td className="px-4 py-3 text-sm font-mono">
-        <Link href={`/babblo/${user.userId}`} className="text-accent hover:underline">
-          {shortId}…
+      <td className="px-4 py-3 text-sm">
+        <Link href={`/babblo/${encodeURIComponent(user.userId)}`} className="text-accent hover:underline">
+          {displayName}
         </Link>
       </td>
       <td className="px-4 py-3 text-sm text-foreground-secondary">
@@ -175,7 +175,7 @@ export default function BabbloPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-background-tertiary text-foreground-secondary text-xs uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left">User ID</th>
+                  <th className="px-4 py-3 text-left">Name</th>
                   <th className="px-4 py-3 text-left">Created</th>
                   <th className="px-4 py-3 text-left">Stage</th>
                   <th className="px-4 py-3 text-center">Bonus</th>
