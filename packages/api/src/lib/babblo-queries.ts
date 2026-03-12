@@ -212,36 +212,35 @@ export async function getBabbloUserProfile(userId: string): Promise<BabbloUserPr
   // Calls (without corrections — fetched separately)
   const callsSql = `
     SELECT
-      id          AS "sessionId",
-      created_at  AS "createdAt",
+      session_id       AS "sessionId",
+      started_at       AS "createdAt",
       duration_seconds AS "durationSeconds",
-      language,
-      persona_name AS "personaName"
+      lang             AS "language",
+      contact_name     AS "personaName"
     FROM conversation_sessions
     WHERE user_id = $1
-    ORDER BY created_at DESC
+    ORDER BY started_at DESC
   `;
 
   // Corrections for all sessions in one query
   const correctionsSql = `
     SELECT
-      c.session_id  AS "sessionId",
-      c.original,
-      c.corrected
-    FROM corrections c
-    INNER JOIN conversation_sessions cs ON cs.id = c.session_id
-    WHERE cs.user_id = $1
+      session_id              AS "sessionId",
+      incorrect_sentence      AS "original",
+      corrected_sentence      AS "corrected"
+    FROM corrections
+    WHERE user_id = $1
   `;
 
   // Persona memory
   const memorySql = `
     SELECT
-      persona_name  AS "personaName",
-      memory_text   AS "memoryText",
-      updated_at    AS "updatedAt"
+      persona_id      AS "personaName",
+      rolling_summary AS "memoryText",
+      updated_at      AS "updatedAt"
     FROM persona_rolling_memory
     WHERE user_id = $1
-    ORDER BY persona_name
+    ORDER BY persona_id
   `;
 
   // Cost
