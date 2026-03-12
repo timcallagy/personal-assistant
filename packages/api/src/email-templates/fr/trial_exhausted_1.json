@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_exhausted_1",
+  "subject": "Tu as utilisé tes minutes gratuites — continue !",
+  "text": "Bonjour {{name}},\n\nTu as épuisé tes 10 minutes gratuites Babblo — j'espère que les appels ont été utiles !\n\nTon premier rechargement inclut 50% de minutes supplémentaires gratuites, appliqué automatiquement au moment du paiement.\n\nOuvre Babblo pour recharger ton compte.\n\nTim\nsupport@babblo.app"
+}

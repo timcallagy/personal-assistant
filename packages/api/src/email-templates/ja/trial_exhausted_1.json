@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_exhausted_1",
+  "subject": "無料分数を使い切りました — 続けましょう！",
+  "text": "こんにちは、{{name}}さん。\n\nBabbloの10分間の無料通話を使い切りました — 通話がお役に立てていれば幸いです！\n\n初回チャージ時に、50%の追加無料分数が自動的に適用されます。\n\nBabbloを開いてアカウントにチャージしてください。\n\nTim\nsupport@babblo.app"
+}

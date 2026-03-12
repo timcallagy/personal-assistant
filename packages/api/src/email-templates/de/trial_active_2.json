@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_active_2",
+  "subject": "Eine kurze Frage",
+  "text": "Hallo {{name}},\n\nEs sieht so aus, als hättest du Babblo eine Weile nicht genutzt. Ich würde gerne hören, was für dich nicht funktioniert.\n\nWas würde Babblo nützlicher machen? Antworte einfach auf diese E-Mail — ich lese alles.\n\nAls Dankeschön füge ich deinem Konto einige kostenlose Zusatzminuten hinzu.\n\nTim\nsupport@babblo.app"
+}

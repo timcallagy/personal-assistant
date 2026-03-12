@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_not_started_1",
+  "subject": "Babblo'daki ilk aramanı seni bekliyor",
+  "text": "Merhaba {{name}},\n\nBabblo ile {{targetLanguage}} pratik yapmaya hazırsın — 10 ücretsiz dakikan kullanıma hazır.\n\nNasıl başlayacağın:\n1. Babblo'yu aç\n2. Bir yapay zeka konuşma ortağı seç\n3. Ara tuşuna bas ve konuşmaya başla\n\nİlk araman mükemmel olmak zorunda değil. Sadece başla.\n\nTim\nsupport@babblo.app"
+}

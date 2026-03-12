@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_not_started_1",
+  "subject": "Your first Babblo call is waiting",
+  "text": "Hi {{name}},\n\nYou're all set to start practising {{targetLanguage}} with Babblo — you have 10 free minutes ready to go.\n\nHere's how to get started:\n1. Open Babblo\n2. Pick an AI conversation partner\n3. Hit call and start talking\n\nYour first call doesn't need to be perfect. Just start.\n\nTim\nsupport@babblo.app"
+}

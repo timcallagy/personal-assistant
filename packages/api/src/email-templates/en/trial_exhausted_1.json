@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_exhausted_1",
+  "subject": "You've used your free minutes — keep going",
+  "text": "Hi {{name}},\n\nYou've used up your 10 free Babblo minutes — hope the calls were useful!\n\nYour first top-up comes with 50% extra minutes free, automatically applied at checkout.\n\nOpen Babblo to top up your account.\n\nTim\nsupport@babblo.app"
+}
