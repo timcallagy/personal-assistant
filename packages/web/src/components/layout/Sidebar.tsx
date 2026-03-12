@@ -12,6 +12,7 @@ const navItems = [
   { href: '/pa/actions', label: 'Actions', icon: '✅' },
   { href: '/pa/jobs', label: 'Jobs', icon: '💼' },
   { href: '/pa/blog', label: 'Blog', icon: '✍️' },
+  { href: '/babblo', label: 'Babblo CMS', icon: '🗣️' },
 ];
 
 export function Sidebar() {

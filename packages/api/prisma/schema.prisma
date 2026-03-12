@@ -306,6 +306,21 @@ model CrawlLog {
 }
 
 // ==========================================
+// Email Automation
+// ==========================================
+
+model SentEmail {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")      // Babblo user UUID (not a FK — different DB)
+  emailType String   @map("email_type")   // e.g. "trial_not_started_1"
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  @@unique([userId, emailType])
+  @@index([userId])
+  @@map("sent_emails")
+}
+
+// ==========================================
 // KPI Driver Tree Models
 // ==========================================
 

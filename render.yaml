@@ -3,8 +3,9 @@ services:
   - type: web
     name: pa-api
     runtime: node
+    region: frankfurt
     plan: starter
-    buildCommand: pnpm install --prod=false && rm -rf node_modules/.prisma node_modules/.pnpm/@prisma+client*/node_modules/.prisma && pnpm --filter @pa/shared build && pnpm --filter @pa/api db:generate && pnpm --filter @pa/api db:push && pnpm --filter @pa/api build
+    buildCommand: pnpm install --prod=false && rm -rf node_modules/.prisma node_modules/.pnpm/@prisma+client*/node_modules/.prisma && pnpm --filter @pa/shared build && pnpm --filter @pa/api db:generate && pnpm --filter @pa/api db:push && pnpm --filter @pa/api build && npx tsx packages/api/src/email-templates/translate.ts
     startCommand: pnpm exec playwright install chromium && pnpm --filter @pa/api start
     disk:
       name: blog-images
@@ -27,12 +28,19 @@ services:
         value: /var/data/uploads
       - key: API_PUBLIC_URL
         sync: false
+      - key: BABBLO_DATABASE_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
     healthCheckPath: /api/v1/health
 
   # Web UI
   - type: web
     name: pa-web
     runtime: node
+    region: frankfurt
     plan: starter
     buildCommand: pnpm install && pnpm --filter @pa/shared build && pnpm --filter @pa/web build
     startCommand: pnpm --filter @pa/web start
@@ -45,5 +53,6 @@ services:
 databases:
   - name: pa-db
     databaseName: pa
+    region: frankfurt
     plan: free
     postgresMajorVersion: 16

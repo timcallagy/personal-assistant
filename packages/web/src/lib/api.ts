@@ -742,4 +742,97 @@ export const jobs = {
   },
 };
 
+// Babblo CMS
+export type BabbloLifecycleStage =
+  | 'trial_not_started'
+  | 'trial_active'
+  | 'trial_exhausted'
+  | 'purchased';
+
+export interface BabbloUser {
+  userId: string;
+  createdAt: string;
+  lifecycleStage: BabbloLifecycleStage;
+  bonusRequested: boolean;
+  callsMade: number;
+  minutesPurchased: number;
+  minutesRemaining: number;
+}
+
+export interface BabbloUsersResponse {
+  users: BabbloUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface BabbloStats {
+  trialNotStarted: number;
+  trialActive: number;
+  trialExhausted: number;
+  purchased: number;
+  total: number;
+}
+
+export interface BabbloCorrection {
+  original: string;
+  corrected: string;
+}
+
+export interface BabbloCall {
+  sessionId: string;
+  createdAt: string;
+  durationSeconds: number;
+  language: string;
+  personaName: string;
+  corrections: BabbloCorrection[];
+}
+
+export interface BabbloPersonaMemory {
+  personaName: string;
+  memoryText: string;
+  updatedAt: string;
+}
+
+export interface BabbloTransaction {
+  id: string;
+  type: string;
+  amountSeconds: number;
+  createdAt: string;
+}
+
+export interface BabbloUserProfile {
+  profile: {
+    userId: string;
+    createdAt: string;
+    displayName: string | null;
+    email: string | null;
+    nativeLanguage: string | null;
+    targetLanguage: string | null;
+    lifecycleStage: BabbloLifecycleStage;
+    bonusRequested: boolean;
+    minutesRemaining: number;
+  };
+  calls: BabbloCall[];
+  personaMemory: BabbloPersonaMemory[];
+  totalCostUsd: number;
+  totalRevenueSeconds: number;
+  transactions: BabbloTransaction[];
+}
+
+export const babblo = {
+  getStats: () => request<BabbloStats>('/babblo/stats'),
+
+  listUsers: (params?: { page?: number; pageSize?: number; stage?: BabbloLifecycleStage }) => {
+    const urlParams = new URLSearchParams();
+    if (params?.page) urlParams.set('page', String(params.page));
+    if (params?.pageSize) urlParams.set('pageSize', String(params.pageSize));
+    if (params?.stage) urlParams.set('stage', params.stage);
+    const query = urlParams.toString();
+    return request<BabbloUsersResponse>(`/babblo${query ? `?${query}` : ''}`);
+  },
+
+  getUser: (userId: string) => request<BabbloUserProfile>(`/babblo/${userId}`),
+};
+
 export { ApiError };

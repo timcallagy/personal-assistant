@@ -9,6 +9,7 @@ import { searchRouter } from './search.js';
 import { blogRouter } from './blog/index.js';
 import { jobsRouter } from './jobs/index.js';
 import { kpiTreeRouter } from './kpi-tree/index.js';
+import { babbloRouter } from './babblo.js';
 
 const router = Router();
 
@@ -41,5 +42,8 @@ router.use('/jobs', jobsRouter);
 
 // KPI tree routes
 router.use('/kpi-tree', kpiTreeRouter);
+
+// Babblo CMS routes
+router.use('/babblo', babbloRouter);
 
 export { router };
