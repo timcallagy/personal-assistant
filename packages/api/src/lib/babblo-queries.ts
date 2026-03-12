@@ -189,10 +189,10 @@ export async function getBabbloUserProfile(userId: string): Promise<BabbloUserPr
     SELECT
       p.user_id                                                     AS "userId",
       p.created_at                                                  AS "createdAt",
-      p.display_name                                                AS "displayName",
-      p.email                                                       AS "email",
-      p.native_language                                             AS "nativeLanguage",
-      p.target_language                                             AS "targetLanguage",
+      p.info->>'display_name'                                       AS "displayName",
+      p.info->>'email'                                              AS "email",
+      p.info->>'native_language'                                    AS "nativeLanguage",
+      p.info->>'target_language'                                    AS "targetLanguage",
       ${LIFECYCLE_CASE}                                             AS "lifecycleStage",
       (
         ub.app_review_bonus_used = true
