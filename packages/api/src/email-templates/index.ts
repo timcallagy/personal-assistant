@@ -19,7 +19,7 @@ export function getTemplate(emailType: string, languageCode: string): EmailTempl
 
 export function renderTemplate(
   template: EmailTemplate,
-  vars: { name: string; targetLanguage: string }
+  vars: { name: string; targetLanguage: string; unsubscribeLink: string }
 ): EmailTemplate {
   const replace = (str: string) =>
     str
@@ -29,6 +29,6 @@ export function renderTemplate(
   return {
     emailType: template.emailType,
     subject: replace(template.subject),
-    text: replace(template.text),
+    text: replace(template.text) + `\n\n---\nUnsubscribe: ${vars.unsubscribeLink}`,
   };
 }

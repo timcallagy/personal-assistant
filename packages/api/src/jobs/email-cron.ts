@@ -2,6 +2,9 @@ import cron from 'node-cron';
 import { babbloQuery } from '../lib/babblo-db.js';
 import { sendEmail, EMAIL_TYPES } from '../lib/email.js';
 import { getTemplate, renderTemplate } from '../email-templates/index.js';
+import { generateUnsubscribeToken } from '../lib/unsubscribe-token.js';
+
+const API_PUBLIC_URL = process.env['API_PUBLIC_URL'] ?? 'https://pa-api-2fwl.onrender.com';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,9 +39,12 @@ async function sendToUsers(
     try {
       const lang = user.nativeLanguage ?? 'en';
       const template = getTemplate(emailType, lang);
+      const token = generateUnsubscribeToken(user.userId);
+      const unsubscribeLink = `${API_PUBLIC_URL}/api/v1/unsubscribe?token=${token}`;
       const rendered = renderTemplate(template, {
         name: getDisplayName(user),
         targetLanguage: getTargetLanguage(user),
+        unsubscribeLink,
       });
       const result = await sendEmail({
         to: user.email,

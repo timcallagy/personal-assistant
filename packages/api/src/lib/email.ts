@@ -28,6 +28,10 @@ export interface SendEmailOptions {
 export async function sendEmail(
   opts: SendEmailOptions
 ): Promise<{ sent: boolean; skipped: boolean }> {
+  // Unsubscribe check
+  const unsubscribed = await prisma.emailUnsubscribe.findUnique({ where: { userId: opts.userId } });
+  if (unsubscribed) return { sent: false, skipped: true };
+
   // Deduplication check — never send the same email type to the same user twice
   const existing = await prisma.sentEmail.findUnique({
     where: { userId_emailType: { userId: opts.userId, emailType: opts.emailType } },

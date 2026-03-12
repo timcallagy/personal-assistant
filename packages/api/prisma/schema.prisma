@@ -309,6 +309,13 @@ model CrawlLog {
 // Email Automation
 // ==========================================
 
+model EmailUnsubscribe {
+  userId    String   @id @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("email_unsubscribes")
+}
+
 model SentEmail {
   id        Int      @id @default(autoincrement())
   userId    String   @map("user_id")      // Babblo user UUID (not a FK — different DB)

@@ -10,6 +10,7 @@ import { blogRouter } from './blog/index.js';
 import { jobsRouter } from './jobs/index.js';
 import { kpiTreeRouter } from './kpi-tree/index.js';
 import { babbloRouter } from './babblo.js';
+import { unsubscribeRouter } from './unsubscribe.js';
 
 const router = Router();
 
@@ -45,5 +46,8 @@ router.use('/kpi-tree', kpiTreeRouter);
 
 // Babblo CMS routes
 router.use('/babblo', babbloRouter);
+
+// Unsubscribe (public)
+router.use('/unsubscribe', unsubscribeRouter);
 
 export { router };
