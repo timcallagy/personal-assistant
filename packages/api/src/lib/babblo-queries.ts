@@ -78,7 +78,7 @@ export interface BabbloUserProfile {
 // p alias for profiles, fp alias for first_purchases subquery)
 const LIFECYCLE_CASE = `
   CASE
-    WHEN EXISTS (SELECT 1 FROM first_purchases fp WHERE fp.user_id = p.id) THEN 'purchased'
+    WHEN EXISTS (SELECT 1 FROM first_purchases fp WHERE fp.user_id = p.user_id) THEN 'purchased'
     WHEN ub.balance_seconds = 0 THEN 'trial_exhausted'
     WHEN ub.balance_seconds BETWEEN 1 AND 599 THEN 'trial_active'
     ELSE 'trial_not_started'
@@ -106,12 +106,12 @@ export async function getBabbloUserList(
   // Use a subquery so we can filter on the computed stage
   const sql = `
     SELECT
-      p.id                                                      AS "userId",
+      p.user_id                                                 AS "userId",
       p.created_at                                              AS "createdAt",
       ${LIFECYCLE_CASE}                                         AS "lifecycleStage",
       (
         p.app_review_bonus_used = true
-        OR EXISTS (SELECT 1 FROM referrals r WHERE r.referrer_id = p.id)
+        OR EXISTS (SELECT 1 FROM referrals r WHERE r.referrer_id = p.user_id)
       )                                                         AS "bonusRequested",
       COUNT(DISTINCT cs.id)::int                                AS "callsMade",
       COALESCE(SUM(CASE WHEN t.transaction_type = 'purchase'
@@ -119,10 +119,10 @@ export async function getBabbloUserList(
                                                                 AS "minutesPurchased",
       COALESCE(ub.balance_seconds, 0) / 60                     AS "minutesRemaining"
     FROM profiles p
-    LEFT JOIN user_balance ub ON ub.user_id = p.id
-    LEFT JOIN conversation_sessions cs ON cs.user_id = p.id
-    LEFT JOIN transactions t ON t.user_id = p.id
-    GROUP BY p.id, p.created_at, p.app_review_bonus_used, ub.balance_seconds
+    LEFT JOIN user_balance ub ON ub.user_id = p.user_id
+    LEFT JOIN conversation_sessions cs ON cs.user_id = p.user_id
+    LEFT JOIN transactions t ON t.user_id = p.user_id
+    GROUP BY p.user_id, p.created_at, p.app_review_bonus_used, ub.balance_seconds
     ${stageWhere}
     ORDER BY p.created_at DESC
     LIMIT $1 OFFSET $2
@@ -131,11 +131,11 @@ export async function getBabbloUserList(
   const countSql = stageFilter
     ? `
       SELECT COUNT(*) AS total FROM (
-        SELECT p.id,
+        SELECT p.user_id,
           ${LIFECYCLE_CASE} AS stage
         FROM profiles p
-        LEFT JOIN user_balance ub ON ub.user_id = p.id
-        GROUP BY p.id, p.app_review_bonus_used, ub.balance_seconds
+        LEFT JOIN user_balance ub ON ub.user_id = p.user_id
+        GROUP BY p.user_id, p.app_review_bonus_used, ub.balance_seconds
       ) sub
       WHERE stage = $1
     `
@@ -168,7 +168,7 @@ export async function getBabbloStats(): Promise<BabbloStats> {
       )::int AS "purchased",
       COUNT(*)::int AS "total"
     FROM profiles p
-    LEFT JOIN user_balance ub ON ub.user_id = p.id
+    LEFT JOIN user_balance ub ON ub.user_id = p.user_id
   `;
 
   const rows = await babbloQuery<BabbloStats>(sql);
@@ -187,7 +187,7 @@ export async function getBabbloUserProfile(userId: string): Promise<BabbloUserPr
   // Profile
   const profileSql = `
     SELECT
-      p.id                                                          AS "userId",
+      p.user_id                                                     AS "userId",
       p.created_at                                                  AS "createdAt",
       p.display_name                                                AS "displayName",
       p.email                                                       AS "email",
@@ -196,12 +196,12 @@ export async function getBabbloUserProfile(userId: string): Promise<BabbloUserPr
       ${LIFECYCLE_CASE}                                             AS "lifecycleStage",
       (
         p.app_review_bonus_used = true
-        OR EXISTS (SELECT 1 FROM referrals r WHERE r.referrer_id = p.id)
+        OR EXISTS (SELECT 1 FROM referrals r WHERE r.referrer_id = p.user_id)
       )                                                             AS "bonusRequested",
       COALESCE(ub.balance_seconds, 0) / 60                         AS "minutesRemaining"
     FROM profiles p
-    LEFT JOIN user_balance ub ON ub.user_id = p.id
-    WHERE p.id = $1
+    LEFT JOIN user_balance ub ON ub.user_id = p.user_id
+    WHERE p.user_id = $1
   `;
 
   const profileRows = await babbloQuery<BabbloUserProfile['profile']>(profileSql, [userId]);
