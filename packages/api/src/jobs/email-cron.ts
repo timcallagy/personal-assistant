@@ -3,6 +3,7 @@ import { babbloQuery } from '../lib/babblo-db.js';
 import { sendEmail, EMAIL_TYPES } from '../lib/email.js';
 import { getTemplate, renderTemplate } from '../email-templates/index.js';
 import { generateUnsubscribeToken } from '../lib/unsubscribe-token.js';
+import { prisma } from '../lib/index.js';
 
 const API_PUBLIC_URL = process.env['API_PUBLIC_URL'] ?? 'https://pa-api-2fwl.onrender.com';
 
@@ -200,8 +201,9 @@ export function startEmailJobs(): void {
 
   for (const job of jobs) {
     cron.schedule(schedule, async () => {
-      if (process.env['EMAIL_JOBS_ENABLED'] === 'false') {
-        console.log(`[cron] Skipping ${job.name} — EMAIL_JOBS_ENABLED=false`);
+      const flag = await prisma.appConfig.findUnique({ where: { key: 'email_jobs_enabled' } });
+      if (flag?.value !== 'true') {
+        console.log(`[cron] Skipping ${job.name} — email_jobs_enabled is not true`);
         return;
       }
       console.log(`[cron] Starting job: ${job.name}`);

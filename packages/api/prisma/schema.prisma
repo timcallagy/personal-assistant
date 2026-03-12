@@ -309,6 +309,14 @@ model CrawlLog {
 // Email Automation
 // ==========================================
 
+model AppConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_config")
+}
+
 model EmailUnsubscribe {
   userId    String   @id @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
