@@ -5,7 +5,7 @@ services:
     runtime: node
     region: frankfurt
     plan: starter
-    buildCommand: pnpm install --prod=false && rm -rf node_modules/.prisma node_modules/.pnpm/@prisma+client*/node_modules/.prisma && pnpm --filter @pa/shared build && pnpm --filter @pa/api db:generate && pnpm --filter @pa/api db:push && pnpm --filter @pa/api build
+    buildCommand: pnpm install --prod=false && rm -rf node_modules/.prisma node_modules/.pnpm/@prisma+client*/node_modules/.prisma packages/api/dist packages/shared/dist && pnpm --filter @pa/shared build && pnpm --filter @pa/api db:generate && pnpm --filter @pa/api db:push && pnpm --filter @pa/api build
     startCommand: pnpm exec playwright install chromium && pnpm --filter @pa/api start
     disk:
       name: blog-images
