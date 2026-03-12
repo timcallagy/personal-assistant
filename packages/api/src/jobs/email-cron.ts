@@ -12,7 +12,7 @@ interface EligibleUser {
   userId: string;
   email: string;
   displayName: string | null;
-  nativeLanguage: string | null;
+  appLanguage: string | null;
   targetLanguage: string | null;
 }
 
@@ -37,7 +37,7 @@ async function sendToUsers(
 
   for (const user of users) {
     try {
-      const lang = user.nativeLanguage ?? 'en';
+      const lang = user.appLanguage ?? 'en';
       const template = getTemplate(emailType, lang);
       const token = generateUnsubscribeToken(user.userId);
       const unsubscribeLink = `${API_PUBLIC_URL}/api/v1/unsubscribe?token=${token}`;
@@ -72,7 +72,7 @@ async function runTrialNotStarted1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'app_language'          AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     LEFT JOIN user_balance ub ON ub.user_id = p.user_id
@@ -95,7 +95,7 @@ async function runTrialNotStarted2(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'app_language'          AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     LEFT JOIN user_balance ub ON ub.user_id = p.user_id
@@ -116,7 +116,7 @@ async function runTrialActive1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'app_language'          AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
@@ -137,7 +137,7 @@ async function runTrialActive2(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'app_language'          AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
@@ -165,7 +165,7 @@ async function runTrialExhausted1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'app_language'          AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
@@ -200,6 +200,10 @@ export function startEmailJobs(): void {
 
   for (const job of jobs) {
     cron.schedule(schedule, async () => {
+      if (process.env['EMAIL_JOBS_ENABLED'] === 'false') {
+        console.log(`[cron] Skipping ${job.name} — EMAIL_JOBS_ENABLED=false`);
+        return;
+      }
       console.log(`[cron] Starting job: ${job.name}`);
       try {
         await job.fn();
