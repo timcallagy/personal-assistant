@@ -111,6 +111,7 @@ export async function getBabbloUserList(
       ${LIFECYCLE_CASE}                                         AS "lifecycleStage",
       (
         ub.app_review_bonus_used = true
+        OR EXISTS (SELECT 1 FROM referrals r WHERE r.referrer_user_id = p.user_id)
       )                                                         AS "bonusRequested",
       COUNT(DISTINCT cs.id)::int                                AS "callsMade",
       COALESCE(SUM(CASE WHEN t.transaction_type = 'purchase'
@@ -195,6 +196,7 @@ export async function getBabbloUserProfile(userId: string): Promise<BabbloUserPr
       ${LIFECYCLE_CASE}                                             AS "lifecycleStage",
       (
         ub.app_review_bonus_used = true
+        OR EXISTS (SELECT 1 FROM referrals r WHERE r.referrer_user_id = p.user_id)
       )                                                             AS "bonusRequested",
       COALESCE(ub.balance_seconds, 0) / 60                         AS "minutesRemaining"
     FROM profiles p
