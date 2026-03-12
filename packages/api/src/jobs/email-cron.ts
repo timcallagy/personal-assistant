@@ -63,19 +63,19 @@ async function runTrialNotStarted1(): Promise<void> {
   const jobName = 'trial_not_started_email_1';
   const users = await babbloQuery<EligibleUser>(`
     SELECT
-      p.id            AS "userId",
-      p.email,
-      p.display_name  AS "displayName",
-      p.native_language AS "nativeLanguage",
-      p.target_language AS "targetLanguage"
+      p.user_id                       AS "userId",
+      p.info->>'email'                AS "email",
+      p.info->>'display_name'         AS "displayName",
+      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
-    LEFT JOIN user_balance ub ON ub.user_id = p.id
+    LEFT JOIN user_balance ub ON ub.user_id = p.user_id
     WHERE
       -- trial_not_started: balance untouched
       (ub.balance_seconds IS NULL OR ub.balance_seconds = 600)
       -- created ~1 day ago (23–25 hour window)
       AND p.created_at BETWEEN NOW() - INTERVAL '25 hours' AND NOW() - INTERVAL '23 hours'
-      AND p.email IS NOT NULL
+      AND p.info->>'email' IS NOT NULL
   `);
   await sendToUsers(users, EMAIL_TYPES.TNS_1, jobName);
 }
@@ -86,17 +86,17 @@ async function runTrialNotStarted2(): Promise<void> {
   const jobName = 'trial_not_started_email_2';
   const users = await babbloQuery<EligibleUser>(`
     SELECT
-      p.id            AS "userId",
-      p.email,
-      p.display_name  AS "displayName",
-      p.native_language AS "nativeLanguage",
-      p.target_language AS "targetLanguage"
+      p.user_id                       AS "userId",
+      p.info->>'email'                AS "email",
+      p.info->>'display_name'         AS "displayName",
+      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
-    LEFT JOIN user_balance ub ON ub.user_id = p.id
+    LEFT JOIN user_balance ub ON ub.user_id = p.user_id
     WHERE
       (ub.balance_seconds IS NULL OR ub.balance_seconds = 600)
       AND p.created_at BETWEEN NOW() - INTERVAL '97 hours' AND NOW() - INTERVAL '95 hours'
-      AND p.email IS NOT NULL
+      AND p.info->>'email' IS NOT NULL
   `);
   await sendToUsers(users, EMAIL_TYPES.TNS_2, jobName);
 }
@@ -107,17 +107,17 @@ async function runTrialActive1(): Promise<void> {
   const jobName = 'trial_active_email_1';
   const users = await babbloQuery<EligibleUser>(`
     SELECT
-      p.id            AS "userId",
-      p.email,
-      p.display_name  AS "displayName",
-      p.native_language AS "nativeLanguage",
-      p.target_language AS "targetLanguage"
+      p.user_id                       AS "userId",
+      p.info->>'email'                AS "email",
+      p.info->>'display_name'         AS "displayName",
+      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
-    INNER JOIN user_balance ub ON ub.user_id = p.id
+    INNER JOIN user_balance ub ON ub.user_id = p.user_id
     WHERE
       ub.balance_seconds BETWEEN 1 AND 599
       AND p.created_at BETWEEN NOW() - INTERVAL '49 hours' AND NOW() - INTERVAL '47 hours'
-      AND p.email IS NOT NULL
+      AND p.info->>'email' IS NOT NULL
   `);
   await sendToUsers(users, EMAIL_TYPES.TA_1, jobName);
 }
@@ -128,13 +128,13 @@ async function runTrialActive2(): Promise<void> {
   const jobName = 'trial_active_email_2';
   const users = await babbloQuery<EligibleUser>(`
     SELECT
-      p.id            AS "userId",
-      p.email,
-      p.display_name  AS "displayName",
-      p.native_language AS "nativeLanguage",
-      p.target_language AS "targetLanguage"
+      p.user_id                       AS "userId",
+      p.info->>'email'                AS "email",
+      p.info->>'display_name'         AS "displayName",
+      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
-    INNER JOIN user_balance ub ON ub.user_id = p.id
+    INNER JOIN user_balance ub ON ub.user_id = p.user_id
     WHERE
       ub.balance_seconds BETWEEN 1 AND 599
       -- signed up at least 7 days ago
@@ -142,10 +142,10 @@ async function runTrialActive2(): Promise<void> {
       -- no call in the last 5 days
       AND NOT EXISTS (
         SELECT 1 FROM conversation_sessions cs
-        WHERE cs.user_id = p.id
-          AND cs.created_at > NOW() - INTERVAL '5 days'
+        WHERE cs.user_id = p.user_id
+          AND cs.started_at > NOW() - INTERVAL '5 days'
       )
-      AND p.email IS NOT NULL
+      AND p.info->>'email' IS NOT NULL
   `);
   await sendToUsers(users, EMAIL_TYPES.TA_2, jobName);
 }
@@ -156,24 +156,24 @@ async function runTrialExhausted1(): Promise<void> {
   const jobName = 'trial_exhausted_email_1';
   const users = await babbloQuery<EligibleUser>(`
     SELECT
-      p.id            AS "userId",
-      p.email,
-      p.display_name  AS "displayName",
-      p.native_language AS "nativeLanguage",
-      p.target_language AS "targetLanguage"
+      p.user_id                       AS "userId",
+      p.info->>'email'                AS "email",
+      p.info->>'display_name'         AS "displayName",
+      p.info->>'native_language'      AS "nativeLanguage",
+      p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
-    INNER JOIN user_balance ub ON ub.user_id = p.id
+    INNER JOIN user_balance ub ON ub.user_id = p.user_id
     WHERE
       ub.balance_seconds = 0
       -- no purchase yet
-      AND NOT EXISTS (SELECT 1 FROM first_purchases fp WHERE fp.user_id = p.id)
+      AND NOT EXISTS (SELECT 1 FROM first_purchases fp WHERE fp.user_id = p.user_id)
       -- exhausted within the last 48 hours (use last transaction as proxy)
       AND EXISTS (
         SELECT 1 FROM transactions t
-        WHERE t.user_id = p.id
+        WHERE t.user_id = p.user_id
           AND t.created_at > NOW() - INTERVAL '48 hours'
       )
-      AND p.email IS NOT NULL
+      AND p.info->>'email' IS NOT NULL
   `);
   await sendToUsers(users, EMAIL_TYPES.TE_1, jobName);
 }
