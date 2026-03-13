@@ -21,7 +21,7 @@ export default async function AboutPage() {
       <div className="blog-prose max-w-none">
         <figure className="mb-8">
           <img
-            src="https://pa-api-6uyh.onrender.com/api/v1/blog/images/1765586456719-de1a33a1f3f6e1ce.jpg"
+            src="https://pa-api-2fwl.onrender.com/api/v1/blog/images/1773397796884-a8af21391b16fbb2.webp"
             alt="Tim Callagy"
             className="rounded-lg w-full max-w-md mx-auto"
           />
