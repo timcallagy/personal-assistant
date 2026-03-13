@@ -81,7 +81,7 @@ export interface BabbloUserProfile {
 const LIFECYCLE_CASE = `
   CASE
     WHEN EXISTS (SELECT 1 FROM first_purchases fp WHERE fp.user_id = p.user_id) THEN 'purchased'
-    WHEN ub.free_trial_used = false AND ub.balance_seconds = 0 THEN 'email_not_verified'
+    WHEN (ub.free_trial_used IS NOT TRUE) AND COALESCE(ub.balance_seconds, 0) = 0 THEN 'email_not_verified'
     WHEN ub.balance_seconds = 0 THEN 'trial_exhausted'
     WHEN ub.balance_seconds BETWEEN 1 AND 599 THEN 'trial_active'
     ELSE 'trial_not_started'
