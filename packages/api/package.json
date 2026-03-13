@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && cp -r src/email-templates dist/email-templates",
+    "build": "tsc && cp -r src/email-templates/. dist/email-templates/",
     "start": "node --expose-gc --max-old-space-size=384 dist/index.js",
     "clean": "rm -rf dist",
     "db:generate": "prisma generate",
