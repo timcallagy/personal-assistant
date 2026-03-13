@@ -20,6 +20,7 @@ export interface BabbloUserRow {
 }
 
 export interface BabbloStats {
+  emailNotVerified: number;
   trialNotStarted: number;
   trialActive: number;
   trialExhausted: number;
@@ -80,6 +81,7 @@ export interface BabbloUserProfile {
 const LIFECYCLE_CASE = `
   CASE
     WHEN EXISTS (SELECT 1 FROM first_purchases fp WHERE fp.user_id = p.user_id) THEN 'purchased'
+    WHEN ub.free_trial_used = false AND ub.balance_seconds = 0 THEN 'email_not_verified'
     WHEN ub.balance_seconds = 0 THEN 'trial_exhausted'
     WHEN ub.balance_seconds BETWEEN 1 AND 599 THEN 'trial_active'
     ELSE 'trial_not_started'
@@ -157,6 +159,9 @@ export async function getBabbloStats(): Promise<BabbloStats> {
   const sql = `
     SELECT
       COUNT(*) FILTER (
+        WHERE ${LIFECYCLE_CASE} = 'email_not_verified'
+      )::int AS "emailNotVerified",
+      COUNT(*) FILTER (
         WHERE ${LIFECYCLE_CASE} = 'trial_not_started'
       )::int AS "trialNotStarted",
       COUNT(*) FILTER (
@@ -176,6 +181,7 @@ export async function getBabbloStats(): Promise<BabbloStats> {
   const rows = await babbloQuery<BabbloStats>(sql);
   return (
     rows[0] ?? {
+      emailNotVerified: 0,
       trialNotStarted: 0,
       trialActive: 0,
       trialExhausted: 0,

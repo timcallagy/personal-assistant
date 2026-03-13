@@ -744,6 +744,7 @@ export const jobs = {
 
 // Babblo CMS
 export type BabbloLifecycleStage =
+  | 'email_not_verified'
   | 'trial_not_started'
   | 'trial_active'
   | 'trial_exhausted'
@@ -768,6 +769,7 @@ export interface BabbloUsersResponse {
 }
 
 export interface BabbloStats {
+  emailNotVerified: number;
   trialNotStarted: number;
   trialActive: number;
   trialExhausted: number;

@@ -8,6 +8,7 @@ import { babblo, type BabbloStats, type BabbloUser, type BabbloLifecycleStage } 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const STAGE_LABELS: Record<BabbloLifecycleStage, string> = {
+  email_not_verified: 'Email Not Verified',
   trial_not_started: 'Not Started',
   trial_active: 'Trial Active',
   trial_exhausted: 'Trial Exhausted',
@@ -15,6 +16,7 @@ const STAGE_LABELS: Record<BabbloLifecycleStage, string> = {
 };
 
 const STAGE_COLOURS: Record<BabbloLifecycleStage, string> = {
+  email_not_verified: 'bg-orange-100 text-orange-800',
   trial_not_started: 'bg-yellow-100 text-yellow-800',
   trial_active: 'bg-blue-100 text-blue-800',
   trial_exhausted: 'bg-red-100 text-red-800',
@@ -89,6 +91,7 @@ function UserRow({ user }: { user: BabbloUser }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const STAGES: BabbloLifecycleStage[] = [
+  'email_not_verified',
   'trial_not_started',
   'trial_active',
   'trial_exhausted',
@@ -96,6 +99,7 @@ const STAGES: BabbloLifecycleStage[] = [
 ];
 
 const STAGE_STAT_KEYS: Record<BabbloLifecycleStage, keyof BabbloStats> = {
+  email_not_verified: 'emailNotVerified',
   trial_not_started: 'trialNotStarted',
   trial_active: 'trialActive',
   trial_exhausted: 'trialExhausted',
