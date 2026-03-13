@@ -50,7 +50,7 @@ babbloRouter.post('/email-jobs/:jobName/test', asyncHandler(async (req, res) => 
 
   const { getTemplate, renderTemplate } = await import('../email-templates/index.js');
   const { generateUnsubscribeToken } = await import('../lib/unsubscribe-token.js');
-  const { Resend } = await import('resend');
+  const { sendEmail } = await import('../lib/email.js');
 
   const API_PUBLIC_URL = process.env['API_PUBLIC_URL'] ?? 'https://pa-api-2fwl.onrender.com';
   const template = getTemplate(emailType, 'en');
@@ -61,14 +61,18 @@ babbloRouter.post('/email-jobs/:jobName/test', asyncHandler(async (req, res) => 
     unsubscribeLink: `${API_PUBLIC_URL}/api/v1/unsubscribe?token=${token}`,
   });
 
-  const resend = new Resend(process.env['RESEND_API_KEY']);
-  await resend.emails.send({
-    from: 'Tim <support@babblo.app>',
+  const result = await sendEmail({
     to: email,
     subject: `[TEST] ${rendered.subject}`,
     text: rendered.text,
-    ...(rendered.html && { html: rendered.html }),
+    html: rendered.html,
+    emailType: emailType as import('../lib/email.js').EmailType,
+    userId: 'test-user',
   });
 
-  res.json({ success: true, message: `Test email sent to ${email}` });
+  if (result.skipped) {
+    res.json({ success: true, message: `Skipped — user is unsubscribed or email already sent.` });
+  } else {
+    res.json({ success: true, message: `Test email sent to ${email}` });
+  }
 }));
