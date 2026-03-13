@@ -9,6 +9,7 @@ import { babblo, type BabbloUserProfile, type BabbloCall, type BabbloLifecycleSt
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STAGE_COLOURS: Record<BabbloLifecycleStage, string> = {
+  email_not_verified: 'bg-orange-100 text-orange-800',
   trial_not_started: 'bg-yellow-100 text-yellow-800',
   trial_active: 'bg-blue-100 text-blue-800',
   trial_exhausted: 'bg-red-100 text-red-800',
@@ -16,6 +17,7 @@ const STAGE_COLOURS: Record<BabbloLifecycleStage, string> = {
 };
 
 const STAGE_LABELS: Record<BabbloLifecycleStage, string> = {
+  email_not_verified: 'Email Not Verified',
   trial_not_started: 'Not Started',
   trial_active: 'Trial Active',
   trial_exhausted: 'Trial Exhausted',
