@@ -126,7 +126,7 @@ export async function getBabbloUserList(
     LEFT JOIN user_balance ub ON ub.user_id = p.user_id
     LEFT JOIN conversation_sessions cs ON cs.user_id = p.user_id
     LEFT JOIN transactions t ON t.user_id = p.user_id
-    GROUP BY p.user_id, p.created_at, ub.app_review_bonus_used, ub.balance_seconds
+    GROUP BY p.user_id, p.created_at, ub.app_review_bonus_used, ub.balance_seconds, ub.free_trial_used
     ${stageWhere}
     ORDER BY p.created_at DESC
     LIMIT $1 OFFSET $2
@@ -139,7 +139,7 @@ export async function getBabbloUserList(
           ${LIFECYCLE_CASE} AS stage
         FROM profiles p
         LEFT JOIN user_balance ub ON ub.user_id = p.user_id
-        GROUP BY p.user_id, ub.app_review_bonus_used, ub.balance_seconds
+        GROUP BY p.user_id, ub.app_review_bonus_used, ub.balance_seconds, ub.free_trial_used
       ) sub
       WHERE stage = $1
     `
