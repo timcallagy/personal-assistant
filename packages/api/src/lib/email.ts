@@ -8,6 +8,7 @@ const REPLY_TO = 'support@babblo.app';
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 export const EMAIL_TYPES = {
+  ENV_1: 'email_not_verified_1',
   TNS_1: 'trial_not_started_1',
   TNS_2: 'trial_not_started_2',
   TA_1: 'trial_active_1',

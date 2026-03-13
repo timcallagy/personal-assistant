@@ -1,0 +1,5 @@
+{
+  "emailType": "email_not_verified_1",
+  "subject": "Potwierdź swój e-mail i odbierz darmowe minuty w Babblo",
+  "text": "Cześć {{name}},\n\nDzieli Cię tylko jeden krok od 10 darmowych minut praktyki konwersacji w języku {{targetLanguage}}.\n\nOtwórz aplikację Babblo i potwierdź swój adres e-mail — darmowe minuty zostaną odblokowane natychmiast.\n\nTim\nsupport@babblo.app"
+}

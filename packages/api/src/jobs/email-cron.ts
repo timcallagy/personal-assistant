@@ -65,6 +65,28 @@ async function sendToUsers(
   console.log(`[${jobName}] Sent: ${sent}, Skipped: ${skipped}`);
 }
 
+// ─── Job 0: email_not_verified email 1 (day 1) ───────────────────────────────
+
+async function runEmailNotVerified1(): Promise<void> {
+  const jobName = 'email_not_verified_email_1';
+  const users = await babbloQuery<EligibleUser>(`
+    SELECT
+      p.user_id                       AS "userId",
+      p.info->>'email'                AS "email",
+      p.info->>'display_name'         AS "displayName",
+      p.info->>'app_language'          AS "appLanguage",
+      p.info->>'target_language'      AS "targetLanguage"
+    FROM profiles p
+    INNER JOIN user_balance ub ON ub.user_id = p.user_id
+    WHERE
+      ub.free_trial_used = false
+      AND ub.balance_seconds = 0
+      AND p.created_at BETWEEN NOW() - INTERVAL '25 hours' AND NOW() - INTERVAL '23 hours'
+      AND p.info->>'email' IS NOT NULL
+  `);
+  await sendToUsers(users, EMAIL_TYPES.ENV_1, jobName);
+}
+
 // ─── Job 1: trial_not_started email 1 (day 1) ────────────────────────────────
 
 async function runTrialNotStarted1(): Promise<void> {
@@ -189,6 +211,7 @@ async function runTrialExhausted1(): Promise<void> {
 // ─── Exports for manual triggering ───────────────────────────────────────────
 
 export const EMAIL_JOBS: Record<string, () => Promise<void>> = {
+  email_not_verified_1: runEmailNotVerified1,
   trial_not_started_1: runTrialNotStarted1,
   trial_not_started_2: runTrialNotStarted2,
   trial_active_1: runTrialActive1,

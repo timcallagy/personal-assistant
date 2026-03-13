@@ -35,6 +35,7 @@ babbloRouter.post('/email-jobs/:jobName/test', asyncHandler(async (req, res) => 
   }
 
   const emailTypeMap: Record<string, string> = {
+    email_not_verified_1: 'email_not_verified_1',
     trial_not_started_1: 'trial_not_started_1',
     trial_not_started_2: 'trial_not_started_2',
     trial_active_1: 'trial_active_1',
