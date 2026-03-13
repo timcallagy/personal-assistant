@@ -66,6 +66,7 @@ export function renderTemplate(
 ): EmailTemplate {
   const replace = (str: string) =>
     str
+      .replace(/Hi \{\{name\}\},/g, vars.name ? `Hi ${vars.name},` : 'Hi,')
       .replace(/\{\{name\}\}/g, vars.name)
       .replace(/\{\{targetLanguage\}\}/g, vars.targetLanguage);
 
