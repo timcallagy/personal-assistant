@@ -21,6 +21,7 @@ export interface SendEmailOptions {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   emailType: EmailType;
   userId: string;
 }
@@ -52,6 +53,7 @@ export async function sendEmail(
     replyTo: REPLY_TO,
     subject: opts.subject,
     text: opts.text,
+    ...(opts.html && { html: opts.html }),
   });
 
   await prisma.sentEmail.create({

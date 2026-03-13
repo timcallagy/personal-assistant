@@ -51,6 +51,7 @@ async function sendToUsers(
         to: user.email,
         subject: rendered.subject,
         text: rendered.text,
+        html: rendered.html,
         emailType,
         userId: user.userId,
       });
