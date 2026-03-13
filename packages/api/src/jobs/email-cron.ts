@@ -186,6 +186,16 @@ async function runTrialExhausted1(): Promise<void> {
   await sendToUsers(users, EMAIL_TYPES.TE_1, jobName);
 }
 
+// ─── Exports for manual triggering ───────────────────────────────────────────
+
+export const EMAIL_JOBS: Record<string, () => Promise<void>> = {
+  trial_not_started_1: runTrialNotStarted1,
+  trial_not_started_2: runTrialNotStarted2,
+  trial_active_1: runTrialActive1,
+  trial_active_2: runTrialActive2,
+  trial_exhausted_1: runTrialExhausted1,
+};
+
 // ─── Scheduler ────────────────────────────────────────────────────────────────
 
 export function startEmailJobs(): void {
