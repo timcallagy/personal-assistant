@@ -11,7 +11,7 @@
  *   npm run crawl:local -- --limit 10
  *
  * Environment variables:
- *   PA_API_URL - API base URL (default: https://pa-api-6uyh.onrender.com)
+ *   PA_API_URL - API base URL (default: https://pa-api-2fwl.onrender.com)
  *   PA_API_KEY - Your API key (required)
  */
 
@@ -22,7 +22,7 @@ import * as cheerio from 'cheerio';
 // Configuration
 // ============================================================================
 
-const API_URL = process.env['PA_API_URL'] || 'https://pa-api-6uyh.onrender.com';
+const API_URL = process.env['PA_API_URL'] || 'https://pa-api-2fwl.onrender.com';
 const API_KEY = process.env['PA_API_KEY'];
 
 if (!API_KEY) {
