@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_exhausted_1",
+  "subject": "무료 이용권을 모두 사용하셨습니다 — 계속해보세요",
+  "text": "안녕하세요 {{name}},\n\nBabblo 무료 10분을 모두 사용하셨습니다 — 통화가 도움이 됐길 바랍니다!\n\n첫 번째 충전 시 추가 50% 이용권이 무료로 제공되며, 결제 시 자동으로 적용됩니다.\n\nBabblo를 열어 계정을 충전하세요.\n\nTim\nsupport@babblo.app"
+}

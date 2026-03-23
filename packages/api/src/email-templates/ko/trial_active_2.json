@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_active_2",
+  "subject": "간단한 질문이 있어요",
+  "text": "안녕하세요 {{name}},\n\n한동안 Babblo를 사용하지 않으신 것 같네요. 무엇이 불편하신지 알고 싶습니다.\n\nBabblo를 더 유용하게 만들려면 무엇이 필요할까요? 이 이메일에 답장해 주세요 — 모든 내용을 읽겠습니다.\n\n감사의 표시로 계정에 추가 무료 이용권을 드리겠습니다.\n\nTim\nsupport@babblo.app"
+}

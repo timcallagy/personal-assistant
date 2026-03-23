@@ -1,0 +1,5 @@
+{
+  "emailType": "trial_exhausted_1",
+  "subject": "您已用完免费时长——继续前进",
+  "text": "你好 {{name}}，\n\n您已用完Babblo的10分钟免费时长——希望这些通话对您有所帮助！\n\n您的第一次充值将自动享受50%额外时长，在结账时自动应用。\n\n打开Babblo为您的账户充值。\n\nTim\nsupport@babblo.app"
+}

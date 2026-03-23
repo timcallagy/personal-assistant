@@ -1,0 +1,5 @@
+{
+  "emailType": "email_not_verified_1",
+  "subject": "确认您的邮箱，领取Babblo免费时长",
+  "text": "你好 {{name}}，\n\n您距离获得10分钟免费{{targetLanguage}}口语练习只差一步。\n\n打开Babblo应用并确认您的邮箱地址——免费时长将立即解锁。\n\nTim\nsupport@babblo.app"
+}
