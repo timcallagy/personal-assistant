@@ -49,12 +49,14 @@ babbloRouter.post('/email-jobs/:jobName/test', asyncHandler(async (req, res) => 
     return;
   }
 
+  const { language } = req.body as { email?: string; language?: string };
+
   const { getTemplate, renderTemplate } = await import('../email-templates/index.js');
   const { generateUnsubscribeToken } = await import('../lib/unsubscribe-token.js');
   const { sendEmail } = await import('../lib/email.js');
 
   const API_PUBLIC_URL = process.env['API_PUBLIC_URL'] ?? 'https://pa-api-2fwl.onrender.com';
-  const template = getTemplate(emailType, 'en');
+  const template = getTemplate(emailType, language ?? 'en');
   const token = generateUnsubscribeToken('test-user');
   const rendered = renderTemplate(template, {
     name: 'Test User',

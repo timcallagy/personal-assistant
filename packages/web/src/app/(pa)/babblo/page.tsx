@@ -88,6 +88,95 @@ function UserRow({ user }: { user: BabbloUser }) {
   );
 }
 
+// ─── Test Email Panel ─────────────────────────────────────────────────────────
+
+const EMAIL_JOB_OPTIONS = [
+  'email_not_verified_1',
+  'trial_not_started_1',
+  'trial_not_started_2',
+  'trial_active_1',
+  'trial_active_2',
+  'trial_exhausted_1',
+];
+
+const LANGUAGE_OPTIONS = ['en', 'es', 'fr', 'de', 'pt', 'it', 'nl', 'pl', 'ru', 'tr', 'ja'];
+
+function TestEmailPanel() {
+  const [email, setEmail] = useState('');
+  const [jobName, setJobName] = useState(EMAIL_JOB_OPTIONS[0]);
+  const [language, setLanguage] = useState('en');
+  const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!email) return;
+    setSending(true);
+    setStatus(null);
+    try {
+      const res = await babblo.testEmail(jobName, email, language);
+      setStatus({ ok: true, message: res.message });
+    } catch (e) {
+      setStatus({ ok: false, message: e instanceof Error ? e.message : 'Failed' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="mb-6 p-4 bg-background-secondary rounded-lg border border-background-tertiary">
+      <h2 className="text-sm font-semibold text-foreground mb-3">Send Test Email</h2>
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-foreground-secondary">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="px-3 py-1.5 rounded border border-background-tertiary bg-background text-sm text-foreground w-52 focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-foreground-secondary">Email type</label>
+          <select
+            value={jobName}
+            onChange={(e) => setJobName(e.target.value)}
+            className="px-3 py-1.5 rounded border border-background-tertiary bg-background text-sm text-foreground focus:outline-none focus:border-accent"
+          >
+            {EMAIL_JOB_OPTIONS.map((j) => (
+              <option key={j} value={j}>{j}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-foreground-secondary">Language</label>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="px-3 py-1.5 rounded border border-background-tertiary bg-background text-sm text-foreground focus:outline-none focus:border-accent"
+          >
+            {LANGUAGE_OPTIONS.map((l) => (
+              <option key={l} value={l}>{l}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={handleSend}
+          disabled={sending || !email}
+          className="px-4 py-1.5 rounded bg-accent text-white text-sm font-medium disabled:opacity-40 hover:bg-accent/90 transition-colors"
+        >
+          {sending ? 'Sending…' : 'Send'}
+        </button>
+      </div>
+      {status && (
+        <p className={`mt-2 text-xs ${status.ok ? 'text-green-600' : 'text-red-600'}`}>
+          {status.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const STAGES: BabbloLifecycleStage[] = [
@@ -154,6 +243,8 @@ export default function BabbloPage() {
         {error && (
           <div className="mb-6 p-4 bg-red-100 text-red-800 rounded-md text-sm">{error}</div>
         )}
+
+        <TestEmailPanel />
 
         {/* Stats bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

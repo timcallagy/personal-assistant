@@ -836,6 +836,12 @@ export const babblo = {
   },
 
   getUser: (userId: string) => request<BabbloUserProfile>(`/babblo/${userId}`),
+
+  testEmail: (jobName: string, email: string, language: string) =>
+    request<{ message: string }>(`/babblo/email-jobs/${encodeURIComponent(jobName)}/test`, {
+      method: 'POST',
+      body: JSON.stringify({ email, language }),
+    }),
 };
 
 export { ApiError };
