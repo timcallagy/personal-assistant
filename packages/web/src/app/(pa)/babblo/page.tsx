@@ -99,7 +99,7 @@ const EMAIL_JOB_OPTIONS = [
   'trial_exhausted_1',
 ];
 
-const LANGUAGE_OPTIONS = ['en', 'es', 'fr', 'de', 'pt', 'it', 'nl', 'pl', 'ru', 'tr', 'ja'];
+const LANGUAGE_OPTIONS = ['en', 'fr', 'es', 'de', 'it', 'pt', 'nl', 'ru', 'ja', 'zh', 'ko', 'ar', 'el', 'hi'];
 
 function TestEmailPanel() {
   const [email, setEmail] = useState('');
