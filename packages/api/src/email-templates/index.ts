@@ -17,7 +17,7 @@ export function getTemplate(emailType: string, languageCode: string): EmailTempl
   return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as EmailTemplate;
 }
 
-const BANNER_URL = 'https://pa-api-2fwl.onrender.com/api/v1/blog/images/1773416942278-4ed4eb5539547114.webp';
+const BANNER_URL = 'https://mail.babblo.app/api/v1/blog/images/1773416942278-4ed4eb5539547114.webp';
 
 function textToHtml(text: string): string {
   return text
