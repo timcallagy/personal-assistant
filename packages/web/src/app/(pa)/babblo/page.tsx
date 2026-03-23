@@ -103,7 +103,7 @@ const LANGUAGE_OPTIONS = ['en', 'es', 'fr', 'de', 'pt', 'it', 'nl', 'pl', 'ru', 
 
 function TestEmailPanel() {
   const [email, setEmail] = useState('');
-  const [jobName, setJobName] = useState(EMAIL_JOB_OPTIONS[0]);
+  const [jobName, setJobName] = useState<string>(EMAIL_JOB_OPTIONS[0] as string);
   const [language, setLanguage] = useState('en');
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [sending, setSending] = useState(false);
