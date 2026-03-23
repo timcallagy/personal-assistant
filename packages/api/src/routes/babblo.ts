@@ -74,8 +74,8 @@ babbloRouter.post('/email-jobs/:jobName/test', asyncHandler(async (req, res) => 
   });
 
   if (result.skipped) {
-    res.json({ success: true, message: `Skipped — user is unsubscribed or email already sent.` });
+    res.json({ success: true, data: { message: `Skipped — user is unsubscribed or email already sent.` } });
   } else {
-    res.json({ success: true, message: `Test email sent to ${email}` });
+    res.json({ success: true, data: { message: `Test email sent to ${email}` } });
   }
 }));
