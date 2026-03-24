@@ -74,7 +74,7 @@ async function runEmailNotVerified1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'app_language'          AS "appLanguage",
+      COALESCE(p.info->>'app_language', p.info->>'native_language') AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
@@ -96,7 +96,7 @@ async function runTrialNotStarted1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'app_language'          AS "appLanguage",
+      COALESCE(p.info->>'app_language', p.info->>'native_language') AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     LEFT JOIN user_balance ub ON ub.user_id = p.user_id
@@ -119,7 +119,7 @@ async function runTrialNotStarted2(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'app_language'          AS "appLanguage",
+      COALESCE(p.info->>'app_language', p.info->>'native_language') AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     LEFT JOIN user_balance ub ON ub.user_id = p.user_id
@@ -140,7 +140,7 @@ async function runTrialActive1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'app_language'          AS "appLanguage",
+      COALESCE(p.info->>'app_language', p.info->>'native_language') AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
@@ -161,7 +161,7 @@ async function runTrialActive2(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'app_language'          AS "appLanguage",
+      COALESCE(p.info->>'app_language', p.info->>'native_language') AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
@@ -189,7 +189,7 @@ async function runTrialExhausted1(): Promise<void> {
       p.user_id                       AS "userId",
       p.info->>'email'                AS "email",
       p.info->>'display_name'         AS "displayName",
-      p.info->>'app_language'          AS "appLanguage",
+      COALESCE(p.info->>'app_language', p.info->>'native_language') AS "appLanguage",
       p.info->>'target_language'      AS "targetLanguage"
     FROM profiles p
     INNER JOIN user_balance ub ON ub.user_id = p.user_id
