@@ -17,6 +17,7 @@ export interface BabbloUserRow {
   callsMade: number;
   minutesPurchased: number;
   minutesRemaining: number;
+  totalCorrections: number;
 }
 
 export interface BabbloStats {
@@ -121,7 +122,9 @@ export async function getBabbloUserList(
       COALESCE(SUM(CASE WHEN t.transaction_type = 'purchase'
                         THEN t.amount_seconds ELSE 0 END), 0)::int / 60
                                                                 AS "minutesPurchased",
-      COALESCE(ub.balance_seconds, 0) / 60                     AS "minutesRemaining"
+      COALESCE(ub.balance_seconds, 0) / 60                     AS "minutesRemaining",
+      (SELECT COUNT(*)::int FROM corrections corr
+       WHERE corr.user_id = p.user_id)                         AS "totalCorrections"
     FROM profiles p
     LEFT JOIN user_balance ub ON ub.user_id = p.user_id
     LEFT JOIN conversation_sessions cs ON cs.user_id = p.user_id

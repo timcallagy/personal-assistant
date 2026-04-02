@@ -20,7 +20,8 @@ interface EligibleUser {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getDisplayName(user: EligibleUser): string {
-  return user.displayName ?? '';
+  const name = user.displayName ?? '';
+  return name.split(' ')[0] || '';
 }
 
 function getTargetLanguage(user: EligibleUser): string {
@@ -45,6 +46,7 @@ async function sendToUsers(
       const rendered = renderTemplate(template, {
         name: getDisplayName(user),
         targetLanguage: getTargetLanguage(user),
+        emailLanguage: lang,
         unsubscribeLink,
       });
       const result = await sendEmail({

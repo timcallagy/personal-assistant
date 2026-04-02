@@ -84,6 +84,7 @@ function UserRow({ user }: { user: BabbloUser }) {
       <td className="px-4 py-3 text-sm text-right">{user.callsMade}</td>
       <td className="px-4 py-3 text-sm text-right">{user.minutesPurchased}</td>
       <td className="px-4 py-3 text-sm text-right">{user.minutesRemaining}</td>
+      <td className="px-4 py-3 text-sm text-right">{user.totalCorrections}</td>
     </tr>
   );
 }
@@ -277,6 +278,7 @@ export default function BabbloPage() {
                   <th className="px-4 py-3 text-right">Calls</th>
                   <th className="px-4 py-3 text-right">Min Purchased</th>
                   <th className="px-4 py-3 text-right">Min Remaining</th>
+                  <th className="px-4 py-3 text-right">Corrections</th>
                 </tr>
               </thead>
               <tbody>

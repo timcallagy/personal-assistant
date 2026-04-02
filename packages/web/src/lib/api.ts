@@ -759,6 +759,7 @@ export interface BabbloUser {
   callsMade: number;
   minutesPurchased: number;
   minutesRemaining: number;
+  totalCorrections: number;
 }
 
 export interface BabbloUsersResponse {
