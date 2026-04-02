@@ -60,7 +60,8 @@ babbloRouter.post('/email-jobs/:jobName/test', asyncHandler(async (req, res) => 
   const token = generateUnsubscribeToken('test-user');
   const rendered = renderTemplate(template, {
     name: 'Test User',
-    targetLanguage: 'Spanish',
+    targetLanguage: 'es',
+    emailLanguage: language ?? 'en',
     unsubscribeLink: `${API_PUBLIC_URL}/api/v1/unsubscribe?token=${token}`,
   });
 
