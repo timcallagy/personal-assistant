@@ -81,7 +81,14 @@ function UserRow({ user }: { user: BabbloUser }) {
       <td className="px-4 py-3 text-sm text-center">
         {user.bonusRequested ? '✓' : '—'}
       </td>
-      <td className="px-4 py-3 text-sm text-right">{user.callsMade}</td>
+      <td className="px-4 py-3 text-sm text-right">
+        <Link
+          href={`/babblo/${encodeURIComponent(user.userId)}#call-history`}
+          className="text-accent hover:underline"
+        >
+          {user.callsMade}
+        </Link>
+      </td>
       <td className="px-4 py-3 text-sm text-right">{user.minutesPurchased}</td>
       <td className="px-4 py-3 text-sm text-right">{user.minutesRemaining}</td>
       <td className="px-4 py-3 text-sm text-right">{user.totalCorrections}</td>

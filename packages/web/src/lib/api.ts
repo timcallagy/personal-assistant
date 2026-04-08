@@ -778,6 +778,23 @@ export interface BabbloStats {
   total: number;
 }
 
+export interface BabbloMessage {
+  id: number;
+  speaker: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  sequenceNumber: number;
+}
+
+export interface BabbloTranscript {
+  sessionId: string;
+  personaName: string;
+  language: string;
+  startedAt: string;
+  durationSeconds: number;
+  messages: BabbloMessage[];
+}
+
 export interface BabbloCorrection {
   original: string;
   corrected: string;
@@ -837,6 +854,9 @@ export const babblo = {
   },
 
   getUser: (userId: string) => request<BabbloUserProfile>(`/babblo/${userId}`),
+
+  getCallTranscript: (userId: string, sessionId: string) =>
+    request<BabbloTranscript>(`/babblo/${encodeURIComponent(userId)}/calls/${encodeURIComponent(sessionId)}`),
 
   testEmail: (jobName: string, email: string, language: string) =>
     request<{ message: string }>(`/babblo/email-jobs/${encodeURIComponent(jobName)}/test`, {

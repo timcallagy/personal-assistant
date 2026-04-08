@@ -11,6 +11,7 @@ babbloRouter.use(sessionAuth);
 // Stats must come before /:id to avoid being captured as a user ID
 babbloRouter.get('/stats', asyncHandler(babbloController.getStats));
 babbloRouter.get('/', asyncHandler(babbloController.listUsers));
+babbloRouter.get('/:id/calls/:sessionId', asyncHandler(babbloController.getCallTranscript));
 babbloRouter.get('/:id', asyncHandler(babbloController.getUserProfile));
 
 babbloRouter.post('/email-jobs/:jobName/run', asyncHandler(async (req, res) => {

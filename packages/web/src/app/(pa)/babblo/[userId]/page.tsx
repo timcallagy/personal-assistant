@@ -40,7 +40,7 @@ function fmtMin(seconds: number) {
 
 // ─── Call row with expandable corrections ────────────────────────────────────
 
-function CallRow({ call }: { call: BabbloCall }) {
+function CallRow({ call, userId }: { call: BabbloCall; userId: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -48,7 +48,15 @@ function CallRow({ call }: { call: BabbloCall }) {
         className="border-b border-background-tertiary hover:bg-background-secondary/50 cursor-pointer"
         onClick={() => setOpen((o) => !o)}
       >
-        <td className="px-4 py-3 text-sm">{fmtDate(call.createdAt)}</td>
+        <td className="px-4 py-3 text-sm">
+          <Link
+            href={`/babblo/${encodeURIComponent(userId)}/calls/${encodeURIComponent(call.sessionId)}`}
+            className="text-accent hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {fmtDate(call.createdAt)}
+          </Link>
+        </td>
         <td className="px-4 py-3 text-sm font-mono">{fmt(call.durationSeconds)}</td>
         <td className="px-4 py-3 text-sm">{call.language}</td>
         <td className="px-4 py-3 text-sm">{call.personaName}</td>
@@ -205,7 +213,7 @@ export default function BabbloUserPage() {
         </div>
 
         {/* Call History */}
-        <section>
+        <section id="call-history">
           <h2 className="text-lg font-semibold text-foreground mb-3">
             Call History ({calls.length})
           </h2>
@@ -225,7 +233,7 @@ export default function BabbloUserPage() {
                 </thead>
                 <tbody>
                   {calls.map((call) => (
-                    <CallRow key={call.sessionId} call={call} />
+                    <CallRow key={call.sessionId} call={call} userId={userId} />
                   ))}
                 </tbody>
               </table>

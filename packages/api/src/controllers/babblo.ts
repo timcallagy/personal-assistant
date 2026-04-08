@@ -3,6 +3,7 @@ import {
   getBabbloUserList,
   getBabbloStats,
   getBabbloUserProfile,
+  getCallTranscript,
   type LifecycleStage,
 } from '../lib/babblo-queries.js';
 
@@ -64,5 +65,22 @@ export const babbloController = {
     }
 
     res.json({ success: true, data: profile });
+  },
+
+  getCallTranscript: async (req: Request, res: Response): Promise<void> => {
+    const { sessionId } = req.params as { sessionId: string };
+
+    if (!sessionId || sessionId.length > 512) {
+      res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'sessionId is required' } });
+      return;
+    }
+
+    const transcript = await getCallTranscript(sessionId);
+    if (!transcript) {
+      res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Session not found' } });
+      return;
+    }
+
+    res.json({ success: true, data: transcript });
   },
 };

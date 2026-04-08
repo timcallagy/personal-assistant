@@ -56,6 +56,23 @@ export interface BabbloTransaction {
   createdAt: string;
 }
 
+export interface BabbloMessage {
+  id: number;
+  speaker: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  sequenceNumber: number;
+}
+
+export interface BabbloTranscript {
+  sessionId: string;
+  personaName: string;
+  language: string;
+  startedAt: string;
+  durationSeconds: number;
+  messages: BabbloMessage[];
+}
+
 export interface BabbloUserProfile {
   profile: {
     userId: string;
@@ -192,6 +209,40 @@ export async function getBabbloStats(): Promise<BabbloStats> {
       total: 0,
     }
   );
+}
+
+export async function getCallTranscript(sessionId: string): Promise<BabbloTranscript | null> {
+  const sessionSql = `
+    SELECT
+      session_id       AS "sessionId",
+      contact_name     AS "personaName",
+      lang             AS "language",
+      started_at       AS "startedAt",
+      duration_seconds AS "durationSeconds"
+    FROM conversation_sessions
+    WHERE session_id = $1
+  `;
+
+  const messagesSql = `
+    SELECT
+      id,
+      speaker,
+      content,
+      timestamp,
+      sequence_number AS "sequenceNumber"
+    FROM conversation_messages
+    WHERE session_id = $1
+    ORDER BY sequence_number ASC
+  `;
+
+  const [sessionRows, messageRows] = await Promise.all([
+    babbloQuery<Omit<BabbloTranscript, 'messages'>>(sessionSql, [sessionId]),
+    babbloQuery<BabbloMessage>(messagesSql, [sessionId]),
+  ]);
+
+  if (!sessionRows.length) return null;
+
+  return { ...sessionRows[0]!, messages: messageRows };
 }
 
 export async function getBabbloUserProfile(userId: string): Promise<BabbloUserProfile | null> {
