@@ -27,15 +27,12 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
         <h3 className="widget-title">About</h3>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://pa-api-2fwl.onrender.com/api/v1/blog/images/1773397796884-a8af21391b16fbb2.webp"
+          src="/headshot.jpg"
           alt="Tim Callagy"
           className="w-full mb-4 rounded"
         />
         <p className="text-blog-secondary text-sm leading-relaxed mb-2">
           I'm Tim, I write about practical applications of AI.
-        </p>
-        <p className="text-blog-muted text-xs italic mb-3">
-          Photo taken by my very talented daughter.
         </p>
         <p className="text-blog-secondary text-sm">
           <a

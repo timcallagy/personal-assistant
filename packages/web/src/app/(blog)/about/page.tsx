@@ -21,13 +21,10 @@ export default async function AboutPage() {
       <div className="blog-prose max-w-none">
         <figure className="mb-8">
           <img
-            src="https://pa-api-2fwl.onrender.com/api/v1/blog/images/1773397796884-a8af21391b16fbb2.webp"
+            src="/headshot.jpg"
             alt="Tim Callagy"
             className="rounded-lg w-full max-w-md mx-auto"
           />
-          <figcaption className="text-center text-blog-secondary text-sm mt-2 italic">
-            Photo taken by my very talented daughter.
-          </figcaption>
         </figure>
 
         <p className="text-lg text-blog-secondary leading-relaxed">
