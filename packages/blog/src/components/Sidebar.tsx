@@ -15,6 +15,12 @@ export function Sidebar({ categories, tags, popularPosts, config }: SidebarProps
       {/* About Widget */}
       <div className="widget">
         <h3 className="widget-title">About</h3>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/headshot.jpg"
+          alt="Tim Callagy"
+          className="rounded-lg w-full max-w-xs mx-auto mb-4"
+        />
         <p className="text-secondary text-sm leading-relaxed">
           {config?.siteDescription || 'Exploring the intersection of AI and practical business applications. Sharing insights on leveraging artificial intelligence for learning, coding, marketing, and innovation.'}
         </p>
