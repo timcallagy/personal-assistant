@@ -133,7 +133,8 @@ export function FunnelConfigurator({ steps, onChange, onApply, isSaving }: Funne
     const idx = draggableSteps.findIndex((s) => s.event === event);
     let parentEvent: string | undefined;
     for (let i = idx - 1; i >= 0; i--) {
-      if (!draggableSteps[i].parentEvent) { parentEvent = draggableSteps[i].event; break; }
+      const s = draggableSteps[i];
+      if (s && !s.parentEvent) { parentEvent = s.event; break; }
     }
     if (!parentEvent) return;
     onChange(steps.map((s) => (s.event === event ? { ...s, parentEvent } : s)));
