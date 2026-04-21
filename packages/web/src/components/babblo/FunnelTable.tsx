@@ -2,9 +2,9 @@
 
 import type { FunnelResponse, FunnelStep } from '@/lib/api';
 
-function pct(users: number, installs: number | null): string {
-  if (!installs) return '—';
-  return ((users / installs) * 100).toFixed(1) + '%';
+function stepPct(value: number | null, prev: number | null | undefined): string {
+  if (value === null || !prev) return '—';
+  return ((value / prev) * 100).toFixed(1) + '%';
 }
 
 function SkeletonRow({ cols }: { cols: number }) {
@@ -28,15 +28,27 @@ interface FunnelTableProps {
   onRetry: () => void;
 }
 
+const PINNED_DEFS = [
+  { key: 'impressions' as const, label: 'Impressions (Google Ads)' },
+  { key: 'clicks' as const, label: 'Clicks (Google Ads)' },
+  { key: 'installs' as const, label: 'Installs / Conversions (Google Ads)' },
+] as const;
+
+const PINNED_KEYS = PINNED_DEFS.map((d) => d.key);
+
+interface OrderedRow {
+  key: string;
+  label: string;
+  allValue: number | null;
+  versionValues?: Record<string, number>;
+  isPinned: boolean;
+}
+
 export function FunnelTable({ data, steps, loading, error, selectedVersions, onRetry }: FunnelTableProps) {
-  const PINNED_EVENTS = ['impressions', 'clicks', 'installs'];
-  const visibleSteps = steps.filter((s) => s.visible && !PINNED_EVENTS.includes(s.event));
+  const visibleSteps = steps.filter((s) => s.visible && !PINNED_KEYS.includes(s.event as typeof PINNED_KEYS[number]));
   const multiVersion = selectedVersions.length >= 2;
 
-  // Total column count: event name + (All Users + All %) + per version (Users + %)
-  const colCount = multiVersion
-    ? 1 + 2 + selectedVersions.length * 2
-    : 3; // event + users + %
+  const colCount = multiVersion ? 1 + 2 + selectedVersions.length * 2 : 3;
 
   if (error) {
     return (
@@ -59,6 +71,27 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
       </p>
     );
   }
+
+  const orderedRows: OrderedRow[] = [
+    ...PINNED_DEFS
+      .filter(({ key }) => steps.find((s) => s.event === key)?.visible)
+      .map(({ key, label }) => ({
+        key,
+        label,
+        allValue: data?.[key] ?? null,
+        isPinned: true,
+      })),
+    ...visibleSteps.map((step) => {
+      const row = data?.steps.find((r) => r.event === step.event);
+      return {
+        key: step.event,
+        label: step.event,
+        allValue: row?.all ?? 0,
+        versionValues: row?.versions,
+        isPinned: false,
+      };
+    }),
+  ];
 
   return (
     <div className="overflow-x-auto rounded-md border border-background-tertiary">
@@ -89,93 +122,65 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={colCount} />)
           ) : (
-            <>
-              {/* Pinned Google Ads rows */}
-              {(
-                [
-                  { key: 'impressions' as const, label: 'Impressions (Google Ads)' },
-                  { key: 'clicks' as const, label: 'Clicks (Google Ads)' },
-                  { key: 'installs' as const, label: 'Installs / Conversions (Google Ads)' },
-                ] as const
-              )
-                .filter(({ key }) => steps.find((s) => s.event === key)?.visible)
-                .map(({ key, label }, idx, arr) => {
-                  const value = data?.[key] ?? null;
-                  const rowPct =
-                    key === 'installs' ? '100%' :
-                    key === 'clicks' ? pct(value ?? 0, data?.impressions ?? null) :
-                    /* impressions */ '100%';
-                  return (
-                    <tr key={key} className={`border-b border-background-tertiary ${idx === arr.length - 1 ? 'border-b-2 border-background-tertiary' : ''}`} style={{ background: 'var(--color-background)' }}>
-                      <td className="px-4 py-3 text-foreground-secondary font-medium">{label}</td>
-                      {multiVersion ? (
-                        <>
-                          <td className="text-right px-4 py-3 text-foreground" title={value === null ? 'Data unavailable' : undefined}>
-                            {value ?? '—'}
-                          </td>
-                          <td className="text-right px-4 py-3 text-foreground-muted">{value !== null ? rowPct : '—'}</td>
-                          {selectedVersions.map((v) => (
-                            <>
-                              <td key={`${v}-u`} className="text-right px-4 py-3 text-foreground">{value ?? '—'}</td>
-                              <td key={`${v}-p`} className="text-right px-4 py-3 text-foreground-muted">{value !== null ? rowPct : '—'}</td>
-                            </>
-                          ))}
-                        </>
-                      ) : (
-                        <>
-                          <td className="text-right px-4 py-3 text-foreground" title={value === null ? 'Data unavailable' : undefined}>
-                            {value ?? '—'}
-                          </td>
-                          <td className="text-right px-4 py-3 text-foreground-muted">{value !== null ? rowPct : '—'}</td>
-                        </>
-                      )}
-                    </tr>
-                  );
-                })}
+            orderedRows.map((row, i) => {
+              const prev = i > 0 ? orderedRows[i - 1] : null;
+              const allPct = i === 0 ? '100%' : stepPct(row.allValue, prev?.allValue ?? null);
+              const isLastPinned = row.isPinned && (i === orderedRows.length - 1 || !orderedRows[i + 1]?.isPinned);
 
-              {/* Event rows */}
-              {visibleSteps.map((step) => {
-                const row = data?.steps.find((r) => r.event === step.event);
-                const allUsers = row?.all ?? 0;
-                return (
-                  <tr key={step.event} className="border-b border-background-tertiary hover:bg-background-secondary/50 transition-colors">
-                    <td className="px-4 py-3 text-foreground-secondary">{step.event}</td>
-                    {multiVersion ? (
-                      <>
-                        <td className={`text-right px-4 py-3 ${allUsers === 0 ? 'text-foreground-muted' : 'text-foreground'}`}>
-                          {allUsers}
-                        </td>
-                        <td className="text-right px-4 py-3 text-foreground-muted">
-                          {pct(allUsers, data?.installs ?? null)}
-                        </td>
-                        {selectedVersions.map((v) => {
-                          const vUsers = row?.versions?.[v] ?? 0;
-                          return (
-                            <>
-                              <td key={`${v}-u`} className={`text-right px-4 py-3 ${vUsers === 0 ? 'text-foreground-muted' : 'text-foreground'}`}>
-                                {vUsers}
-                              </td>
-                              <td key={`${v}-p`} className="text-right px-4 py-3 text-foreground-muted">
-                                {pct(vUsers, data?.installs ?? null)}
-                              </td>
-                            </>
-                          );
-                        })}
-                      </>
-                    ) : (
-                      <>
-                        <td className={`text-right px-4 py-3 ${allUsers === 0 ? 'text-foreground-muted' : 'text-foreground'}`}>
-                          {allUsers}
-                        </td>
-                        <td className="text-right px-4 py-3 text-foreground-muted">
-                          {pct(allUsers, data?.installs ?? null)}
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-            </>
+              return (
+                <tr
+                  key={row.key}
+                  className={`border-b border-background-tertiary ${row.isPinned ? '' : 'hover:bg-background-secondary/50 transition-colors'} ${isLastPinned ? 'border-b-2' : ''}`}
+                  style={row.isPinned ? { background: 'var(--color-background)' } : undefined}
+                >
+                  <td className={`px-4 py-3 text-foreground-secondary ${row.isPinned ? 'font-medium' : ''}`}>
+                    {row.label}
+                  </td>
+                  {multiVersion ? (
+                    <>
+                      <td
+                        className={`text-right px-4 py-3 ${row.allValue === null || row.allValue === 0 ? 'text-foreground-muted' : 'text-foreground'}`}
+                        title={row.allValue === null ? 'Data unavailable' : undefined}
+                      >
+                        {row.allValue ?? '—'}
+                      </td>
+                      <td className="text-right px-4 py-3 text-foreground-muted">
+                        {row.allValue !== null ? allPct : '—'}
+                      </td>
+                      {selectedVersions.map((v) => {
+                        const vUsers = row.versionValues?.[v] ?? (row.isPinned ? (row.allValue ?? 0) : 0);
+                        const prevVUsers = prev
+                          ? (prev.versionValues?.[v] ?? prev.allValue)
+                          : null;
+                        const vPct = i === 0 ? '100%' : stepPct(vUsers, prevVUsers);
+                        return (
+                          <>
+                            <td key={`${v}-u`} className={`text-right px-4 py-3 ${vUsers === 0 ? 'text-foreground-muted' : 'text-foreground'}`}>
+                              {vUsers}
+                            </td>
+                            <td key={`${v}-p`} className="text-right px-4 py-3 text-foreground-muted">
+                              {vPct}
+                            </td>
+                          </>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <td
+                        className={`text-right px-4 py-3 ${row.allValue === null || row.allValue === 0 ? 'text-foreground-muted' : 'text-foreground'}`}
+                        title={row.allValue === null ? 'Data unavailable' : undefined}
+                      >
+                        {row.allValue ?? '—'}
+                      </td>
+                      <td className="text-right px-4 py-3 text-foreground-muted">
+                        {row.allValue !== null ? allPct : '—'}
+                      </td>
+                    </>
+                  )}
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>
