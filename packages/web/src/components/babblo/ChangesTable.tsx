@@ -9,13 +9,24 @@ const CATEGORY_STYLES: Record<string, string> = {
 };
 
 export function ChangesTable() {
-  const [changes, setChanges] = useState<ChangeEntry[]>([]);
+  const [changes, setChanges] = useState<ChangeEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    babbloFunnel.getChanges().then((data) => setChanges([...data].reverse())).catch(() => {});
+    babbloFunnel.getChanges()
+      .then((data) => setChanges([...data].reverse()))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load changes'));
   }, []);
 
-  if (changes.length === 0) return null;
+  if (changes === null && !error) return (
+    <div className="mt-8 text-sm text-foreground-muted px-1">Loading changes…</div>
+  );
+  if (error) return (
+    <div className="mt-8 text-sm text-red-400 px-1">Changes log error: {error}</div>
+  );
+  if (changes!.length === 0) return (
+    <div className="mt-8 text-sm text-foreground-muted px-1">No changes recorded yet.</div>
+  );
 
   return (
     <div className="mt-8">
@@ -32,7 +43,7 @@ export function ChangesTable() {
             </tr>
           </thead>
           <tbody>
-            {changes.map((change, i) => (
+            {changes!.map((change, i) => (
               <tr key={i} className="border-t border-background-tertiary hover:bg-background-secondary/50 transition-colors">
                 <td className="px-4 py-3 text-foreground-secondary whitespace-nowrap">
                   {change.date}
