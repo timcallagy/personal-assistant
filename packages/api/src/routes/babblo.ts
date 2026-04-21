@@ -1,7 +1,4 @@
 import { Router } from 'express';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { sessionAuth } from '../middleware/index.js';
 import { babbloController } from '../controllers/babblo.js';
 import { asyncHandler } from '../middleware/index.js';
@@ -12,8 +9,6 @@ import * as posthog from '../services/posthog.js';
 import { getAdMetrics } from '../services/googleAds.js';
 import type { FunnelStep, FunnelConfigResponse, FunnelFilterOptions, FunnelEventsResponse, FunnelResponse } from '@pa/shared';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const changesPath = resolve(__dirname, '../data/changes.json');
 
 export const babbloRouter = Router();
 
@@ -194,8 +189,8 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
 // ─── Changes Log ─────────────────────────────────────────────────────────────
 
 babbloRouter.get('/changes', asyncHandler(async (_req, res) => {
-  const data = JSON.parse(readFileSync(changesPath, 'utf-8')) as unknown[];
-  res.json({ success: true, data });
+  const changes = await prisma.babbloChange.findMany({ orderBy: [{ date: 'desc' }, { id: 'desc' }] });
+  res.json({ success: true, data: changes });
 }));
 
 // Stats must come before /:id to avoid being captured as a user ID

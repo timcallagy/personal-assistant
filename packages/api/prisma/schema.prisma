@@ -414,3 +414,16 @@ model KpiMetricValue {
   @@index([periodId])
   @@map("kpi_metric_values")
 }
+
+model BabbloChange {
+  id          Int      @id @default(autoincrement())
+  date        String
+  time        String
+  category    String
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([date])
+  @@map("babblo_changes")
+}
+
