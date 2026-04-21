@@ -626,6 +626,7 @@ export interface CrawlLogsResponseData {
 export interface FunnelStep {
   event: string;
   visible: boolean;
+  parentEvent?: string;
 }
 
 export type VersionCounts = Record<string, number>;
