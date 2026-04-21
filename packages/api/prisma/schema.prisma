@@ -23,15 +23,31 @@ model User {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  projects   Project[]
-  labels     Label[]
-  notes      Note[]
-  actions    Action[]
-  blogPosts  BlogPost[]
-  companies  Company[]
-  jobProfile JobProfile?
+  projects           Project[]
+  labels             Label[]
+  notes              Note[]
+  actions            Action[]
+  blogPosts          BlogPost[]
+  companies          Company[]
+  jobProfile         JobProfile?
+  babbloFunnelConfig BabbloFunnelConfig?
 
   @@map("users")
+}
+
+// ==========================================
+// Babblo Funnel Config
+// ==========================================
+
+model BabbloFunnelConfig {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map("user_id")
+  steps     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("babblo_funnel_configs")
 }
 
 // ==========================================

@@ -36,6 +36,22 @@ services:
         sync: false
       - key: UNSUBSCRIBE_SECRET
         sync: false
+      - key: POSTHOG_API_KEY
+        sync: false
+      - key: POSTHOG_PROJECT_ID
+        sync: false
+      - key: POSTHOG_BASE_URL
+        sync: false
+      - key: GOOGLE_ADS_DEVELOPER_TOKEN
+        sync: false
+      - key: GOOGLE_ADS_CUSTOMER_ID
+        sync: false
+      - key: GOOGLE_ADS_CLIENT_ID
+        sync: false
+      - key: GOOGLE_ADS_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_ADS_REFRESH_TOKEN
+        sync: false
     healthCheckPath: /api/v1/health
 
   # Web UI

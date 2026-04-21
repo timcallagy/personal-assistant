@@ -13,3 +13,5 @@ export { Modal } from './Modal';
 export { Select } from './Select';
 
 export { MultiSelect } from './MultiSelect';
+
+export { Toast } from './Toast';

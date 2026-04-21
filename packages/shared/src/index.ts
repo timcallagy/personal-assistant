@@ -618,3 +618,40 @@ export interface CrawlLogsResponseData {
   logs: CrawlLog[];
   total: number;
 }
+
+// ============================================
+// Babblo Funnel Types
+// ============================================
+
+export interface FunnelStep {
+  event: string;
+  visible: boolean;
+}
+
+export type VersionCounts = Record<string, number>;
+
+export interface FunnelRow {
+  event: string;
+  all: number;
+  versions?: VersionCounts;
+}
+
+export interface FunnelResponse {
+  installs: number | null;
+  steps: FunnelRow[];
+  dateFrom: string;
+  dateTo: string;
+}
+
+export interface FunnelFilterOptions {
+  versions: string[];
+  countries: string[];
+}
+
+export interface FunnelEventsResponse {
+  events: string[];
+}
+
+export interface FunnelConfigResponse {
+  steps: FunnelStep[];
+}

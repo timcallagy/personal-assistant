@@ -13,6 +13,7 @@ const navItems = [
   { href: '/pa/jobs', label: 'Jobs', icon: '💼' },
   { href: '/pa/blog', label: 'Blog', icon: '✍️' },
   { href: '/babblo', label: 'Babblo CRM', icon: '🗣️' },
+  { href: '/babblo/funnel', label: 'Babblo Funnel', icon: '📈' },
 ];
 
 export function Sidebar() {

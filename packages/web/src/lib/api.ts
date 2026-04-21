@@ -866,3 +866,38 @@ export const babblo = {
 };
 
 export { ApiError };
+
+// ─── Babblo Funnel ────────────────────────────────────────────────────────────
+
+import type {
+  FunnelResponse,
+  FunnelConfigResponse,
+  FunnelFilterOptions,
+  FunnelEventsResponse,
+} from '@pa/shared';
+
+export type { FunnelResponse, FunnelConfigResponse, FunnelFilterOptions, FunnelEventsResponse };
+export type { FunnelStep, FunnelRow } from '@pa/shared';
+
+export const babbloFunnel = {
+  getFunnel: (params: {
+    from: string;
+    to: string;
+    versions?: string[];
+    countries?: string[];
+    steps: string[];
+  }) => {
+    const query = new URLSearchParams({ from: params.from, to: params.to, steps: params.steps.join(',') });
+    if (params.versions?.length) query.set('versions', params.versions.join(','));
+    if (params.countries?.length) query.set('countries', params.countries.join(','));
+    return request<FunnelResponse>(`/babblo/funnel?${query.toString()}`);
+  },
+  getFilterOptions: () => request<FunnelFilterOptions>('/babblo/funnel-filter-options'),
+  getEvents: () => request<FunnelEventsResponse>('/babblo/funnel-events'),
+  getConfig: () => request<FunnelConfigResponse>('/babblo/funnel-config'),
+  saveConfig: (steps: FunnelConfigResponse['steps']) =>
+    request<FunnelConfigResponse>('/babblo/funnel-config', {
+      method: 'POST',
+      body: JSON.stringify({ steps }),
+    }),
+};
