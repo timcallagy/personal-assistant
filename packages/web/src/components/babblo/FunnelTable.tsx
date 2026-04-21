@@ -71,8 +71,7 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
 
   // Build pinned rows
   const pinnedRows: OrderedRow[] = [];
-  for (let i = 0; i < PINNED_DEFS.length; i++) {
-    const { key, label } = PINNED_DEFS[i];
+  for (const { key, label } of PINNED_DEFS) {
     if (!steps.find((s) => s.event === key)?.visible) continue;
     const allValue = data?.[key] ?? null;
     const prev = pinnedRows[pinnedRows.length - 1] ?? null;
