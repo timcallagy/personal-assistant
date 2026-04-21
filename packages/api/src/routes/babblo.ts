@@ -77,9 +77,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 babbloRouter.get('/funnel-events', asyncHandler(async (_req, res) => {
   const cached = eventsCache.get('all');
   if (cached) { res.json({ success: true, data: cached }); return; }
-  const events = await withTimeout(posthog.getDistinctEvents(), 5000, []);
+  const events = await withTimeout(posthog.getDistinctEvents(), 15000, []);
   const response: FunnelEventsResponse = { events };
-  eventsCache.set('all', response);
+  if (events.length > 0) eventsCache.set('all', response);
   res.json({ success: true, data: response });
 }));
 
@@ -88,11 +88,14 @@ babbloRouter.get('/funnel-filter-options', asyncHandler(async (_req, res) => {
   if (cached) { res.json({ success: true, data: cached }); return; }
   const [versions, countries] = await withTimeout(
     Promise.all([posthog.getDistinctVersions(), posthog.getDistinctCountries()]),
-    5000,
+    15000,
     [[], []] as [string[], string[]]
   );
   const response: FunnelFilterOptions = { versions, countries };
-  filterOptionsCache.set('all', response);
+  // Only cache if we got real data — empty results from a timeout should not be cached
+  if (versions.length > 0 || countries.length > 0) {
+    filterOptionsCache.set('all', response);
+  }
   res.json({ success: true, data: response });
 }));
 
