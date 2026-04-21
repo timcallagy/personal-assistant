@@ -124,7 +124,9 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
           ) : (
             orderedRows.map((row, i) => {
               const prev = i > 0 ? orderedRows[i - 1] : null;
-              const allPct = i === 0 ? '100%' : stepPct(row.allValue, prev?.allValue ?? null);
+              // Don't compute step-over-step across the Google Ads → PostHog boundary
+              const crossSourceBoundary = !row.isPinned && prev?.isPinned;
+              const allPct = i === 0 ? '100%' : crossSourceBoundary ? '—' : stepPct(row.allValue, prev?.allValue ?? null);
               const isLastPinned = row.isPinned && (i === orderedRows.length - 1 || !orderedRows[i + 1]?.isPinned);
 
               return (
@@ -148,11 +150,20 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
                         {row.allValue !== null ? allPct : '—'}
                       </td>
                       {selectedVersions.map((v) => {
-                        const vUsers = row.versionValues?.[v] ?? (row.isPinned ? (row.allValue ?? 0) : 0);
+                        // Pinned rows (Google Ads) have no per-version data
+                        if (row.isPinned) {
+                          return (
+                            <>
+                              <td key={`${v}-u`} className="text-right px-4 py-3 text-foreground-muted">—</td>
+                              <td key={`${v}-p`} className="text-right px-4 py-3 text-foreground-muted">—</td>
+                            </>
+                          );
+                        }
+                        const vUsers = row.versionValues?.[v] ?? 0;
                         const prevVUsers = prev
-                          ? (prev.versionValues?.[v] ?? prev.allValue)
+                          ? (prev.isPinned ? null : (prev.versionValues?.[v] ?? 0))
                           : null;
-                        const vPct = i === 0 ? '100%' : stepPct(vUsers, prevVUsers);
+                        const vPct = stepPct(vUsers, prevVUsers);
                         return (
                           <>
                             <td key={`${v}-u`} className={`text-right px-4 py-3 ${vUsers === 0 ? 'text-foreground-muted' : 'text-foreground'}`}>
