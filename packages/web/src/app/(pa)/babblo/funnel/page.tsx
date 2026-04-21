@@ -5,6 +5,7 @@ import { Toast } from '@/components/ui';
 import { FunnelFilterBar } from '@/components/babblo/FunnelFilterBar';
 import { FunnelTable } from '@/components/babblo/FunnelTable';
 import { FunnelConfigurator } from '@/components/babblo/FunnelConfigurator';
+import { ChangesTable } from '@/components/babblo/ChangesTable';
 import { useBabbloFunnel } from '@/hooks/useBabbloFunnel';
 
 export default function BabbloFunnelPage() {
@@ -38,7 +39,7 @@ export default function BabbloFunnelPage() {
 
         {/* Body */}
         <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
-          {/* Funnel table */}
+          {/* Funnel table + changes log */}
           <div className="flex-1 overflow-auto p-4 md:p-6">
             <FunnelTable
               data={funnelData}
@@ -48,6 +49,7 @@ export default function BabbloFunnelPage() {
               selectedVersions={selectedVersions}
               onRetry={refetch}
             />
+            <ChangesTable />
           </div>
 
           {/* Step configurator */}

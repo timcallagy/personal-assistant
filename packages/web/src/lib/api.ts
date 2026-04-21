@@ -900,4 +900,12 @@ export const babbloFunnel = {
       method: 'POST',
       body: JSON.stringify({ steps }),
     }),
+  getChanges: () => request<ChangeEntry[]>('/babblo/changes'),
 };
+
+export interface ChangeEntry {
+  date: string;
+  time: string;
+  category: string;
+  description: string;
+}

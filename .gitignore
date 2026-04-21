@@ -51,4 +51,4 @@ images/blog_post_images/*
 # Credentials and API keys
 stats_api_keys/
 db_bkps/
-data/
+/data/
