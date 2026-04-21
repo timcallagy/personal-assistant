@@ -14,7 +14,7 @@ export function ChangesTable() {
 
   useEffect(() => {
     babbloFunnel.getChanges()
-      .then((data) => setChanges([...data].reverse()))
+      .then((data) => setChanges(data))
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load changes'));
   }, []);
 
