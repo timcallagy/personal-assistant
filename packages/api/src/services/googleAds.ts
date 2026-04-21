@@ -20,22 +20,30 @@ function getCustomer() {
   return customer;
 }
 
-export async function getInstallCount(dateFrom: string, dateTo: string): Promise<number | null> {
+export interface GoogleAdsMetrics {
+  installs: number | null;
+  clicks: number | null;
+  impressions: number | null;
+}
+
+export async function getAdMetrics(dateFrom: string, dateTo: string): Promise<GoogleAdsMetrics> {
   try {
     const c = getCustomer();
     const rows = await c.query(`
-      SELECT segments.date, metrics.conversions
+      SELECT segments.date, metrics.conversions, metrics.clicks, metrics.impressions
       FROM campaign
       WHERE segments.date BETWEEN '${dateFrom}' AND '${dateTo}'
       ORDER BY segments.date DESC
     `);
-    let total = 0;
+    let installs = 0, clicks = 0, impressions = 0;
     for (const row of rows) {
-      total += Math.round((row.metrics?.conversions as number) ?? 0);
+      installs    += Math.round((row.metrics?.conversions as number) ?? 0);
+      clicks      += Math.round((row.metrics?.clicks as number) ?? 0);
+      impressions += Math.round((row.metrics?.impressions as number) ?? 0);
     }
-    return total;
+    return { installs, clicks, impressions };
   } catch (err) {
-    console.error('[GoogleAds] getInstallCount error:', err);
-    return null;
+    console.error('[GoogleAds] getAdMetrics error:', err);
+    return { installs: null, clicks: null, impressions: null };
   }
 }

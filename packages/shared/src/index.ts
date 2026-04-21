@@ -637,6 +637,8 @@ export interface FunnelRow {
 }
 
 export interface FunnelResponse {
+  impressions: number | null;
+  clicks: number | null;
   installs: number | null;
   steps: FunnelRow[];
   dateFrom: string;

@@ -6,7 +6,7 @@ import { EMAIL_JOBS } from '../jobs/email-cron.js';
 import { prisma } from '../lib/index.js';
 import { createCache } from '../lib/simpleCache.js';
 import * as posthog from '../services/posthog.js';
-import { getInstallCount } from '../services/googleAds.js';
+import { getAdMetrics } from '../services/googleAds.js';
 import type { FunnelStep, FunnelConfigResponse, FunnelFilterOptions, FunnelEventsResponse, FunnelResponse } from '@pa/shared';
 
 export const babbloRouter = Router();
@@ -16,6 +16,8 @@ babbloRouter.use(sessionAuth);
 // ─── Funnel Config ────────────────────────────────────────────────────────────
 
 const DEFAULT_FUNNEL_STEPS: FunnelStep[] = [
+  { event: 'impressions', visible: true },
+  { event: 'clicks', visible: true },
   { event: 'installs', visible: true },
   { event: 'App Opened', visible: true },
   { event: 'Onboarding Started', visible: true },
@@ -123,7 +125,7 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
   const selectedVersions = versions ? versions.split(',').filter(Boolean) : [];
   const selectedCountries = countries ? countries.split(',').filter(Boolean) : [];
   const allSteps = stepsParam.split(',').filter(Boolean);
-  const posthogSteps = allSteps.filter((s) => s !== 'installs');
+  const posthogSteps = allSteps.filter((s) => !['installs', 'clicks', 'impressions'].includes(s));
   const multiVersion = selectedVersions.length >= 2;
 
   const TIMEOUT_MS = 15000;
@@ -133,7 +135,7 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
       const geoFilter = selectedCountries.length ? selectedCountries : undefined;
       const versionFilter = selectedVersions.length ? selectedVersions : undefined;
 
-      const promises: Promise<unknown>[] = [getInstallCount(from, to)];
+      const promises: Promise<unknown>[] = [getAdMetrics(from, to)];
       if (multiVersion) {
         promises.push(posthog.getFunnelCounts(from, to, posthogSteps, undefined, geoFilter));
         for (const v of selectedVersions) {
@@ -144,7 +146,7 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
       }
 
       const results = await Promise.all(promises);
-      const installs = results[0] as number | null;
+      const { installs, clicks, impressions } = results[0] as { installs: number | null; clicks: number | null; impressions: number | null };
       const combinedCounts = results[1] as Record<string, number>;
       const perVersionCounts: Record<string, Record<string, number>> = {};
       if (multiVersion) {
@@ -160,7 +162,7 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
         return { event, all: combinedCounts[event] ?? 0 };
       });
 
-      return { installs, steps };
+      return { installs, clicks, impressions, steps };
     };
 
     const result = await Promise.race([
@@ -168,7 +170,7 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), TIMEOUT_MS)),
     ]);
 
-    const response: FunnelResponse = { installs: result.installs, steps: result.steps, dateFrom: from, dateTo: to };
+    const response: FunnelResponse = { impressions: result.impressions, clicks: result.clicks, installs: result.installs, steps: result.steps, dateFrom: from, dateTo: to };
     res.json({ success: true, data: response });
   } catch (err) {
     if ((err as Error).message === 'TIMEOUT') {

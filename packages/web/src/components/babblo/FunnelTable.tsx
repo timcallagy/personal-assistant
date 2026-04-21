@@ -89,33 +89,46 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
             Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={colCount} />)
           ) : (
             <>
-              {/* Installs row */}
-              <tr className="bg-background border-b border-background-tertiary">
-                <td className="px-4 py-3 text-foreground-secondary font-medium">
-                  Installs (Google Ads)
-                </td>
-                {multiVersion ? (
-                  <>
-                    <td className="text-right px-4 py-3 text-foreground" title={data?.installs === null ? 'Install data unavailable' : undefined}>
-                      {data?.installs ?? '—'}
-                    </td>
-                    <td className="text-right px-4 py-3 text-foreground-muted">100%</td>
-                    {selectedVersions.map((v) => (
-                      <>
-                        <td key={`${v}-u`} className="text-right px-4 py-3 text-foreground">{data?.installs ?? '—'}</td>
-                        <td key={`${v}-p`} className="text-right px-4 py-3 text-foreground-muted">100%</td>
-                      </>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <td className="text-right px-4 py-3 text-foreground" title={data?.installs === null ? 'Install data unavailable' : undefined}>
-                      {data?.installs ?? '—'}
-                    </td>
-                    <td className="text-right px-4 py-3 text-foreground-muted">100%</td>
-                  </>
-                )}
-              </tr>
+              {/* Pinned Google Ads rows */}
+              {(
+                [
+                  { key: 'impressions' as const, label: 'Impressions (Google Ads)' },
+                  { key: 'clicks' as const, label: 'Clicks (Google Ads)' },
+                  { key: 'installs' as const, label: 'Installs / Conversions (Google Ads)' },
+                ] as const
+              )
+                .filter(({ key }) => steps.find((s) => s.event === key)?.visible)
+                .map(({ key, label }, idx, arr) => {
+                  const value = data?.[key] ?? null;
+                  const isBaseline = key === 'installs';
+                  const rowPct = isBaseline ? '100%' : pct(value ?? 0, data?.installs ?? null);
+                  return (
+                    <tr key={key} className={`border-b border-background-tertiary ${idx === arr.length - 1 ? 'border-b-2 border-background-tertiary' : ''}`} style={{ background: 'var(--color-background)' }}>
+                      <td className="px-4 py-3 text-foreground-secondary font-medium">{label}</td>
+                      {multiVersion ? (
+                        <>
+                          <td className="text-right px-4 py-3 text-foreground" title={value === null ? 'Data unavailable' : undefined}>
+                            {value ?? '—'}
+                          </td>
+                          <td className="text-right px-4 py-3 text-foreground-muted">{value !== null ? rowPct : '—'}</td>
+                          {selectedVersions.map((v) => (
+                            <>
+                              <td key={`${v}-u`} className="text-right px-4 py-3 text-foreground">{value ?? '—'}</td>
+                              <td key={`${v}-p`} className="text-right px-4 py-3 text-foreground-muted">{value !== null ? rowPct : '—'}</td>
+                            </>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <td className="text-right px-4 py-3 text-foreground" title={value === null ? 'Data unavailable' : undefined}>
+                            {value ?? '—'}
+                          </td>
+                          <td className="text-right px-4 py-3 text-foreground-muted">{value !== null ? rowPct : '—'}</td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
 
               {/* Event rows */}
               {visibleSteps.map((step) => {

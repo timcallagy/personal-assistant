@@ -90,8 +90,14 @@ export function FunnelConfigurator({ steps, onChange, onApply, isSaving }: Funne
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
-  const installsStep = steps.find((s) => s.event === 'installs');
-  const draggableSteps = steps.filter((s) => s.event !== 'installs');
+  const PINNED = ['impressions', 'clicks', 'installs'];
+  const PINNED_LABELS: Record<string, string> = {
+    impressions: 'Impressions (Google Ads)',
+    clicks: 'Clicks (Google Ads)',
+    installs: 'Installs / Conversions (Google Ads)',
+  };
+  const pinnedSteps = PINNED.map((e) => steps.find((s) => s.event === e)).filter(Boolean) as typeof steps;
+  const draggableSteps = steps.filter((s) => !PINNED.includes(s.event));
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -99,7 +105,7 @@ export function FunnelConfigurator({ steps, onChange, onApply, isSaving }: Funne
     const oldIndex = draggableSteps.findIndex((s) => s.event === active.id);
     const newIndex = draggableSteps.findIndex((s) => s.event === over.id);
     const reordered = arrayMove(draggableSteps, oldIndex, newIndex);
-    onChange(installsStep ? [installsStep, ...reordered] : reordered);
+    onChange([...pinnedSteps, ...reordered]);
   }
 
   function handleToggle(event: string) {
@@ -111,20 +117,22 @@ export function FunnelConfigurator({ steps, onChange, onApply, isSaving }: Funne
       <h3 className="text-sm font-medium text-foreground mb-3">Configure Steps</h3>
 
       <div className="flex-1 overflow-y-auto -mx-1 px-1">
-        {/* Installs row — pinned, not draggable */}
-        {installsStep && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded mb-1 bg-background-tertiary/50">
+        {/* Pinned Google Ads rows — not draggable */}
+        {pinnedSteps.map((step) => (
+          <div key={step.event} className="flex items-center gap-2 px-3 py-2 rounded mb-1 bg-background-tertiary/50">
             <span className="text-foreground-muted w-[14px]" aria-hidden>⠿</span>
             <input
               type="checkbox"
-              checked={installsStep.visible}
-              onChange={() => handleToggle('installs')}
+              checked={step.visible}
+              onChange={() => handleToggle(step.event)}
               className="accent-accent shrink-0"
             />
-            <span className="text-sm text-foreground-secondary truncate flex-1">installs</span>
+            <span className="text-sm text-foreground-secondary truncate flex-1">
+              {PINNED_LABELS[step.event] ?? step.event}
+            </span>
             <span className="text-xs text-foreground-muted ml-auto">pinned</span>
           </div>
-        )}
+        ))}
 
         {/* Draggable steps */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
