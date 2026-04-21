@@ -29,7 +29,8 @@ interface FunnelTableProps {
 }
 
 export function FunnelTable({ data, steps, loading, error, selectedVersions, onRetry }: FunnelTableProps) {
-  const visibleSteps = steps.filter((s) => s.visible && s.event !== 'installs');
+  const PINNED_EVENTS = ['impressions', 'clicks', 'installs'];
+  const visibleSteps = steps.filter((s) => s.visible && !PINNED_EVENTS.includes(s.event));
   const multiVersion = selectedVersions.length >= 2;
 
   // Total column count: event name + (All Users + All %) + per version (Users + %)
@@ -100,8 +101,10 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
                 .filter(({ key }) => steps.find((s) => s.event === key)?.visible)
                 .map(({ key, label }, idx, arr) => {
                   const value = data?.[key] ?? null;
-                  const isBaseline = key === 'installs';
-                  const rowPct = isBaseline ? '100%' : pct(value ?? 0, data?.installs ?? null);
+                  const rowPct =
+                    key === 'installs' ? '100%' :
+                    key === 'clicks' ? pct(value ?? 0, data?.impressions ?? null) :
+                    /* impressions */ '100%';
                   return (
                     <tr key={key} className={`border-b border-background-tertiary ${idx === arr.length - 1 ? 'border-b-2 border-background-tertiary' : ''}`} style={{ background: 'var(--color-background)' }}>
                       <td className="px-4 py-3 text-foreground-secondary font-medium">{label}</td>
@@ -136,7 +139,7 @@ export function FunnelTable({ data, steps, loading, error, selectedVersions, onR
                 const allUsers = row?.all ?? 0;
                 return (
                   <tr key={step.event} className="border-b border-background-tertiary hover:bg-background-secondary/50 transition-colors">
-                    <td className="px-4 py-3 text-foreground-secondary font-mono text-xs">{step.event}</td>
+                    <td className="px-4 py-3 text-foreground-secondary">{step.event}</td>
                     {multiVersion ? (
                       <>
                         <td className={`text-right px-4 py-3 ${allUsers === 0 ? 'text-foreground-muted' : 'text-foreground'}`}>

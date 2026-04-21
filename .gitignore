@@ -47,3 +47,8 @@ blog-template/
 # Blog post images (local staging)
 images/blog_post_images/*
 !images/blog_post_images/.gitkeep
+
+# Credentials and API keys
+stats_api_keys/
+db_bkps/
+data/

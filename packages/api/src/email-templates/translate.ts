@@ -17,16 +17,19 @@ import type { EmailTemplate } from './types.js';
 
 const LANGUAGES: Record<string, string> = {
   en: 'English',
-  es: 'Spanish',
   fr: 'French',
+  es: 'Spanish',
   de: 'German',
-  pt: 'Portuguese',
   it: 'Italian',
+  pt: 'Portuguese',
   nl: 'Dutch',
-  pl: 'Polish',
   ru: 'Russian',
-  tr: 'Turkish',
   ja: 'Japanese',
+  zh: 'Chinese',
+  ko: 'Korean',
+  ar: 'Arabic',
+  el: 'Greek',
+  hi: 'Hindi',
 };
 
 const TEMPLATES: EmailTemplate[] = [tns1, tns2, ta1, ta2, te1];

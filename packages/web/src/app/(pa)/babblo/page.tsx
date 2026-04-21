@@ -105,13 +105,13 @@ const EMAIL_JOB_OPTIONS = [
   'trial_active_1',
   'trial_active_2',
   'trial_exhausted_1',
-];
+] as const satisfies [string, ...string[]];
 
 const LANGUAGE_OPTIONS = ['en', 'fr', 'es', 'de', 'it', 'pt', 'nl', 'ru', 'ja', 'zh', 'ko', 'ar', 'el', 'hi'];
 
 function TestEmailPanel() {
   const [email, setEmail] = useState('');
-  const [jobName, setJobName] = useState<string>(EMAIL_JOB_OPTIONS[0] as string);
+  const [jobName, setJobName] = useState<string>(EMAIL_JOB_OPTIONS[0]);
   const [language, setLanguage] = useState('en');
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [sending, setSending] = useState(false);
