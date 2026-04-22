@@ -6,7 +6,7 @@ import { EMAIL_JOBS } from '../jobs/email-cron.js';
 import { prisma } from '../lib/index.js';
 import { createCache } from '../lib/simpleCache.js';
 import * as posthog from '../services/posthog.js';
-import { getAdMetrics } from '../services/googleAds.js';
+import { getAdMetrics, saveRefreshToken } from '../services/googleAds.js';
 import type { FunnelStep, FunnelConfigResponse, FunnelFilterOptions, FunnelEventsResponse, FunnelResponse } from '@pa/shared';
 
 
@@ -184,6 +184,58 @@ babbloRouter.get('/funnel', asyncHandler(async (req, res) => {
     console.error('[Funnel] Error:', err);
     res.status(500).json({ success: false, error: { code: 'POSTHOG_ERROR', message: 'Could not load funnel data from PostHog.' } });
   }
+}));
+
+// ─── Google Ads OAuth ─────────────────────────────────────────────────────────
+
+babbloRouter.get('/google-ads/auth-url', asyncHandler(async (_req, res) => {
+  const clientId = process.env['GOOGLE_ADS_CLIENT_ID'];
+  const apiPublicUrl = process.env['API_PUBLIC_URL'] ?? 'https://pa-api-2fwl.onrender.com';
+  if (!clientId) {
+    res.status(500).json({ success: false, error: { code: 'CONFIG_ERROR', message: 'GOOGLE_ADS_CLIENT_ID not set' } });
+    return;
+  }
+  const redirectUri = `${apiPublicUrl}/api/v1/babblo/google-ads/callback`;
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'https://www.googleapis.com/auth/adwords',
+    access_type: 'offline',
+    prompt: 'consent',
+  });
+  res.json({ success: true, data: { authUrl: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` } });
+}));
+
+babbloRouter.get('/google-ads/callback', asyncHandler(async (req, res) => {
+  const { code, error } = req.query as Record<string, string | undefined>;
+
+  if (error || !code) {
+    res.status(400).send(`<html><body style="font-family:sans-serif;padding:2rem"><h2>❌ Auth failed</h2><p>${error ?? 'No code returned'}</p></body></html>`);
+    return;
+  }
+
+  const clientId = process.env['GOOGLE_ADS_CLIENT_ID'];
+  const clientSecret = process.env['GOOGLE_ADS_CLIENT_SECRET'];
+  const apiPublicUrl = process.env['API_PUBLIC_URL'] ?? 'https://pa-api-2fwl.onrender.com';
+  const redirectUri = `${apiPublicUrl}/api/v1/babblo/google-ads/callback`;
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ code, client_id: clientId!, client_secret: clientSecret!, redirect_uri: redirectUri, grant_type: 'authorization_code' }).toString(),
+  });
+
+  const tokenData = await tokenRes.json() as { refresh_token?: string; error?: string };
+
+  if (!tokenData.refresh_token) {
+    res.status(400).send(`<html><body style="font-family:sans-serif;padding:2rem"><h2>❌ No refresh token returned</h2><p>${tokenData.error ?? 'Google did not return a refresh_token. Make sure prompt=consent is set.'}</p></body></html>`);
+    return;
+  }
+
+  await saveRefreshToken(tokenData.refresh_token);
+
+  res.send(`<html><body style="font-family:sans-serif;padding:2rem;background:#0f172a;color:#e2e8f0"><h2>✅ Google Ads reconnected</h2><p>Token saved. You can close this tab.</p><script>setTimeout(()=>window.close(),2000)</script></body></html>`);
 }));
 
 // ─── Changes Log ─────────────────────────────────────────────────────────────

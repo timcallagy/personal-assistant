@@ -901,6 +901,7 @@ export const babbloFunnel = {
       body: JSON.stringify({ steps }),
     }),
   getChanges: () => request<ChangeEntry[]>('/babblo/changes'),
+  getGoogleAdsAuthUrl: () => request<{ authUrl: string }>('/babblo/google-ads/auth-url'),
 };
 
 export interface ChangeEntry {

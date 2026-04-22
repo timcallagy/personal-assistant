@@ -6,6 +6,7 @@ import { FunnelFilterBar } from '@/components/babblo/FunnelFilterBar';
 import { FunnelTable } from '@/components/babblo/FunnelTable';
 import { FunnelConfigurator } from '@/components/babblo/FunnelConfigurator';
 import { ChangesTable } from '@/components/babblo/ChangesTable';
+import { GoogleAdsReconnect } from '@/components/babblo/GoogleAdsReconnect';
 import { useBabbloFunnel } from '@/hooks/useBabbloFunnel';
 
 export default function BabbloFunnelPage() {
@@ -22,6 +23,13 @@ export default function BabbloFunnelPage() {
   return (
     <Layout>
       <div className="flex flex-col h-full overflow-hidden">
+        {/* Google Ads reconnect banner */}
+        {!loading && funnelData && funnelData.installs === null && funnelData.clicks === null && funnelData.impressions === null && (
+          <div className="px-4 pt-3">
+            <GoogleAdsReconnect />
+          </div>
+        )}
+
         {/* Filter bar */}
         <FunnelFilterBar
           activePreset={activePreset}
