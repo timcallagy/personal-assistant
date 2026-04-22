@@ -415,14 +415,6 @@ model KpiMetricValue {
   @@map("kpi_metric_values")
 }
 
-model AppConfig {
-  key       String   @id
-  value     String
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("app_configs")
-}
-
 model BabbloChange {
   id          Int      @id @default(autoincrement())
   date        String

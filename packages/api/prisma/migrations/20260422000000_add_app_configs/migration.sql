@@ -1,5 +1,0 @@
-CREATE TABLE "app_configs" (
-  "key" TEXT PRIMARY KEY,
-  "value" TEXT NOT NULL,
-  "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
