@@ -111,6 +111,41 @@ golfRouter.patch('/rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, 
   res.json({ success: true, data: { id: updated.id } });
 }));
 
+// GET /golf/all-rounds — all rounds for all users (any authenticated golf user can view)
+golfRouter.get('/all-rounds', golfAuth, asyncHandler(async (_req: GolfRequest, res) => {
+  const rounds = await prisma.golfRound.findMany({
+    orderBy: { playedAt: 'desc' },
+    select: {
+      id: true, course: true, holes: true, totalShots: true,
+      holeData: true, status: true, playedAt: true,
+      user: { select: { username: true } },
+    },
+  });
+  res.json({ success: true, data: rounds });
+}));
+
+// GET /golf/all-rounds/:id — single round detail
+golfRouter.get('/all-rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
+  const id = parseInt(req.params['id'] ?? '', 10);
+  if (isNaN(id)) {
+    res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid round ID' } });
+    return;
+  }
+  const round = await prisma.golfRound.findUnique({
+    where: { id },
+    select: {
+      id: true, course: true, holes: true, totalShots: true,
+      holeData: true, status: true, playedAt: true,
+      user: { select: { username: true } },
+    },
+  });
+  if (!round) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Round not found' } });
+    return;
+  }
+  res.json({ success: true, data: round });
+}));
+
 // GET /golf/rounds — list completed rounds for the current user
 golfRouter.get('/rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
   const rounds = await prisma.golfRound.findMany({
