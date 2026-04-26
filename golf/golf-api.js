@@ -11,57 +11,112 @@
     return;
   }
 
-  let roundSaved = false;
+  var currentRoundId = null;
 
-  // Wait for the page to fully load before patching functions
-  window.addEventListener('load', function () {
-    // Patch showScorecard: save the round when the scorecard is shown
-    const _showScorecard = window.showScorecard;
-    window.showScorecard = function () {
-      _showScorecard.call(this);
-      if (!roundSaved && window.G && G.allHoleData && G.allHoleData.length > 0) {
-        roundSaved = true;
-        saveRound();
-      }
-    };
+  function authHeaders() {
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+  }
 
-    // Patch newGame: reset saved flag so the next round can be saved
-    const _newGame = window.newGame;
-    window.newGame = function () {
-      roundSaved = false;
-      _newGame.call(this);
-    };
-  });
+  function handleUnauthorized() {
+    localStorage.removeItem('golf_token');
+    localStorage.removeItem('golf_username');
+    window.location.replace(BASE || '/');
+  }
 
-  async function saveRound() {
+  // Create a draft round at the start of the game
+  async function createDraftRound() {
     try {
-      const totalShots = G.allHoleData.reduce(function (sum, h) { return sum + h.total; }, 0);
-      const res = await fetch(API + '/api/v1/golf/rounds', {
+      var res = await fetch(API + '/api/v1/golf/rounds', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token,
-        },
+        headers: authHeaders(),
         body: JSON.stringify({
           course: G.course,
           holes: G.holes,
-          totalShots: totalShots,
-          holeData: G.allHoleData,
+          totalShots: 0,
+          holeData: [],
+          status: 'in_progress',
         }),
       });
-      if (!res.ok) {
-        const json = await res.json().catch(function () { return {}; });
-        if (res.status === 401) {
-          // Token expired — clear and redirect to login
-          localStorage.removeItem('golf_token');
-          localStorage.removeItem('golf_username');
-          window.location.replace(BASE || '/');
-        } else {
-          console.warn('[Golf] Round save failed:', json.error?.message || res.status);
-        }
-      }
+      if (res.status === 401) { handleUnauthorized(); return; }
+      var json = await res.json();
+      if (json.success) currentRoundId = json.data.id;
     } catch (err) {
-      console.warn('[Golf] Round save error:', err);
+      console.warn('[Golf] Failed to create draft round:', err);
     }
   }
+
+  // Update the draft round after each hole is finished
+  async function updateDraftRound() {
+    if (!currentRoundId) return;
+    try {
+      var totalShots = G.allHoleData.reduce(function (s, h) { return s + h.total; }, 0);
+      var res = await fetch(API + '/api/v1/golf/rounds/' + currentRoundId, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          totalShots: totalShots,
+          holeData: G.allHoleData,
+          status: 'in_progress',
+        }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+      if (!res.ok) {
+        var json = await res.json().catch(function () { return {}; });
+        console.warn('[Golf] Failed to update round:', json.error?.message || res.status);
+      }
+    } catch (err) {
+      console.warn('[Golf] Failed to update round:', err);
+    }
+  }
+
+  // Mark the round as complete when the scorecard is shown
+  async function completeRound() {
+    if (!currentRoundId) return;
+    try {
+      var totalShots = G.allHoleData.reduce(function (s, h) { return s + h.total; }, 0);
+      var res = await fetch(API + '/api/v1/golf/rounds/' + currentRoundId, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          totalShots: totalShots,
+          holeData: G.allHoleData,
+          status: 'complete',
+        }),
+      });
+      if (res.status === 401) { handleUnauthorized(); return; }
+    } catch (err) {
+      console.warn('[Golf] Failed to complete round:', err);
+    }
+  }
+
+  window.addEventListener('load', function () {
+    // Patch startGame: create a draft round in the DB when the game begins
+    var _startGame = window.startGame;
+    window.startGame = function () {
+      _startGame.call(this);
+      currentRoundId = null;
+      createDraftRound();
+    };
+
+    // Patch finishHole: save completed hole data to the draft round
+    var _finishHole = window.finishHole;
+    window.finishHole = function () {
+      _finishHole.call(this);
+      updateDraftRound();
+    };
+
+    // Patch showScorecard: mark the round as complete
+    var _showScorecard = window.showScorecard;
+    window.showScorecard = function () {
+      _showScorecard.call(this);
+      completeRound();
+    };
+
+    // Patch newGame: reset round tracking for the next game
+    var _newGame = window.newGame;
+    window.newGame = function () {
+      currentRoundId = null;
+      _newGame.call(this);
+    };
+  });
 })();

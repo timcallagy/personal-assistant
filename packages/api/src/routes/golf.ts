@@ -57,13 +57,14 @@ golfRouter.post('/login', asyncHandler(async (req: GolfRequest, res) => {
   res.json({ success: true, data: { token: session.id, username: user.username } });
 }));
 
-// POST /golf/rounds — save a completed round
+// POST /golf/rounds — create a round (in_progress or complete)
 golfRouter.post('/rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
-  const { course, holes, totalShots, holeData } = req.body as {
+  const { course, holes, totalShots, holeData, status } = req.body as {
     course?: string;
     holes?: number;
     totalShots?: number;
     holeData?: unknown[];
+    status?: string;
   };
   if (!course || typeof holes !== 'number' || typeof totalShots !== 'number' || !Array.isArray(holeData)) {
     res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'course, holes, totalShots, and holeData are required' } });
@@ -76,15 +77,44 @@ golfRouter.post('/rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) 
       holes,
       totalShots,
       holeData: holeData as object[],
+      status: status === 'in_progress' ? 'in_progress' : 'complete',
     },
   });
   res.json({ success: true, data: { id: round.id, playedAt: round.playedAt } });
 }));
 
-// GET /golf/rounds — list rounds for the current user
+// PATCH /golf/rounds/:id — update an in-progress round
+golfRouter.patch('/rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
+  const id = parseInt(req.params['id'] ?? '', 10);
+  if (isNaN(id)) {
+    res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid round ID' } });
+    return;
+  }
+  const existing = await prisma.golfRound.findFirst({ where: { id, userId: req.golfUser!.id } });
+  if (!existing) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Round not found' } });
+    return;
+  }
+  const { totalShots, holeData, status } = req.body as {
+    totalShots?: number;
+    holeData?: unknown[];
+    status?: string;
+  };
+  const updated = await prisma.golfRound.update({
+    where: { id },
+    data: {
+      ...(typeof totalShots === 'number' && { totalShots }),
+      ...(Array.isArray(holeData) && { holeData: holeData as object[] }),
+      ...(status === 'in_progress' || status === 'complete' ? { status } : {}),
+    },
+  });
+  res.json({ success: true, data: { id: updated.id } });
+}));
+
+// GET /golf/rounds — list completed rounds for the current user
 golfRouter.get('/rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
   const rounds = await prisma.golfRound.findMany({
-    where: { userId: req.golfUser!.id },
+    where: { userId: req.golfUser!.id, status: 'complete' },
     orderBy: { playedAt: 'desc' },
     select: { id: true, course: true, holes: true, totalShots: true, holeData: true, playedAt: true },
   });
