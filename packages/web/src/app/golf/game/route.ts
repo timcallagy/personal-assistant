@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const API_URL = process.env['NEXT_PUBLIC_API_URL']?.replace(/\/$/, '') ?? 'https://mail.babblo.app';
+const API_URL = (process.env['NEXT_PUBLIC_API_URL'] ?? 'https://mail.babblo.app')
+  .replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
 const BASE_PATH = '/golf';
 const INJECT =
   `<script>window.GOLF_API_URL='${API_URL}';window.GOLF_BASE_PATH='${BASE_PATH}';</script>\n` +
