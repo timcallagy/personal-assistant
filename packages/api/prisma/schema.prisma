@@ -427,3 +427,46 @@ model BabbloChange {
   @@map("babblo_changes")
 }
 
+// ==========================================
+// Golf Tracker Models
+// ==========================================
+
+model GolfUser {
+  id           Int           @id @default(autoincrement())
+  username     String        @unique
+  passwordHash String        @map("password_hash")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  rounds       GolfRound[]
+  sessions     GolfSession[]
+
+  @@map("golf_users")
+}
+
+model GolfSession {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user GolfUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("golf_sessions")
+}
+
+model GolfRound {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  course     String
+  holes      Int
+  totalShots Int      @map("total_shots")
+  holeData   Json     @map("hole_data")
+  playedAt   DateTime @default(now()) @map("played_at")
+
+  user GolfUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("golf_rounds")
+}
+

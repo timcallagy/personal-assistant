@@ -68,6 +68,22 @@ services:
       - key: NEXT_PUBLIC_API_URL
         sync: false
 
+  # Golf Tracker
+  - type: web
+    name: pa-golf
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: echo "no build step"
+    startCommand: node golf/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: API_URL
+        value: https://mail.babblo.app
+
 databases:
   - name: pa-db
     databaseName: pa

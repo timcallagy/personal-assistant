@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lola's Golf Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #1a3d14;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 430px;
+            min-height: 100vh;
+            background: #f0f7ee;
+        }
+
+        .screen { display: none; padding: 20px; min-height: 100vh; }
+        .screen.active { display: block; }
+        .dir-btn {
+            flex: 1; padding: 11px 6px;
+            border: 2px solid #ddd; border-radius: 12px;
+            background: white; font-family: 'Poppins', sans-serif;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            color: #555; transition: all 0.15s;
+        }
+        .dir-btn:active { transform: scale(0.96); }
+        .dir-btn.picked { background: #2d5a27; color: white; border-color: #2d5a27; }
+
+        .hidden { display: none !important; }
+
+        /* ---- HEADER ---- */
+        .header {
+            background: #2d5a27;
+            color: white;
+            padding: 22px 20px 18px;
+            text-align: center;
+            border-radius: 0 0 24px 24px;
+            margin: -20px -20px 20px -20px;
+        }
+        .header h1 { font-family: 'Dancing Script', cursive; font-size: 30px; }
+        .header .sub { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+        /* ---- CARD ---- */
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .card h2 { color: #2d5a27; font-size: 17px; margin-bottom: 12px; }
+
+        /* ---- BUTTONS ---- */
+        .btn {
+            display: block; width: 100%; padding: 15px;
+            border: none; border-radius: 14px;
+            font-family: 'Poppins', sans-serif; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: transform 0.1s;
+            margin-bottom: 10px;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-green { background: #2d5a27; color: white; }
+        .btn-gold  { background: #c8a020; color: white; }
+        .btn:disabled { opacity: 0.45; pointer-events: none; }
+
+        /* ---- HOLE SELECTOR ---- */
+        .hole-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .hole-btn {
+            padding: 13px 0; border: 2px solid #ddd; border-radius: 12px;
+            background: white; font-size: 17px; font-weight: 700;
+            cursor: pointer; transition: all 0.15s; font-family: 'Poppins', sans-serif;
+        }
+        .hole-btn.selected { background: #2d5a27; color: white; border-color: #2d5a27; }
+
+        /* ---- SEARCH ---- */
+        .search-box {
+            width: 100%; padding: 12px 16px;
+            border: 2px solid #ddd; border-radius: 12px;
+            font-family: 'Poppins', sans-serif; font-size: 15px;
+            margin-bottom: 10px; outline: none;
+        }
+        .search-box:focus { border-color: #2d5a27; }
+        .search-results { max-height: 220px; overflow-y: auto; border-radius: 12px; border: 1px solid #eee; }
+        .search-item {
+            padding: 12px 16px; cursor: pointer;
+            border-bottom: 1px solid #f5f5f5; font-size: 15px;
+        }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:active, .search-item.chosen {
+            background: #e8f5e9; color: #2d5a27; font-weight: 700;
+        }
+
+        /* ---- GAME HEADER ---- */
+        .game-top {
+            background: #2d5a27; color: white;
+            padding: 14px 20px 12px;
+            margin: -20px -20px 16px -20px;
+            border-radius: 0 0 22px 22px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .game-top .hole-num { font-size: 22px; font-weight: 700; }
+        .game-top .course-nm { font-size: 11px; opacity: 0.75; }
+        .game-top .shot-count { font-size: 20px; font-weight: 700; text-align: right; }
+        .game-top .shot-label { font-size: 11px; opacity: 0.75; text-align: right; }
+
+        /* ---- PROGRESS BAR ---- */
+        .progress { display: flex; gap: 5px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+        .pdot {
+            width: 10px; height: 10px; border-radius: 50%; background: #ccc;
+            transition: all 0.3s;
+        }
+        .pdot.done { background: #c8a020; }
+        .pdot.now  { background: #2d5a27; width: 24px; border-radius: 5px; }
+
+        /* ---- SELECTED CLUB BADGE ---- */
+        .selected-club-badge {
+            background: #e8f5e9; border: 2px solid #2d5a27;
+            border-radius: 10px; padding: 9px 14px;
+            color: #2d5a27; font-weight: 700; font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        /* ---- SHOT SYMBOLS ---- */
+        .shot-symbols { display: flex; gap: 10px; justify-content: center; margin: 6px 0 14px; }
+        .sym-btn {
+            flex: 1; border-radius: 16px; border: none; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 12px 6px;
+            font-size: 12px; font-weight: 700; font-family: 'Poppins', sans-serif;
+            transition: transform 0.12s;
+        }
+        .sym-btn:active { transform: scale(0.9); }
+        .sym-btn svg { width: 46px; height: 46px; margin-bottom: 6px; }
+        .sym-bad  { background: #ffe5e5; color: #c0392b; }
+        .sym-ok   { background: #fff8e1; color: #d68910; }
+        .sym-good { background: #e8f5e9; color: #27ae60; }
+
+        /* ---- TALLY BAR ---- */
+        .tally-wrap { margin-top: 4px; }
+        .tally-label-txt { text-align: center; font-size: 12px; color: #888; margin-bottom: 6px; }
+        .tally-bar {
+            background: #2d5a27; border-radius: 16px;
+            padding: 16px 14px; text-align: center;
+            cursor: pointer; min-height: 78px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: transform 0.1s; user-select: none;
+        }
+        .tally-bar:active { transform: scale(0.97); }
+        .tally-top-label { color: rgba(255,255,255,0.65); font-size: 11px; margin-bottom: 8px; }
+        .tally-marks { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center; }
+        .tally-group { display: flex; align-items: center; gap: 3px; }
+        .tmark { width: 4px; height: 26px; background: white; border-radius: 2px; }
+        .tmark-cross {
+            width: 28px; height: 4px; background: white;
+            border-radius: 2px; transform: rotate(-60deg);
+            margin-left: -22px; margin-right: -4px;
+        }
+        .tally-zero { color: rgba(255,255,255,0.5); font-size: 13px; }
+
+        /* ---- PUTT SYMBOLS ---- */
+        .putt-symbols { display: flex; gap: 10px; justify-content: center; margin: 6px 0 14px; }
+        .putt-btn {
+            flex: 1; border-radius: 16px; border: none; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 12px 6px;
+            font-size: 12px; font-weight: 700; font-family: 'Poppins', sans-serif;
+            transition: transform 0.12s;
+        }
+        .putt-btn:active { transform: scale(0.9); }
+        .putt-btn svg { width: 46px; height: 46px; margin-bottom: 6px; }
+        .putt-short { background: #fff8e1; color: #d68910; }
+        .putt-in    { background: #e8f5e9; color: #27ae60; }
+        .putt-far   { background: #ffe5e5; color: #c0392b; }
+
+        /* ---- HOLE COMPLETE ---- */
+        .big-icon { font-size: 70px; text-align: center; padding: 16px 0; }
+        .big-score { font-size: 28px; font-weight: 700; color: #2d5a27; text-align: center; margin-bottom: 6px; }
+        .big-msg { font-size: 16px; text-align: center; color: #555; }
+
+        /* ---- SCORECARD ---- */
+        .sc-hole-card {
+            background: white; border-radius: 18px;
+            margin-bottom: 14px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .sc-hole-header {
+            background: #2d5a27; color: white;
+            padding: 12px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sc-hole-title { font-size: 16px; font-weight: 700; }
+        .sc-hole-total { font-size: 16px; font-weight: 700; }
+
+        .sc-club-row {
+            display: flex; align-items: center;
+            padding: 10px 16px; border-bottom: 1px solid #f0f0f0;
+            gap: 10px;
+        }
+        .sc-club-row:last-child { border-bottom: none; }
+        .sc-club-name { flex: 1; font-size: 14px; font-weight: 600; color: #333; }
+        .sc-club-shots { font-size: 13px; color: #666; white-space: nowrap; }
+        .sc-quality {
+            width: 34px; height: 34px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .sc-quality svg { width: 22px; height: 22px; }
+        .sq-good { background: #e8f5e9; }
+        .sq-ok   { background: #fff8e1; }
+        .sq-bad  { background: #ffe5e5; }
+        .sq-putt { background: #e3f2fd; }
+
+        /* ---- TOTAL BANNER ---- */
+        .total-banner {
+            background: #c8a020; color: white;
+            border-radius: 14px; padding: 16px;
+            text-align: center; margin-bottom: 14px;
+        }
+        .total-banner .t-label { font-size: 13px; opacity: 0.85; }
+        .total-banner .t-num { font-size: 36px; font-weight: 700; }
+        .total-banner .t-course { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+
+        /* ---- FLASH ---- */
+        .flash {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(45,90,39,0.9); color: white;
+            padding: 14px 28px; border-radius: 16px;
+            font-size: 18px; font-weight: 700;
+            pointer-events: none; opacity: 0;
+            transition: opacity 0.2s; z-index: 100;
+        }
+        .flash.show { opacity: 1; }
+    </style>
+</head>
+<body>
+<div class="app">
+
+<!-- ========== SCREEN 1: SETUP ========== -->
+<div class="screen active" id="screen-setup">
+    <div class="header">
+        <h1>Lola's Golf Tracker</h1>
+        <div class="sub">Track your round like a pro!</div>
+    </div>
+
+    <div class="card">
+        <h2>How many holes?</h2>
+        <div class="hole-grid">
+            <button class="hole-btn" onclick="pickHoles(1, this)">1</button>
+            <button class="hole-btn" onclick="pickHoles(2, this)">2</button>
+            <button class="hole-btn" onclick="pickHoles(3, this)">3</button>
+            <button class="hole-btn" onclick="pickHoles(4, this)">4</button>
+            <button class="hole-btn" onclick="pickHoles(5, this)">5</button>
+            <button class="hole-btn" onclick="pickHoles(6, this)">6</button>
+            <button class="hole-btn" onclick="pickHoles(9, this)">9</button>
+            <button class="hole-btn" onclick="pickHoles(18, this)">18</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Golf Course</h2>
+        <input class="search-box" id="course-search" type="text" placeholder="Search for a course..."
+               oninput="filterCourses()" onfocus="filterCourses()">
+        <div class="search-results" id="course-list"></div>
+    </div>
+
+    <button class="btn btn-green" id="start-btn" onclick="startGame()" disabled>Tee off!</button>
+</div>
+
+<!-- ========== SCREEN 2: GAME ========== -->
+<div class="screen" id="screen-game">
+    <div class="game-top">
+        <div>
+            <div class="hole-num" id="g-hole">Hole 1</div>
+            <div class="course-nm" id="g-course"></div>
+        </div>
+        <div>
+            <div class="shot-count" id="g-shots">0</div>
+            <div class="shot-label">shots</div>
+        </div>
+    </div>
+
+    <div class="progress" id="progress"></div>
+
+    <!-- PHASE: Club selection -->
+    <div id="phase-club">
+        <div class="card">
+            <h2>Which club are you using?</h2>
+            <input class="search-box" id="club-search" type="text" placeholder="Search clubs..."
+                   oninput="filterClubs()" onfocus="filterClubs()">
+            <div class="search-results" id="club-list"></div>
+        </div>
+    </div>
+
+    <!-- PHASE: Shot -->
+    <div id="phase-shot" class="hidden">
+        <div class="card">
+            <div class="selected-club-badge" id="g-club-badge">Club: Driver</div>
+            <h2>How was your shot?</h2>
+            <div class="shot-symbols">
+                <button class="sym-btn sym-bad" onclick="recordShot('bad')">
+                    <svg viewBox="0 0 50 50">
+                        <line x1="10" y1="10" x2="40" y2="40" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="40" y1="10" x2="10" y2="40" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>
+                    </svg>
+                    Bad
+                </button>
+                <button class="sym-btn sym-ok" onclick="recordShot('ok')">
+                    <svg viewBox="0 0 50 50">
+                        <polyline points="2,30 11,15 20,35 29,15 38,35 47,20"
+                            stroke="#d68910" stroke-width="5" stroke-linecap="round"
+                            stroke-linejoin="round" fill="none"/>
+                    </svg>
+                    OK
+                </button>
+                <button class="sym-btn sym-good" onclick="recordShot('good')">
+                    <svg viewBox="0 0 50 50">
+                        <polyline points="7,25 20,39 43,11"
+                            stroke="#27ae60" stroke-width="6" stroke-linecap="round"
+                            stroke-linejoin="round" fill="none"/>
+                    </svg>
+                    Great!
+                </button>
+            </div>
+
+            <div class="tally-wrap">
+                <div class="tally-label-txt">Tap the bar to add a stroke</div>
+                <div class="tally-bar" id="shot-tally" onclick="addShot()">
+                    <div class="tally-top-label">Strokes this hole</div>
+                    <div class="tally-marks" id="shot-tally-marks">
+                        <span class="tally-zero">Tap to count!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:14px;">
+                <div style="font-size:13px;color:#888;margin-bottom:6px;">Comment box (optional)</div>
+                <input type="text" id="shot-comment" placeholder="e.g. Amazing drive!"
+                    style="width:100%;padding:12px 14px;border:2px solid #ddd;border-radius:12px;
+                           font-family:'Poppins',sans-serif;font-size:15px;outline:none;"
+                    onfocus="this.style.borderColor='#2d5a27'"
+                    onblur="this.style.borderColor='#ddd'">
+            </div>
+
+            <div style="margin-top:14px;">
+                <div style="font-size:13px;color:#888;margin-bottom:8px;">Which direction did it go?</div>
+                <div style="display:flex;gap:8px;">
+                    <button class="dir-btn" id="dir-left"     onclick="pickDirection('left')"    >Left</button>
+                    <button class="dir-btn" id="dir-straight" onclick="pickDirection('straight')" >Straight</button>
+                    <button class="dir-btn" id="dir-right"    onclick="pickDirection('right')"   >Right</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-gold" onclick="goNextClub()">Choose next club</button>
+        <button class="btn btn-green" onclick="goToPutting()">On the green! (Putter)</button>
+    </div>
+
+    <!-- PHASE: Putting -->
+    <div id="phase-putt" class="hidden">
+        <div class="card">
+            <div class="selected-club-badge">Club: Putter</div>
+            <h2>How was your putt?</h2>
+            <div class="putt-symbols">
+                <button class="putt-btn putt-short" onclick="recordPutt('short')">
+                    <svg viewBox="0 0 50 50">
+                        <circle cx="25" cy="25" r="10" fill="#d68910"/>
+                    </svg>
+                    Too short
+                </button>
+                <button class="putt-btn putt-in" onclick="recordPutt('in')">
+                    <svg viewBox="0 0 50 50">
+                        <circle cx="25" cy="25" r="18" stroke="#27ae60" stroke-width="5" fill="none"/>
+                    </svg>
+                    In the hole!
+                </button>
+                <button class="putt-btn putt-far" onclick="recordPutt('far')">
+                    <svg viewBox="0 0 50 50">
+                        <line x1="6" y1="25" x2="44" y2="25" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>
+                    </svg>
+                    Too far
+                </button>
+            </div>
+
+            <div class="tally-wrap">
+                <div class="tally-label-txt">Tap the bar to add a putt</div>
+                <div class="tally-bar" id="putt-tally" onclick="addPutt()">
+                    <div class="tally-top-label">Putts this hole</div>
+                    <div class="tally-marks" id="putt-tally-marks">
+                        <span class="tally-zero">Tap to count!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SCREEN 3: HOLE COMPLETE ========== -->
+<div class="screen" id="screen-hole-done">
+    <div class="header">
+        <h1 id="hd-title">Hole 1 Complete!</h1>
+    </div>
+    <div class="card">
+        <div class="big-icon" id="hd-icon">★</div>
+        <div class="big-score" id="hd-score">3 shots</div>
+        <div class="big-msg" id="hd-msg">Well played!</div>
+    </div>
+    <button class="btn btn-green" id="hd-next-btn" onclick="nextHole()">Next Hole</button>
+    <button class="btn btn-gold" onclick="showScorecard()">See Scorecard</button>
+</div>
+
+<!-- ========== SCREEN 4: SCORECARD ========== -->
+<div class="screen" id="screen-scorecard">
+    <div class="header">
+        <h1>Your Scorecard</h1>
+        <div class="sub" id="sc-course"></div>
+    </div>
+    <div id="sc-total-banner" class="total-banner">
+        <div class="t-label">Total shots</div>
+        <div class="t-num" id="sc-total-num">0</div>
+        <div class="t-course" id="sc-total-course"></div>
+    </div>
+    <div id="sc-holes"></div>
+    <button class="btn btn-gold" onclick="newGame()">Play Again!</button>
+</div>
+
+</div><!-- end .app -->
+
+<div class="flash" id="flash"></div>
+
+<script>
+// ---- DATA ----
+const CLUBS = [
+    'Driver',
+    '7 Iron',
+    '9 Iron',
+    'Hybrid',
+    'Sand Wedge',
+    'Putter'
+];
+
+const COURSES = [
+    'St Andrews','Augusta National','Pebble Beach','Carnoustie',
+    'Royal Birkdale','Muirfield','Royal Troon','Turnberry',
+    'Wentworth','The Belfry','Gleneagles','Valderrama',
+    'Whistling Straits','Sawgrass (TPC)','Shinnecock Hills','Oakmont',
+    'Bethpage Black','Royal Portrush','Hoylake','Sunningdale',
+    'Woburn','Loch Lomond','Castle Stuart','Kingsbarns',
+    'Royal Dornoch','Ballybunion','Lahinch','Royal County Down',
+    'Portmarnock','Swinley Forest',
+    'Forrest Little','Malahide Par 3'
+];
+
+// ---- STATE ----
+let G = {
+    holes: 0,
+    course: '',
+    hole: 1,
+    shots: 0,           // total non-putt strokes this hole
+    putts: 0,           // total putts this hole
+    currentClub: '',
+    currentClubShots: 0,
+    currentClubQuality: null,  // 'good' | 'ok' | 'bad' | null
+    holeClubs: [],      // clubs used this hole: [{club, shots, quality}]
+    allHoleData: [],    // one entry per completed hole: {total, clubs:[...], putts}
+};
+
+// ---- SETUP SCREEN ----
+function pickHoles(n, btn) {
+    G.holes = n;
+    document.querySelectorAll('.hole-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    checkReady();
+}
+
+function filterCourses() {
+    const q = document.getElementById('course-search').value.toLowerCase();
+    const list = q ? COURSES.filter(c => c.toLowerCase().includes(q)) : COURSES;
+    document.getElementById('course-list').innerHTML = list.map(c =>
+        `<div class="search-item${c === G.course ? ' chosen' : ''}" onclick="pickCourse('${c.replace(/'/g,"&#39;")}')">${c}</div>`
+    ).join('');
+}
+
+function pickCourse(c) {
+    G.course = c;
+    document.getElementById('course-search').value = c;
+    filterCourses();
+    checkReady();
+}
+
+function checkReady() {
+    document.getElementById('start-btn').disabled = !(G.holes > 0 && G.course);
+}
+
+// ---- START GAME ----
+function startGame() {
+    G.hole = 1; G.shots = 0; G.putts = 0; G.scores = [];
+    G.currentClub = ''; G.currentClubShots = 0; G.currentClubQuality = null;
+    G.holeClubs = []; G.allHoleData = [];
+    show('screen-game');
+    refreshGameTop();
+    buildProgress();
+    goToClubPhase();
+}
+
+// ---- CLUB SEARCH ----
+function filterClubs() {
+    const q = document.getElementById('club-search').value.toLowerCase();
+    const list = q ? CLUBS.filter(c => c.toLowerCase().includes(q)) : CLUBS;
+    document.getElementById('club-list').innerHTML = list.map(c =>
+        `<div class="search-item" onclick="pickClub('${c}')">${c}</div>`
+    ).join('');
+}
+
+function pickClub(club) {
+    if (club === 'Putter') { goToPutting(); return; }
+    // Save previous club if any shots were recorded with it
+    saveCurrentClub();
+    G.currentClub = club;
+    G.currentClubShots = 0;
+    G.currentClubQuality = null;
+    document.getElementById('g-club-badge').textContent = 'Club: ' + club;
+    goToShotPhase();
+}
+
+let currentDirection = null;
+
+function pickDirection(dir) {
+    currentDirection = dir;
+    ['left','straight','right'].forEach(d => {
+        document.getElementById('dir-' + d).classList.toggle('picked', d === dir);
+    });
+}
+
+function saveCurrentClub() {
+    if (G.currentClub && G.currentClubShots > 0) {
+        const commentEl = document.getElementById('shot-comment');
+        G.holeClubs.push({
+            club: G.currentClub,
+            shots: G.currentClubShots,
+            quality: G.currentClubQuality,
+            comment: commentEl ? commentEl.value.trim() : '',
+            direction: currentDirection
+        });
+    }
+}
+
+// ---- PHASES ----
+function goToClubPhase() {
+    document.getElementById('club-search').value = '';
+    filterClubs();
+    document.getElementById('phase-club').classList.remove('hidden');
+    document.getElementById('phase-shot').classList.add('hidden');
+    document.getElementById('phase-putt').classList.add('hidden');
+}
+
+function goToShotPhase() {
+    document.getElementById('phase-club').classList.add('hidden');
+    document.getElementById('phase-shot').classList.remove('hidden');
+    document.getElementById('phase-putt').classList.add('hidden');
+}
+
+function goToPutting() {
+    saveCurrentClub();
+    G.currentClub = '';
+    document.getElementById('phase-club').classList.add('hidden');
+    document.getElementById('phase-shot').classList.add('hidden');
+    document.getElementById('phase-putt').classList.remove('hidden');
+}
+
+function goNextClub() {
+    saveCurrentClub();
+    G.currentClub = '';
+    G.currentClubShots = 0;
+    G.currentClubQuality = null;
+    document.getElementById('shot-comment').value = '';
+    currentDirection = null;
+    ['left','straight','right'].forEach(d => document.getElementById('dir-' + d).classList.remove('picked'));
+    goToClubPhase();
+}
+
+// ---- SHOT / PUTT COUNTING ----
+function addShot() {
+    G.shots++;
+    G.currentClubShots++;
+    drawTally('shot-tally-marks', G.shots);
+    refreshGameTop();
+}
+
+function addPutt() {
+    G.putts++;
+    drawTally('putt-tally-marks', G.putts);
+    refreshGameTop();
+}
+
+function recordShot(quality) {
+    const msgs = { bad: 'Bad shot!', ok: 'OK shot!', good: 'Great shot!' };
+    showFlash(msgs[quality]);
+    G.currentClubQuality = quality;
+    addShot();
+}
+
+function recordPutt(result) {
+    if (result === 'in') {
+        addPutt();
+        showFlash('In the hole!');
+        setTimeout(finishHole, 600);
+    } else {
+        showFlash(result === 'short' ? 'Too short!' : 'Too far!');
+        addPutt();
+    }
+}
+
+// ---- TALLY MARKS ----
+function drawTally(id, count) {
+    const el = document.getElementById(id);
+    if (count === 0) { el.innerHTML = '<span class="tally-zero">Tap to count!</span>'; return; }
+    let html = '';
+    const groups = Math.floor(count / 5);
+    const rem = count % 5;
+    for (let g = 0; g < groups; g++) {
+        html += '<div class="tally-group">';
+        for (let i = 0; i < 4; i++) html += '<div class="tmark"></div>';
+        html += '<div class="tmark-cross"></div></div>';
+    }
+    if (rem > 0) {
+        html += '<div class="tally-group">';
+        for (let i = 0; i < rem; i++) html += '<div class="tmark"></div>';
+        html += '</div>';
+    }
+    el.innerHTML = html;
+}
+
+// ---- GAME HEADER ----
+function refreshGameTop() {
+    document.getElementById('g-hole').textContent = 'Hole ' + G.hole;
+    document.getElementById('g-course').textContent = G.course;
+    document.getElementById('g-shots').textContent = G.shots + G.putts;
+}
+
+// ---- PROGRESS DOTS ----
+function buildProgress() {
+    const el = document.getElementById('progress');
+    el.innerHTML = '';
+    for (let i = 1; i <= G.holes; i++) {
+        const d = document.createElement('div');
+        d.className = 'pdot' + (i < G.hole ? ' done' : i === G.hole ? ' now' : '');
+        el.appendChild(d);
+    }
+}
+
+// ---- HOLE COMPLETE ----
+function finishHole() {
+    const total = G.shots + G.putts;
+
+    // Save hole data — include putts as a separate entry
+    const holeRecord = {
+        total: total,
+        clubs: [...G.holeClubs],
+        putts: G.putts
+    };
+    G.allHoleData.push(holeRecord);
+
+    // Hole complete screen
+    document.getElementById('hd-title').textContent = 'Hole ' + G.hole + ' Complete!';
+    document.getElementById('hd-score').textContent = total + (total === 1 ? ' shot' : ' shots');
+
+    let icon, msg;
+    if (total <= 2)      { icon = '★★★'; msg = 'Incredible — hole in one territory!'; }
+    else if (total <= 3) { icon = '★★';  msg = 'Brilliant round!'; }
+    else if (total <= 5) { icon = '★';   msg = 'Well played!'; }
+    else if (total <= 7) { icon = 'A';   msg = 'Good effort!'; }
+    else                 { icon = 'B';   msg = 'Keep practising — you will get there!'; }
+
+    document.getElementById('hd-icon').textContent = icon;
+    document.getElementById('hd-msg').textContent = msg;
+    document.getElementById('hd-next-btn').textContent =
+        G.hole >= G.holes ? 'Finish Round!' : 'Next Hole';
+
+    show('screen-hole-done');
+}
+
+function nextHole() {
+    if (G.hole >= G.holes) { showScorecard(); return; }
+    G.hole++;
+    G.shots = 0; G.putts = 0;
+    G.currentClub = ''; G.currentClubShots = 0; G.currentClubQuality = null;
+    G.holeClubs = [];
+    drawTally('shot-tally-marks', 0);
+    drawTally('putt-tally-marks', 0);
+    show('screen-game');
+    refreshGameTop();
+    buildProgress();
+    goToClubPhase();
+}
+
+// ---- SCORECARD ----
+function qualityIcon(quality) {
+    if (quality === 'good') return `<div class="sc-quality sq-good">
+        <svg viewBox="0 0 50 50"><polyline points="7,25 20,39 43,11" stroke="#27ae60" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>`;
+    if (quality === 'ok') return `<div class="sc-quality sq-ok">
+        <svg viewBox="0 0 50 50"><polyline points="2,30 11,15 20,35 29,15 38,35 47,20" stroke="#d68910" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+    </div>`;
+    if (quality === 'bad') return `<div class="sc-quality sq-bad">
+        <svg viewBox="0 0 50 50"><line x1="10" y1="10" x2="40" y2="40" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/><line x1="40" y1="10" x2="10" y2="40" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/></svg>
+    </div>`;
+    // no quality recorded
+    return `<div class="sc-quality" style="background:#f0f0f0;color:#aaa;font-size:16px;font-weight:700;">-</div>`;
+}
+
+function puttIcon(result) {
+    if (result === 'in') return `<div class="sc-quality sq-putt">
+        <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="16" stroke="#1976d2" stroke-width="5" fill="none"/></svg>
+    </div>`;
+    if (result === 'short') return `<div class="sc-quality sq-putt">
+        <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="8" fill="#d68910"/></svg>
+    </div>`;
+    if (result === 'far') return `<div class="sc-quality sq-putt">
+        <svg viewBox="0 0 50 50"><line x1="6" y1="25" x2="44" y2="25" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/></svg>
+    </div>`;
+    return `<div class="sc-quality sq-putt" style="color:#999;font-size:16px;">-</div>`;
+}
+
+function showScorecard() {
+    let grandTotal = 0;
+    let html = '';
+
+    G.allHoleData.forEach((hole, i) => {
+        grandTotal += hole.total;
+        html += `<div class="sc-hole-card">
+            <div class="sc-hole-header">
+                <div class="sc-hole-title">Hole ${i + 1}</div>
+                <div class="sc-hole-total">${hole.total} ${hole.total === 1 ? 'shot' : 'shots'}</div>
+            </div>`;
+
+        // Clubs used
+        hole.clubs.forEach(c => {
+            html += `<div class="sc-club-row" style="flex-wrap:wrap;">
+                ${qualityIcon(c.quality)}
+                <div class="sc-club-name">${c.club}</div>
+                <div class="sc-club-shots">${c.shots} ${c.shots === 1 ? 'shot' : 'shots'}</div>
+                ${c.direction ? `<div style="width:100%;padding:2px 0 0 44px;font-size:12px;color:#2d5a27;font-weight:600;">${c.direction === 'left' ? 'Left' : c.direction === 'right' ? 'Right' : 'Straight'}</div>` : ''}
+                ${c.comment ? `<div style="width:100%;padding:2px 0 2px 44px;font-size:12px;color:#888;font-style:italic;">"${c.comment}"</div>` : ''}
+            </div>`;
+        });
+
+        // Putting row
+        if (hole.putts > 0) {
+            html += `<div class="sc-club-row">
+                <div class="sc-quality sq-putt">
+                    <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="16" stroke="#1976d2" stroke-width="5" fill="none"/></svg>
+                </div>
+                <div class="sc-club-name">Putter</div>
+                <div class="sc-club-shots">${hole.putts} ${hole.putts === 1 ? 'putt' : 'putts'}</div>
+            </div>`;
+        }
+
+        html += '</div>';
+    });
+
+    document.getElementById('sc-holes').innerHTML = html;
+    document.getElementById('sc-total-num').textContent = grandTotal;
+    document.getElementById('sc-total-course').textContent = G.course;
+    document.getElementById('sc-course').textContent = G.course;
+    show('screen-scorecard');
+}
+
+// ---- NEW GAME ----
+function newGame() {
+    G = { holes: 0, course: '', hole: 1, shots: 0, putts: 0,
+          currentClub: '', currentClubShots: 0, currentClubQuality: null,
+          holeClubs: [], allHoleData: [] };
+    document.getElementById('course-search').value = '';
+    document.getElementById('course-list').innerHTML = '';
+    document.querySelectorAll('.hole-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('start-btn').disabled = true;
+    show('screen-setup');
+}
+
+// ---- UTILS ----
+function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+let flashTimer;
+function showFlash(msg) {
+    const el = document.getElementById('flash');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => el.classList.remove('show'), 900);
+}
+</script>
+</body>
+</html>

@@ -11,6 +11,7 @@ import { jobsRouter } from './jobs/index.js';
 import { kpiTreeRouter } from './kpi-tree/index.js';
 import { babbloRouter } from './babblo.js';
 import { unsubscribeRouter } from './unsubscribe.js';
+import { golfRouter } from './golf.js';
 
 const router = Router();
 
@@ -49,5 +50,8 @@ router.use('/babblo', babbloRouter);
 
 // Unsubscribe (public)
 router.use('/unsubscribe', unsubscribeRouter);
+
+// Golf tracker
+router.use('/golf', golfRouter);
 
 export { router };
