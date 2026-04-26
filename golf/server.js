@@ -10,8 +10,8 @@ const DIR = __dirname;
 
 // Browser uses relative URLs so all /api/* calls route through this server's proxy.
 // API_URL is used server-side only (for the proxy target).
-const GAME_INJECT = `<script>window.GOLF_API_URL='';</script>\n<script src="/golf-api.js"></script>\n</body>`;
-const LOGIN_INJECT = `<script>window.GOLF_API_URL='';</script>`;
+const GAME_INJECT = `<script>window.GOLF_API_URL='';window.GOLF_BASE_PATH='';</script>\n<script src="/golf-api.js"></script>\n</body>`;
+const LOGIN_INJECT = `<script>window.GOLF_API_URL='';window.GOLF_BASE_PATH='';</script>`;
 
 const server = http.createServer((req, res) => {
   const rawUrl = req.url || '/';

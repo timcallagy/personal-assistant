@@ -2,11 +2,12 @@
   'use strict';
 
   const API = window.GOLF_API_URL || '';
+  const BASE = window.GOLF_BASE_PATH || '';
   const token = localStorage.getItem('golf_token');
 
   // Redirect to login if not authenticated
   if (!token) {
-    window.location.replace('/');
+    window.location.replace(BASE || '/');
     return;
   }
 
@@ -54,7 +55,7 @@
           // Token expired — clear and redirect to login
           localStorage.removeItem('golf_token');
           localStorage.removeItem('golf_username');
-          window.location.replace('/');
+          window.location.replace(BASE || '/');
         } else {
           console.warn('[Golf] Round save failed:', json.error?.message || res.status);
         }

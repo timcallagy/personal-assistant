@@ -160,12 +160,12 @@
 </div>
 
 <script>
-  // GOLF_API_URL is set by the golf server at render time
   const API = window.GOLF_API_URL || '';
+  const BASE = window.GOLF_BASE_PATH || '';
 
   // If already logged in, go straight to the game
   if (localStorage.getItem('golf_token')) {
-    window.location.replace('/game');
+    window.location.replace(BASE + '/game');
   }
 
   document.getElementById('password').addEventListener('keydown', function(e) {
@@ -203,7 +203,7 @@
 
       localStorage.setItem('golf_token', json.data.token);
       localStorage.setItem('golf_username', json.data.username);
-      window.location.replace('/game');
+      window.location.replace(BASE + '/game');
     } catch {
       showError('Could not connect. Please try again.');
     } finally {
