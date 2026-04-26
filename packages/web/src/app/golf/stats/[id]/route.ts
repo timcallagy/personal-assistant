@@ -132,29 +132,58 @@ const HTML = `<!DOCTYPE html>
             '<div class="hole-total">' + hole.total + (hole.total === 1 ? ' shot' : ' shots') + '</div>' +
           '</div>';
 
-        (hole.clubs || []).forEach(function(c) {
-          var qClass = c.quality === 'good' ? 'q-good' : c.quality === 'bad' ? 'q-bad' : 'q-ok';
-          var qIcon  = c.quality === 'good' ? '✓' : c.quality === 'bad' ? '✗' : '~';
-          html += '<div class="club-row">' +
-            '<div class="quality-dot ' + qClass + '">' + qIcon + '</div>' +
-            '<div class="club-name">' + c.club + '</div>' +
-            '<div class="club-shots">' + c.shots + (c.shots === 1 ? ' shot' : ' shots') + '</div>';
-          if (c.direction || c.comment) {
-            html += '<div class="club-extras">';
-            if (c.direction) html += '<span class="dir">' + cap(c.direction) + '</span>';
-            if (c.comment)   html += '<span class="comment">"' + c.comment + '"</span>';
+        if (hole.shots) {
+          // New per-shot format
+          hole.shots.forEach(function(s) {
+            if (s.club === 'Putter') {
+              var resultLabel = s.result === 'in' ? 'In!' : s.result === 'short' ? 'Short' : s.result === 'far' ? 'Far' : 'Putt';
+              html += '<div class="club-row">' +
+                '<div class="quality-dot q-putt">⛳</div>' +
+                '<div class="club-name">Putter</div>' +
+                '<div class="club-shots">' + resultLabel + '</div>' +
+              '</div>';
+            } else {
+              var qClass = s.quality === 'good' ? 'q-good' : s.quality === 'bad' ? 'q-bad' : 'q-ok';
+              var qIcon  = s.quality === 'good' ? '✓' : s.quality === 'bad' ? '✗' : '~';
+              html += '<div class="club-row">' +
+                '<div class="quality-dot ' + qClass + '">' + qIcon + '</div>' +
+                '<div class="club-name">' + s.club + '</div>' +
+                '<div class="club-shots">1 shot</div>';
+              if (s.direction || s.comment) {
+                html += '<div class="club-extras">';
+                if (s.direction) html += '<span class="dir">' + cap(s.direction) + '</span>';
+                if (s.comment)   html += '<span class="comment">"' + s.comment + '"</span>';
+                html += '</div>';
+              }
+              html += '</div>';
+            }
+          });
+        } else {
+          // Legacy per-club format
+          (hole.clubs || []).forEach(function(c) {
+            var qClass = c.quality === 'good' ? 'q-good' : c.quality === 'bad' ? 'q-bad' : 'q-ok';
+            var qIcon  = c.quality === 'good' ? '✓' : c.quality === 'bad' ? '✗' : '~';
+            html += '<div class="club-row">' +
+              '<div class="quality-dot ' + qClass + '">' + qIcon + '</div>' +
+              '<div class="club-name">' + c.club + '</div>' +
+              '<div class="club-shots">' + c.shots + (c.shots === 1 ? ' shot' : ' shots') + '</div>';
+            if (c.direction || c.comment) {
+              html += '<div class="club-extras">';
+              if (c.direction) html += '<span class="dir">' + cap(c.direction) + '</span>';
+              if (c.comment)   html += '<span class="comment">"' + c.comment + '"</span>';
+              html += '</div>';
+            }
             html += '</div>';
+          });
+          if (hole.putts > 0) {
+            html += '<div class="club-row">' +
+              '<div class="quality-dot q-putt">⛳</div>' +
+              '<div class="club-name">Putter</div>' +
+              '<div class="club-shots">' + hole.putts + (hole.putts === 1 ? ' putt' : ' putts') + '</div>' +
+            '</div>';
           }
-          html += '</div>';
-        });
-
-        if (hole.putts > 0) {
-          html += '<div class="club-row">' +
-            '<div class="quality-dot q-putt">⛳</div>' +
-            '<div class="club-name">Putter</div>' +
-            '<div class="club-shots">' + hole.putts + (hole.putts === 1 ? ' putt' : ' putts') + '</div>' +
-          '</div>';
         }
+
         html += '</div>';
       });
     }

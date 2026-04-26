@@ -469,9 +469,10 @@ let G = {
     putts: 0,           // total putts this hole
     currentClub: '',
     currentClubShots: 0,
-    currentClubQuality: null,  // 'good' | 'ok' | 'bad' | null
-    holeClubs: [],      // clubs used this hole: [{club, shots, quality}]
-    allHoleData: [],    // one entry per completed hole: {total, clubs:[...], putts}
+    currentClubQuality: null,
+    currentClubStartIdx: 0,
+    holeShots: [],
+    allHoleData: [],
 };
 
 // ---- SETUP SCREEN ----
@@ -505,7 +506,7 @@ function checkReady() {
 function startGame() {
     G.hole = 1; G.shots = 0; G.putts = 0; G.scores = [];
     G.currentClub = ''; G.currentClubShots = 0; G.currentClubQuality = null;
-    G.holeClubs = []; G.allHoleData = [];
+    G.holeShots = []; G.currentClubStartIdx = 0; G.allHoleData = [];
     show('screen-game');
     refreshGameTop();
     buildProgress();
@@ -523,16 +524,17 @@ function filterClubs() {
 
 function pickClub(club) {
     if (club === 'Putter') { goToPutting(); return; }
-    // Save previous club if any shots were recorded with it
     saveCurrentClub();
     G.currentClub = club;
     G.currentClubShots = 0;
     G.currentClubQuality = null;
+    G.currentClubStartIdx = G.holeShots.length;
     document.getElementById('g-club-badge').textContent = 'Club: ' + club;
     goToShotPhase();
 }
 
 let currentDirection = null;
+let currentPuttResult = null;
 
 function pickDirection(dir) {
     currentDirection = dir;
@@ -544,13 +546,11 @@ function pickDirection(dir) {
 function saveCurrentClub() {
     if (G.currentClub && G.currentClubShots > 0) {
         const commentEl = document.getElementById('shot-comment');
-        G.holeClubs.push({
-            club: G.currentClub,
-            shots: G.currentClubShots,
-            quality: G.currentClubQuality,
-            comment: commentEl ? commentEl.value.trim() : '',
-            direction: currentDirection
-        });
+        const comment = commentEl ? commentEl.value.trim() : '';
+        for (let i = G.currentClubStartIdx; i < G.holeShots.length; i++) {
+            G.holeShots[i].comment = comment;
+            G.holeShots[i].direction = currentDirection;
+        }
     }
 }
 
@@ -571,6 +571,7 @@ function goToShotPhase() {
 
 function goToPutting() {
     saveCurrentClub();
+    G.currentClubStartIdx = G.holeShots.length;
     G.currentClub = '';
     document.getElementById('phase-club').classList.add('hidden');
     document.getElementById('phase-shot').classList.add('hidden');
@@ -579,6 +580,7 @@ function goToPutting() {
 
 function goNextClub() {
     saveCurrentClub();
+    G.currentClubStartIdx = G.holeShots.length;
     G.currentClub = '';
     G.currentClubShots = 0;
     G.currentClubQuality = null;
@@ -592,12 +594,16 @@ function goNextClub() {
 function addShot() {
     G.shots++;
     G.currentClubShots++;
+    G.holeShots.push({ club: G.currentClub, quality: G.currentClubQuality, comment: '', direction: null });
+    G.currentClubQuality = null;
     drawTally('shot-tally-marks', G.shots);
     refreshGameTop();
 }
 
 function addPutt() {
     G.putts++;
+    G.holeShots.push({ club: 'Putter', quality: null, result: currentPuttResult, comment: '', direction: null });
+    currentPuttResult = null;
     drawTally('putt-tally-marks', G.putts);
     refreshGameTop();
 }
@@ -610,6 +616,7 @@ function recordShot(quality) {
 }
 
 function recordPutt(result) {
+    currentPuttResult = result;
     if (result === 'in') {
         addPutt();
         showFlash('In the hole!');
@@ -662,11 +669,9 @@ function buildProgress() {
 function finishHole() {
     const total = G.shots + G.putts;
 
-    // Save hole data — include putts as a separate entry
     const holeRecord = {
         total: total,
-        clubs: [...G.holeClubs],
-        putts: G.putts
+        shots: [...G.holeShots]
     };
     G.allHoleData.push(holeRecord);
 
@@ -694,7 +699,7 @@ function nextHole() {
     G.hole++;
     G.shots = 0; G.putts = 0;
     G.currentClub = ''; G.currentClubShots = 0; G.currentClubQuality = null;
-    G.holeClubs = [];
+    G.holeShots = []; G.currentClubStartIdx = 0;
     drawTally('shot-tally-marks', 0);
     drawTally('putt-tally-marks', 0);
     show('screen-game');
@@ -743,27 +748,24 @@ function showScorecard() {
                 <div class="sc-hole-total">${hole.total} ${hole.total === 1 ? 'shot' : 'shots'}</div>
             </div>`;
 
-        // Clubs used
-        hole.clubs.forEach(c => {
-            html += `<div class="sc-club-row" style="flex-wrap:wrap;">
-                ${qualityIcon(c.quality)}
-                <div class="sc-club-name">${c.club}</div>
-                <div class="sc-club-shots">${c.shots} ${c.shots === 1 ? 'shot' : 'shots'}</div>
-                ${c.direction ? `<div style="width:100%;padding:2px 0 0 44px;font-size:12px;color:#2d5a27;font-weight:600;">${c.direction === 'left' ? 'Left' : c.direction === 'right' ? 'Right' : 'Straight'}</div>` : ''}
-                ${c.comment ? `<div style="width:100%;padding:2px 0 2px 44px;font-size:12px;color:#888;font-style:italic;">"${c.comment}"</div>` : ''}
-            </div>`;
+        hole.shots.forEach(s => {
+            if (s.club === 'Putter') {
+                const resultLabel = s.result === 'in' ? 'In!' : s.result === 'short' ? 'Short' : s.result === 'far' ? 'Far' : 'Putt';
+                html += `<div class="sc-club-row">
+                    ${puttIcon(s.result)}
+                    <div class="sc-club-name">Putter</div>
+                    <div class="sc-club-shots">${resultLabel}</div>
+                </div>`;
+            } else {
+                html += `<div class="sc-club-row" style="flex-wrap:wrap;">
+                    ${qualityIcon(s.quality)}
+                    <div class="sc-club-name">${s.club}</div>
+                    <div class="sc-club-shots">1 shot</div>
+                    ${s.direction ? `<div style="width:100%;padding:2px 0 0 44px;font-size:12px;color:#2d5a27;font-weight:600;">${s.direction === 'left' ? 'Left' : s.direction === 'right' ? 'Right' : 'Straight'}</div>` : ''}
+                    ${s.comment ? `<div style="width:100%;padding:2px 0 2px 44px;font-size:12px;color:#888;font-style:italic;">"${s.comment}"</div>` : ''}
+                </div>`;
+            }
         });
-
-        // Putting row
-        if (hole.putts > 0) {
-            html += `<div class="sc-club-row">
-                <div class="sc-quality sq-putt">
-                    <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="16" stroke="#1976d2" stroke-width="5" fill="none"/></svg>
-                </div>
-                <div class="sc-club-name">Putter</div>
-                <div class="sc-club-shots">${hole.putts} ${hole.putts === 1 ? 'putt' : 'putts'}</div>
-            </div>`;
-        }
 
         html += '</div>';
     });
@@ -779,7 +781,7 @@ function showScorecard() {
 function newGame() {
     G = { holes: 0, course: '', hole: 1, shots: 0, putts: 0,
           currentClub: '', currentClubShots: 0, currentClubQuality: null,
-          holeClubs: [], allHoleData: [] };
+          currentClubStartIdx: 0, holeShots: [], allHoleData: [] };
     document.getElementById('course-search').value = '';
     document.getElementById('course-list').innerHTML = '';
     document.querySelectorAll('.hole-btn').forEach(b => b.classList.remove('selected'));
