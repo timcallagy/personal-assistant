@@ -152,7 +152,7 @@ const HTML = `<!DOCTYPE html>
     btn.disabled = true;
     btn.textContent = '…';
     try {
-      var res = await fetch(API + '/api/v1/golf/rounds/' + id, {
+      var res = await fetch(API + '/api/v1/golf/all-rounds/' + id, {
         method: 'PATCH',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ archived: archive })

@@ -113,6 +113,27 @@ golfRouter.patch('/rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, 
   res.json({ success: true, data: { id: updated.id } });
 }));
 
+// PATCH /golf/all-rounds/:id — archive/unarchive any round (no ownership check)
+golfRouter.patch('/all-rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
+  const id = parseInt(req.params['id'] ?? '', 10);
+  if (isNaN(id)) {
+    res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid round ID' } });
+    return;
+  }
+  const { archived } = req.body as { archived?: boolean };
+  if (typeof archived !== 'boolean') {
+    res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'archived must be a boolean' } });
+    return;
+  }
+  const existing = await prisma.golfRound.findUnique({ where: { id } });
+  if (!existing) {
+    res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Round not found' } });
+    return;
+  }
+  const updated = await prisma.golfRound.update({ where: { id }, data: { archived } });
+  res.json({ success: true, data: { id: updated.id } });
+}));
+
 // GET /golf/all-rounds — all rounds for all users; ?archived=true to see archived rounds
 golfRouter.get('/all-rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
   const showArchived = req.query['archived'] === 'true';
