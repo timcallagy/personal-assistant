@@ -171,6 +171,17 @@ golfRouter.get('/all-rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest
   res.json({ success: true, data: round });
 }));
 
+// GET /golf/courses/:courseName/holes — par and stroke index per hole for a course
+golfRouter.get('/courses/:courseName/holes', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
+  const courseName = decodeURIComponent(req.params['courseName'] ?? '');
+  const holes = await prisma.golfCourseHole.findMany({
+    where: { courseName },
+    orderBy: { holeNumber: 'asc' },
+    select: { holeNumber: true, par: true, strokeIndex: true },
+  });
+  res.json({ success: true, data: holes });
+}));
+
 // GET /golf/rounds — list completed rounds for the current user
 golfRouter.get('/rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
   const rounds = await prisma.golfRound.findMany({

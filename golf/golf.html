@@ -109,6 +109,7 @@
         }
         .game-top .hole-num { font-size: 22px; font-weight: 700; }
         .game-top .course-nm { font-size: 11px; opacity: 0.75; }
+        .game-top .par-si-txt { font-size: 11px; opacity: 0.75; margin-top: 2px; }
         .game-top .shot-count { font-size: 20px; font-weight: 700; text-align: right; }
         .game-top .shot-label { font-size: 11px; opacity: 0.75; text-align: right; }
 
@@ -199,6 +200,7 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .sc-hole-title { font-size: 16px; font-weight: 700; }
+        .sc-hole-par { font-size: 11px; opacity: 0.75; margin-top: 2px; }
         .sc-hole-total { font-size: 16px; font-weight: 700; }
 
         .sc-club-row {
@@ -282,6 +284,7 @@
         <div>
             <div class="hole-num" id="g-hole">Hole 1</div>
             <div class="course-nm" id="g-course"></div>
+            <div class="par-si-txt" id="g-par-si"></div>
         </div>
         <div>
             <div class="shot-count" id="g-shots">0</div>
@@ -473,6 +476,7 @@ let G = {
     currentClubStartIdx: 0,
     holeShots: [],
     allHoleData: [],
+    courseHoles: [],    // [{ holeNumber, par, strokeIndex }] from API
 };
 
 // ---- SETUP SCREEN ----
@@ -507,10 +511,29 @@ function startGame() {
     G.hole = 1; G.shots = 0; G.putts = 0; G.scores = [];
     G.currentClub = ''; G.currentClubShots = 0; G.currentClubQuality = null;
     G.holeShots = []; G.currentClubStartIdx = 0; G.allHoleData = [];
+    G.courseHoles = [];
     show('screen-game');
     refreshGameTop();
     buildProgress();
     goToClubPhase();
+    loadCourseHoles(G.course);
+}
+
+async function loadCourseHoles(course) {
+    var apiUrl = window.GOLF_API_URL || '';
+    var tok = localStorage.getItem('golf_token');
+    try {
+        var res = await fetch(apiUrl + '/api/v1/golf/courses/' + encodeURIComponent(course) + '/holes', {
+            headers: { 'Authorization': 'Bearer ' + tok }
+        });
+        if (res.ok) {
+            var json = await res.json();
+            G.courseHoles = json.data || [];
+            refreshGameTop();
+        }
+    } catch (e) {
+        // no hole data available — UI stays blank for par/SI
+    }
 }
 
 // ---- CLUB SEARCH ----
@@ -652,6 +675,8 @@ function refreshGameTop() {
     document.getElementById('g-hole').textContent = 'Hole ' + G.hole;
     document.getElementById('g-course').textContent = G.course;
     document.getElementById('g-shots').textContent = G.shots + G.putts;
+    var holeInfo = G.courseHoles && G.courseHoles.find(function(h) { return h.holeNumber === G.hole; });
+    document.getElementById('g-par-si').textContent = holeInfo ? 'Par ' + holeInfo.par + ' · SI ' + holeInfo.strokeIndex : '';
 }
 
 // ---- PROGRESS DOTS ----
@@ -741,10 +766,15 @@ function showScorecard() {
     let html = '';
 
     G.allHoleData.forEach((hole, i) => {
+        const holeNum = i + 1;
+        const holeInfo = G.courseHoles && G.courseHoles.find(h => h.holeNumber === holeNum);
         grandTotal += hole.total;
         html += `<div class="sc-hole-card">
             <div class="sc-hole-header">
-                <div class="sc-hole-title">Hole ${i + 1}</div>
+                <div>
+                    <div class="sc-hole-title">Hole ${holeNum}</div>
+                    ${holeInfo ? `<div class="sc-hole-par">Par ${holeInfo.par} · SI ${holeInfo.strokeIndex}</div>` : ''}
+                </div>
                 <div class="sc-hole-total">${hole.total} ${hole.total === 1 ? 'shot' : 'shots'}</div>
             </div>`;
 
@@ -781,7 +811,7 @@ function showScorecard() {
 function newGame() {
     G = { holes: 0, course: '', hole: 1, shots: 0, putts: 0,
           currentClub: '', currentClubShots: 0, currentClubQuality: null,
-          currentClubStartIdx: 0, holeShots: [], allHoleData: [] };
+          currentClubStartIdx: 0, holeShots: [], allHoleData: [], courseHoles: [] };
     document.getElementById('course-search').value = '';
     document.getElementById('course-list').innerHTML = '';
     document.querySelectorAll('.hole-btn').forEach(b => b.classList.remove('selected'));

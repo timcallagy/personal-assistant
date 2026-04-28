@@ -94,14 +94,28 @@ const HTML = `<!DOCTYPE html>
         return;
       }
       var json = await res.json();
-      renderRound(json.data);
+      var round = json.data;
+
+      var courseHoles = [];
+      try {
+        var holesRes = await fetch(API + '/api/v1/golf/courses/' + encodeURIComponent(round.course) + '/holes', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (holesRes.ok) {
+          var holesJson = await holesRes.json();
+          courseHoles = holesJson.data || [];
+        }
+      } catch (e) { /* no hole data — par/SI columns stay blank */ }
+
+      renderRound(round, courseHoles);
     } catch (e) {
       showError('Could not load round. Please try again.');
     }
   }
 
-  function renderRound(r) {
+  function renderRound(r, courseHoles) {
     hide('state-loading');
+    courseHoles = courseHoles || [];
     var name = cap(r.user ? r.user.username : 'Unknown');
     var date = new Date(r.playedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     var played = Array.isArray(r.holeData) ? r.holeData.length : 0;
@@ -126,9 +140,14 @@ const HTML = `<!DOCTYPE html>
     if (r.holeData && r.holeData.length > 0) {
       html += '<div class="section-title">Hole by Hole</div>';
       r.holeData.forEach(function(hole, i) {
+        var holeNum = i + 1;
+        var holeInfo = courseHoles.find(function(h) { return h.holeNumber === holeNum; });
+        var parSiHtml = holeInfo
+          ? '<div style="font-size:11px;opacity:0.75;margin-top:2px;">Par ' + holeInfo.par + ' · SI ' + holeInfo.strokeIndex + '</div>'
+          : '';
         html += '<div class="hole-card">' +
           '<div class="hole-header">' +
-            '<div class="hole-num">Hole ' + (i + 1) + '</div>' +
+            '<div><div class="hole-num">Hole ' + holeNum + '</div>' + parSiHtml + '</div>' +
             '<div class="hole-total">' + hole.total + (hole.total === 1 ? ' shot' : ' shots') + '</div>' +
           '</div>';
 

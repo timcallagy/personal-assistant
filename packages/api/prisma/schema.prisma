@@ -474,3 +474,15 @@ model GolfRound {
   @@map("golf_rounds")
 }
 
+model GolfCourseHole {
+  id          Int    @id @default(autoincrement())
+  courseName  String @map("course_name")
+  holeNumber  Int    @map("hole_number")
+  par         Int
+  strokeIndex Int    @map("stroke_index")
+
+  @@unique([courseName, holeNumber])
+  @@index([courseName])
+  @@map("golf_course_holes")
+}
+
