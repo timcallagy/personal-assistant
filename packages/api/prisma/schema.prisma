@@ -463,12 +463,14 @@ model GolfRound {
   totalShots Int      @map("total_shots")
   holeData   Json     @map("hole_data")
   status     String   @default("complete") // 'in_progress' | 'complete'
+  archived   Boolean  @default(false)
   playedAt   DateTime @default(now()) @map("played_at")
 
   user GolfUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
+  @@index([archived])
   @@map("golf_rounds")
 }
 

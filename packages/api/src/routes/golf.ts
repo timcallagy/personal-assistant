@@ -95,10 +95,11 @@ golfRouter.patch('/rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, 
     res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Round not found' } });
     return;
   }
-  const { totalShots, holeData, status } = req.body as {
+  const { totalShots, holeData, status, archived } = req.body as {
     totalShots?: number;
     holeData?: unknown[];
     status?: string;
+    archived?: boolean;
   };
   const updated = await prisma.golfRound.update({
     where: { id },
@@ -106,18 +107,21 @@ golfRouter.patch('/rounds/:id', golfAuth, asyncHandler(async (req: GolfRequest, 
       ...(typeof totalShots === 'number' && { totalShots }),
       ...(Array.isArray(holeData) && { holeData: holeData as object[] }),
       ...(status === 'in_progress' || status === 'complete' ? { status } : {}),
+      ...(typeof archived === 'boolean' && { archived }),
     },
   });
   res.json({ success: true, data: { id: updated.id } });
 }));
 
-// GET /golf/all-rounds — all rounds for all users (any authenticated golf user can view)
-golfRouter.get('/all-rounds', golfAuth, asyncHandler(async (_req: GolfRequest, res) => {
+// GET /golf/all-rounds — all rounds for all users; ?archived=true to see archived rounds
+golfRouter.get('/all-rounds', golfAuth, asyncHandler(async (req: GolfRequest, res) => {
+  const showArchived = req.query['archived'] === 'true';
   const rounds = await prisma.golfRound.findMany({
+    where: { archived: showArchived },
     orderBy: { playedAt: 'desc' },
     select: {
       id: true, course: true, holes: true, totalShots: true,
-      holeData: true, status: true, playedAt: true,
+      holeData: true, status: true, archived: true, playedAt: true,
       user: { select: { username: true } },
     },
   });
